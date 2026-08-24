@@ -72,23 +72,36 @@ def control_value(case: Path, name: str, default: float) -> float:
     return float(match.group(1).strip())
 
 
-def exact_values(nx: int, ny: int, time_value: float) -> list[float]:
-    """Return sin(2*pi*(x+y-2*t)) at cell centres."""
+def exact_values(
+    nx: int,
+    ny: int,
+    time_value: float,
+    velocity: tuple[float, float, float] = (1.0, 1.0, 0.0),
+) -> list[float]:
+    """Return the translated sine wave at structured cell centres."""
+    phase_speed = float(velocity[0]) + float(velocity[1])
     values: list[float] = []
     for j in range(ny):
         y = (j + 0.5) / ny
         for i in range(nx):
             x = (i + 0.5) / nx
-            values.append(math.sin(2.0 * math.pi * (x + y - 2.0 * time_value)))
+            values.append(
+                math.sin(2.0 * math.pi * (x + y - phase_speed * time_value))
+            )
     return values
 
 
-def write_initial_field(case: Path, nx: int, ny: int) -> Path:
+def write_initial_field(
+    case: Path,
+    nx: int,
+    ny: int,
+    velocity: tuple[float, float, float] = (1.0, 1.0, 0.0),
+) -> Path:
     """Write T(x,y,0)=sin(2*pi*(x+y)) to case/0.orig/T."""
     output = case / "0.orig" / "T"
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    values = exact_values(nx, ny, 0.0)
+    values = exact_values(nx, ny, 0.0, velocity)
     body = "\n".join(f"    {value:.16e}" for value in values)
     output.write_text(
         f"""/*--------------------------------*- C++ -*----------------------------------*\\
@@ -180,19 +193,37 @@ def parse_solver_log(path: Path) -> list[dict[str, float]]:
 
 
 def normalized_errors(
-    numerical: list[float], exact: list[float], cell_volume: float
+    numerical: list[float],
+    exact: list[float],
+    cell_volume: float | list[float],
 ) -> tuple[float, float, float]:
     """Compute volume-weighted normalized L1, L2 and Linf errors."""
     if len(numerical) != len(exact):
         raise RuntimeError("Numerical and exact fields have different sizes")
+    if isinstance(cell_volume, (int, float)):
+        weights = [float(cell_volume)] * len(numerical)
+    else:
+        weights = [float(value) for value in cell_volume]
+        if len(weights) != len(numerical):
+            raise RuntimeError("Field and cell-volume lists have different sizes")
     error = [value - reference for value, reference in zip(numerical, exact)]
-    denominator_l1 = sum(abs(reference) for reference in exact) * cell_volume
-    denominator_l2 = sum(reference * reference for reference in exact) * cell_volume
+    denominator_l1 = sum(
+        abs(reference) * weight for reference, weight in zip(exact, weights)
+    )
+    denominator_l2 = sum(
+        reference * reference * weight for reference, weight in zip(exact, weights)
+    )
     denominator_linf = max(abs(reference) for reference in exact)
     if denominator_l1 <= 0.0 or denominator_l2 <= 0.0 or denominator_linf <= 0.0:
         raise RuntimeError("Exact field norm is zero")
 
-    l1 = sum(abs(value) for value in error) * cell_volume / denominator_l1
-    l2 = math.sqrt(sum(value * value for value in error) * cell_volume / denominator_l2)
+    l1 = (
+        sum(abs(value) * weight for value, weight in zip(error, weights))
+        / denominator_l1
+    )
+    l2 = math.sqrt(
+        sum(value * value * weight for value, weight in zip(error, weights))
+        / denominator_l2
+    )
     linf = max(abs(value) for value in error) / denominator_linf
     return l1, l2, linf

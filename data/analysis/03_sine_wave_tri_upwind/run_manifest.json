@@ -1,0 +1,29 @@
+{
+  "caseName": "03_sine_wave_tri_upwind",
+  "resolutions": [
+    10,
+    20,
+    40,
+    80
+  ],
+  "caseRoot": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_sine_wave_tri_upwind",
+  "caseDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_sine_wave_tri_upwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_sine_wave_tri_upwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_sine_wave_tri_upwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_sine_wave_tri_upwind/N80"
+  ],
+  "dataDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/cases/03_sine_wave_tri_upwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/cases/03_sine_wave_tri_upwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/cases/03_sine_wave_tri_upwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/cases/03_sine_wave_tri_upwind/N80"
+  ],
+  "figureDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/cases/03_sine_wave_tri_upwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/cases/03_sine_wave_tri_upwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/cases/03_sine_wave_tri_upwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/cases/03_sine_wave_tri_upwind/N80"
+  ],
+  "rawResults": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/analysis/03_sine_wave_tri_upwind/raw_results.csv"
+}

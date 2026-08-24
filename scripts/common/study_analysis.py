@@ -7,9 +7,13 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MPLCONFIGDIR = PROJECT_ROOT / "build" / "matplotlib"
+MPLCONFIGDIR.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(MPLCONFIGDIR))
 
 
 RAW_FIELDS = [
@@ -156,6 +160,11 @@ def analyse(case_name: str) -> Path:
         )
         previous = row
 
+    mesh_type = str(summary_rows[0].get("mesh", "quad"))
+    mesh_label = {
+        "quad": "均匀结构化四边形",
+        "tri": "三角形棱柱",
+    }.get(mesh_type, mesh_type)
     summary_path = data_dir / "convergence_summary.csv"
     fields = list(summary_rows[0].keys())
     with summary_path.open("w", newline="", encoding="utf-8") as stream:
@@ -185,7 +194,7 @@ def analyse(case_name: str) -> Path:
     report_lines = [
         f"# {case_name} 网格收敛性分析",
         "",
-        "本研究使用周期正弦波线性对流算例，比较不同均匀四边形网格分辨率。",
+        f"本研究使用周期正弦波线性对流算例，比较不同 {mesh_label} 网格分辨率。",
         "所有网格使用相同的初始函数、速度、周期边界、CFL 和终止时间。",
         "",
         "$$p = \\frac{\\log(E_N/E_{2N})}{\\log(2)}$$",
@@ -251,7 +260,7 @@ def plot(case_name: str) -> None:
     axis.loglog(n_values, linf, "^-", label="normalized Linf")
     reference = l1[-1] * n_values[-1]
     axis.loglog(n_values, [reference / n for n in n_values], "k--", label="slope 1 reference")
-    axis.set_xlabel("N cells per edge")
+    axis.set_xlabel("N base intervals per direction")
     axis.set_ylabel("normalized error at t=1")
     axis.set_title(f"{case_name}: error convergence")
     axis.grid(True, which="both", alpha=0.25)
@@ -274,7 +283,7 @@ def plot(case_name: str) -> None:
         if x:
             axis.plot(x, y, marker=marker, linestyle="-", label=label)
     axis.axhline(1.0, linestyle="--", color="black", label="first order")
-    axis.set_xlabel("N cells per edge")
+    axis.set_xlabel("N base intervals per direction")
     axis.set_ylabel("observed order")
     axis.set_title(f"{case_name}: observed convergence order")
     axis.grid(True, alpha=0.25)
@@ -284,14 +293,14 @@ def plot(case_name: str) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.8), constrained_layout=True)
     axes[0].plot(n_values, l1, "o-", label="normalized L1")
-    axes[0].set_xlabel("N cells per edge")
+    axes[0].set_xlabel("N base intervals per direction")
     axes[0].set_ylabel("normalized L1 error")
     axes[0].grid(True, alpha=0.25)
     axes[0].legend()
     amplitudes = [float(row["finalAmplitude"]) for row in rows]
     axes[1].plot(n_values, amplitudes, "o-", label="final amplitude")
     axes[1].axhline(1.0, linestyle="--", color="black", label="exact amplitude")
-    axes[1].set_xlabel("N cells per edge")
+    axes[1].set_xlabel("N base intervals per direction")
     axes[1].set_ylabel("amplitude")
     axes[1].grid(True, alpha=0.25)
     axes[1].legend()

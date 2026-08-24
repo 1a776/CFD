@@ -22,9 +22,12 @@ class CaseConfig:
 
     path: Path
     case_name: str
+    template_case_name: str
     description: str
     problem: str
     mesh_type: str
+    mesh_backend: str
+    gmsh_python: str | None
     scheme_name: str
     div_scheme: str
     solver: str
@@ -43,7 +46,7 @@ class CaseConfig:
 
     @property
     def template_case(self) -> Path:
-        return self.case_root / f"N{self.template_resolution}"
+        return CASES_DIR / self.template_case_name / f"N{self.template_resolution}"
 
     def case_dir(self, resolution: int) -> Path:
         return self.case_root / f"N{resolution}"
@@ -100,9 +103,18 @@ def load_config(value: str | Path) -> CaseConfig:
     return CaseConfig(
         path=path,
         case_name=str(data["caseName"]),
+        template_case_name=str(data.get("templateCaseName", data["caseName"])),
         description=str(data.get("description", "")),
         problem=str(data.get("problem", "sine_wave_advection")),
         mesh_type=str(data.get("meshType", "quad")),
+        mesh_backend=str(
+            data.get("meshBackend", "blockMesh" if data.get("meshType", "quad") == "quad" else "")
+        ),
+        gmsh_python=(
+            str(data["gmshPython"])
+            if data.get("gmshPython") is not None
+            else None
+        ),
         scheme_name=str(data.get("schemeName", "")),
         div_scheme=str(data["divScheme"]),
         solver=str(data.get("solver", "explicitAdvectionFoamStudent")),
