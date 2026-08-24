@@ -1,0 +1,16 @@
+build/bin/*
+!build/bin/.gitkeep
+UDF/solver/*/Make/linux*/
+**/__pycache__/
+data/archive/
+figures/archive/
+
+# Runtime output for every resolution case.
+cases/*/N*/0/
+cases/*/N*/[0-9]*/
+!cases/*/N*/0.orig/
+!cases/*/N*/0.orig/**
+cases/*/N*/constant/polyMesh/
+cases/*/N*/log.*
+cases/*/N*/run.batch.log
+cases/*/N*/postProcessing/

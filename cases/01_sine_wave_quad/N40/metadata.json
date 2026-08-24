@@ -1,0 +1,8 @@
+{
+  "caseName": "01_sine_wave_quad",
+  "resolution": 40,
+  "initialFunction": "sin(2*pi*(x+y))",
+  "velocity": [1.0, 1.0],
+  "endTime": 1.0,
+  "maxCo": 0.2
+}
