@@ -1,11 +1,17 @@
 # 学生版线性对流 CFD 工程
 
-本项目对应教学材料中的二维周期正弦波线性对流算例。当前求解器使用有限体积法、显式前向 Euler 时间推进，并通过 `CFL=0.2` 自动调整时间步。
+本项目用于学习并实现 PDF 第 1 题：
 
-当前案例：
+$$\frac{\partial \phi}{\partial t}+\nabla\cdot(\boldsymbol{u}\phi)=0.$$
 
-- `01_sine_wave_quad`：四边形网格、一阶迎风插值；
-- `02_sine_wave_quad_linearUpwind`：四边形网格、`linearUpwind` 插值，用于格式对比。
+当前已经实现的是二维周期正弦波算例：
+
+- 结构化四边形网格；
+- 显式时间推进；
+- `Gauss upwind` 和 `Gauss linearUpwind grad(T)` 两种空间格式；
+- `N10/N20/N40/N80` 多网格误差与收敛阶分析。
+
+三角形网格和固体旋转算例已经建立配置文件，但目前仍标记为规划项，尚未接入可运行的网格生成和后处理逻辑。
 
 ## 目录结构
 
@@ -13,6 +19,8 @@
 student_project/
 ├── README.md
 ├── UDF/
+│   └── solver/
+│       └── explicitAdvectionFoamStudent/
 │
 ├── build/
 │   └── bin/
@@ -24,59 +32,82 @@ student_project/
 │   │   ├── N20/
 │   │   ├── N40/
 │   │   └── N80/
-│   ├── 02_sine_wave_quad_linearUpwind/
-│   │   ├── N10/
-│   │   ├── N20/
-│   │   ├── N40/
-│   │   └── N80/
-│   └── 后续案例/
+│   └── 02_sine_wave_quad_linearUpwind/
+│       ├── N10/
+│       ├── N20/
+│       ├── N40/
+│       └── N80/
 │
 ├── scripts/
 │   ├── build_student_solver.sh
-│   ├── 01_sine_wave_quad/
-│   │   ├── create_initial_fields.py
-│   │   ├── measure_error.py
-│   │   ├── plot_results.py
-│   │   ├── run_all_N.py
-│   │   ├── collect_results.py
-│   │   ├── plot_convergence.py
-│   │   ├── analyze_results.py
-│   │   └── README.md
-│   ├── 02_sine_wave_quad_linearUpwind/
-│   │   ├── create_initial_fields.py
-│   │   ├── measure_error.py
-│   │   ├── plot_results.py
-│   │   ├── run_all_N.py
-│   │   ├── collect_results.py
-│   │   ├── analyze_results.py
-│   │   ├── plot_convergence.py
-│   │   └── README.md
+│   ├── prepare_case.py
+│   ├── run_case.py
+│   ├── postprocess_case.py
+│   ├── run_study.py
+│   ├── collect_results.py
+│   ├── analyze_study.py
+│   ├── plot_study.py
+│   ├── configs/
+│   │   ├── 01_sine_wave_quad_upwind.json
+│   │   ├── 02_sine_wave_quad_linearUpwind.json
+│   │   ├── 03_sine_wave_tri_upwind.json
+│   │   └── 04_solid_rotation_quad_upwind.json
 │   └── common/
-│       └── 通用辅助函数
+│       ├── paths.py
+│       ├── case_config.py
+│       ├── foam_case.py
+│       ├── mesh_tools.py
+│       ├── advection_sine.py
+│       ├── advection_rotation.py
+│       ├── metrics.py
+│       └── plotting.py
 │
 ├── data/
 │   ├── cases/
-│   │   ├── 01_sine_wave_quad/N10/...
-│   │   ├── 01_sine_wave_quad/N20/...
-│   │   └── 02_sine_wave_quad_linearUpwind/N20/...
 │   └── analysis/
-│       ├── 01_sine_wave_quad/
-│       └── 02_sine_wave_quad_linearUpwind/
 │
 ├── figures/
 │   ├── cases/
-│   │   ├── 01_sine_wave_quad/N10/...
-│   │   └── 02_sine_wave_quad_linearUpwind/N20/...
 │   └── analysis/
-│       ├── 01_sine_wave_quad/
-│       └── 02_sine_wave_quad_linearUpwind/
 │
 └── docs/
     ├── 01/
     └── compare/
 ```
 
-`cases/` 只保存 OpenFOAM 算例输入和运行产物，不再放 Python 分析脚本。每个 `Nxx` 都是一个可以独立运行的完整算例，包含 `0.orig/`、`system/`、`constant/`、`Allrun` 和 `Allclean`。
+旧的 `scripts/01_sine_wave_quad/` 和 `scripts/02_sine_wave_quad_linearUpwind/` 已删除。现在所有案例统一通过顶层脚本和 JSON 配置运行。
+
+## 配置文件
+
+同一个题目内部，不同案例通过 JSON 配置文件区分。配置文件记录：
+
+| 参数 | 含义 |
+|---|---|
+| `caseName` | 对应 `cases/` 下的案例目录 |
+| `problem` | 物理问题类型 |
+| `meshType` | 网格类型 |
+| `schemeName` | 人类可读的格式名称 |
+| `divScheme` | 写入 `system/fvSchemes` 的对流离散格式 |
+| `solver` | 要调用的 OpenFOAM 求解器 |
+| `resolutions` | 默认的 N 序列 |
+| `endTime` | 终止时间 |
+| `maxCo` | 目标 Courant 数 |
+
+当前可运行配置：
+
+```text
+scripts/configs/01_sine_wave_quad_upwind.json
+scripts/configs/02_sine_wave_quad_linearUpwind.json
+```
+
+规划配置：
+
+```text
+scripts/configs/03_sine_wave_tri_upwind.json
+scripts/configs/04_solid_rotation_quad_upwind.json
+```
+
+规划配置中的 `"implemented"` 为 `false`，脚本会拒绝运行，避免误以为已经完成。
 
 ## 编译求解器
 
@@ -91,123 +122,218 @@ sh scripts/build_student_solver.sh
 build/bin/explicitAdvectionFoamStudent
 ```
 
-## 运行 01 案例的全部网格
+## 只准备案例
+
+准备 01 案例的 `N40`，不运行 OpenFOAM：
 
 ```bash
-cd /home/a776/workdocuments/上交船舶/slover/student_project
-source /opt/openfoam14/etc/bashrc
-python3 scripts/01_sine_wave_quad/run_all_N.py --overwrite
+python3 scripts/prepare_case.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --N 40 \
+    --overwrite
 ```
 
-默认运行：
+准备全部默认 N：
+
+```bash
+python3 scripts/run_study.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --prepare-only \
+    --overwrite
+```
+
+02 案例只替换配置文件：
+
+```bash
+python3 scripts/run_study.py \
+    --config scripts/configs/02_sine_wave_quad_linearUpwind.json \
+    --prepare-only \
+    --overwrite
+```
+
+## 运行一个 N
+
+运行 OpenFOAM 前：
+
+```bash
+source /opt/openfoam14/etc/bashrc
+```
+
+运行并后处理 01 案例的 `N40`：
+
+```bash
+python3 scripts/run_case.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --N 40 \
+    --overwrite
+```
+
+如果案例已经准备好，只想运行：
+
+```bash
+python3 scripts/run_case.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --N 40 \
+    --no-prepare
+```
+
+如果已有 OpenFOAM 结果，只做后处理：
+
+```bash
+python3 scripts/postprocess_case.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --N 40
+```
+
+## 运行全部 N
+
+```bash
+source /opt/openfoam14/etc/bashrc
+
+python3 scripts/run_study.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --resolutions 10,20,40,80 \
+    --overwrite
+```
+
+这个命令会对每个 N 执行：
 
 ```text
-N10, N20, N40, N80
+prepare_case
+    -> Allclean
+    -> 生成 0.orig/T
+    -> blockMesh
+    -> checkMesh
+    -> 求解器
+    -> 单网格后处理
 ```
 
-脚本会自动生成对应网格、生成初始场、运行 `blockMesh`、`checkMesh`、学生求解器，并进行单网格后处理和所有网格的收敛分析。
+全部 N 完成后自动执行：
 
-## 运行 02 案例的全部网格
+```text
+collect_results
+    -> analyze_study
+    -> plot_study
+```
+
+## 只重新分析已有结果
+
+如果每个 N 已经有：
+
+```text
+data/cases/<caseName>/Nxx/summary.json
+```
+
+可以只收集：
 
 ```bash
-cd /home/a776/workdocuments/上交船舶/slover/student_project
-source /opt/openfoam14/etc/bashrc
-python3 scripts/02_sine_wave_quad_linearUpwind/run_all_N.py --overwrite
+python3 scripts/collect_results.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --resolutions 10,20,40,80
 ```
 
-## 单个 N 的运行和后处理
-
-例如 `01` 案例的 `N20`：
+计算收敛表和分析报告：
 
 ```bash
-source /opt/openfoam14/etc/bashrc
-sh cases/01_sine_wave_quad/N20/Allrun
-
-python3 scripts/01_sine_wave_quad/plot_results.py \
-    --case-dir cases/01_sine_wave_quad/N20
+python3 scripts/analyze_study.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json
 ```
 
-快速查看误差：
+重新绘制总体图：
 
 ```bash
-python3 scripts/01_sine_wave_quad/measure_error.py \
-    --case-dir cases/01_sine_wave_quad/N20
+python3 scripts/plot_study.py \
+    --config scripts/configs/01_sine_wave_quad_upwind.json
 ```
+
+这些命令不会运行 OpenFOAM，只读取已有结果。
 
 ## 输出位置
 
-每个 N 的数据：
+单个 N 的数据：
 
 ```text
-data/cases/01_sine_wave_quad/N20/
+data/cases/<caseName>/N40/
 ├── summary.json
 ├── time_history.csv
 ├── field_data.csv
 └── error_field.csv
 ```
 
-每个 N 的图：
+单个 N 的图片：
 
 ```text
-figures/cases/01_sine_wave_quad/N20/
+figures/cases/<caseName>/N40/
 ├── field_comparison.png
 ├── diagonal_profile.png
 ├── amplitude_history.png
 └── cfl_history.png
 ```
 
-全部 N 的分析数据：
+所有 N 的分析：
 
 ```text
-data/analysis/01_sine_wave_quad/
+data/analysis/<caseName>/
 ├── raw_results.csv
 ├── convergence_summary.csv
 ├── run_manifest.json
 └── analysis.md
 ```
 
-全部 N 的分析图：
+所有 N 的总体图片：
 
 ```text
-figures/analysis/01_sine_wave_quad/
+figures/analysis/<caseName>/
 ├── convergence_errors.png
 ├── convergence_order.png
 └── all_N_comparison.png
 ```
 
-## 只重新分析已有结果
+## 收敛阶
 
-如果四个 N 已经运行完成，可以跳过求解器：
+最终时刻的归一化误差为：
 
-```bash
-python3 scripts/01_sine_wave_quad/collect_results.py
-python3 scripts/01_sine_wave_quad/analyze_results.py
-```
+$$L_1=\frac{\sum_c V_c|T_c-T_c^{exact}|}{\sum_c V_c|T_c^{exact}|}.$$
 
-重新绘制收敛图：
+当网格由 $N$ 加密到 $2N$ 时：
 
-```bash
-python3 scripts/01_sine_wave_quad/plot_convergence.py
-```
+$$p=\frac{\log(E_N/E_{2N})}{\log(2)}.$$
 
-## 清理规则
-
-每个分辨率算例自己的运行产物由对应的 `Allclean` 管理：
-
-```bash
-sh cases/01_sine_wave_quad/N20/Allclean
-```
-
-它会清理时间目录、`0/`、`constant/polyMesh/`、`postProcessing/` 和日志，但保留 `0.orig/`、`system/` 和手工维护的常量文件。
-
-## 学习文档
+实际代码位置：
 
 ```text
-docs/01/00_learning_path.md
-docs/01/09_stage6_visualization_and_convergence.md
-docs/01/10_plotting_commands.md
-docs/01/11_periodic_boundary_explanation.md
-docs/01/12_project_structure.md
-docs/compare/0102.md
-docs/compare/命令.md
+scripts/common/advection_tools.py
+    normalized_errors()
+
+scripts/common/study_analysis.py
+    observed_order()
+    analyse()
 ```
+
+## 当前实现边界
+
+已实现：
+
+- 线性对流方程；
+- 二维周期正弦波；
+- 结构化四边形网格；
+- `Gauss upwind`；
+- `Gauss linearUpwind grad(T)`；
+- 单个 N 后处理；
+- 多个 N 的误差和收敛阶分析。
+
+暂未实现：
+
+- 三角形网格生成和读取；
+- 固体旋转复杂剖面；
+- slotted disk、cone、smooth hump 初始场；
+- 非结构网格上的专用可视化；
+- 第 1 题之外的扩散、Poisson 和 Navier-Stokes 求解器。
+
+清理单个案例：
+
+```bash
+sh cases/01_sine_wave_quad/N40/Allclean
+```
+
+`Allclean` 只删除可重新生成的运行产物，不删除 `0.orig/`、`system/` 和常量输入文件。

@@ -1,0 +1,16 @@
+{
+  "caseName": "04_solid_rotation_quad_upwind",
+  "description": "Planned solid-rotation test with a slotted disk, cone, and smooth hump on a quadrilateral mesh.",
+  "problem": "solid_rotation_advection",
+  "meshType": "quad",
+  "schemeName": "upwind",
+  "divScheme": "Gauss upwind",
+  "solver": "explicitAdvectionFoamStudent",
+  "templateResolution": 100,
+  "resolutions": [100],
+  "velocity": [0.0, 0.0, 0.0],
+  "endTime": 6.283185307179586,
+  "maxCo": 0.2,
+  "thickness": 0.1,
+  "implemented": false
+}

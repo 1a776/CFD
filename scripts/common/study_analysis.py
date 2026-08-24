@@ -9,13 +9,6 @@ import json
 import math
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
-
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -232,6 +225,12 @@ def analyse(case_name: str) -> Path:
 
 
 def plot(case_name: str) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    import matplotlib.pyplot as plt
+
     data_dir, figure_dir = analysis_dirs(case_name)
     summary_path = data_dir / "convergence_summary.csv"
     figure_dir.mkdir(parents=True, exist_ok=True)

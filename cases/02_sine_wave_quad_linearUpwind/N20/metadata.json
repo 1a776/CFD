@@ -1,8 +1,18 @@
 {
   "caseName": "02_sine_wave_quad_linearUpwind",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/02_sine_wave_quad_linearUpwind.json",
+  "problem": "sine_wave_advection",
+  "meshType": "quad",
+  "schemeName": "linearUpwind",
+  "divScheme": "Gauss linearUpwind grad(T)",
   "resolution": 20,
-  "initialFunction": "sin(2*pi*(x+y))",
-  "velocity": [1.0, 1.0],
+  "solver": "explicitAdvectionFoamStudent",
+  "velocity": [
+    1.0,
+    1.0,
+    0.0
+  ],
   "endTime": 1.0,
-  "maxCo": 0.2
+  "maxCo": 0.2,
+  "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/02_sine_wave_quad_linearUpwind/N20/0.orig/T"
 }
