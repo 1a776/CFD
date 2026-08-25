@@ -1,0 +1,51 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+// 必须和 build/bin 中的可执行文件名一致。
+application     explicitAdvectionFoamStudent;
+
+// 从 0 时间目录开始。
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         6.2831853071795862;
+
+// 这是 controlDict 中的初始时间步参数。
+// Stage 5 会根据 CFL 公式计算候选时间步，并在每一步调用 setDeltaT 覆盖它。
+// 保留这个条目是为了满足 OpenFOAM 的标准 controlDict 结构。
+deltaT          0.01;
+
+// 每推进 10 个时间步写一次场。
+// 当前 CFL 时间步约为 0.005，因此预计写出 0.05、0.10、...、1.00。
+writeControl    timeStep;
+writeInterval   10;
+purgeWrite      0;
+
+// 使用普通 ASCII 文本，方便直接打开查看 T。
+writeFormat     ascii;
+writePrecision  12;
+timePrecision   17;
+writeCompression off;
+runTimeModifiable no;
+
+// 目标 Courant 数，Stage 2 会读取它。
+maxCo           0.2;
+
+// 可选字段名称。求解器用 lookupOrDefault 读取。
+velocityField   U;
+advectedField   T;
+
+// 仅作为学习记录，C++ 不直接读取它。
+studentStage    5;

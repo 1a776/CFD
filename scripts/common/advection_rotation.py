@@ -152,6 +152,19 @@ def write_case_initial_field(
     return write_scalar_field(case / "0.orig" / "T", values, SCALAR_BOUNDARY)
 
 
+def write_case_initial_field_from_centres(
+    case: Path,
+    centres: list[tuple[float, float, float]],
+    profile_config: dict[str, Any] | None = None,
+) -> Path:
+    """Write the profile at the actual cell centres of an unstructured mesh."""
+    values = [
+        solid_rotation_profile(x, y, profile_config)
+        for x, y, _ in centres
+    ]
+    return write_scalar_field(case / "0.orig" / "T", values, SCALAR_BOUNDARY)
+
+
 def write_case_velocity_field(
     case: Path,
     nx: int,
@@ -173,9 +186,30 @@ def write_case_velocity_field(
     return write_vector_field(case / "0.orig" / "U", values, VELOCITY_BOUNDARY)
 
 
+def write_case_velocity_field_from_centres(
+    case: Path,
+    centres: list[tuple[float, float, float]],
+    velocity_config: dict[str, Any] | None = None,
+) -> Path:
+    """Write the rotation velocity at the actual cell centres."""
+    velocity_config = velocity_config or {}
+    center_value = velocity_config.get("center", [0.5, 0.5])
+    if not isinstance(center_value, list | tuple) or len(center_value) != 2:
+        raise RuntimeError("velocityModel.center must contain two numbers")
+    center = (float(center_value[0]), float(center_value[1]))
+    angular_velocity = float(velocity_config.get("angularVelocity", 1.0))
+    values = [
+        solid_rotation_velocity(x, y, center, angular_velocity)
+        for x, y, _ in centres
+    ]
+    return write_vector_field(case / "0.orig" / "U", values, VELOCITY_BOUNDARY)
+
+
 __all__ = [
     "solid_rotation_velocity",
     "solid_rotation_profile",
     "write_case_initial_field",
+    "write_case_initial_field_from_centres",
     "write_case_velocity_field",
+    "write_case_velocity_field_from_centres",
 ]

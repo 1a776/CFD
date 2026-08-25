@@ -164,6 +164,46 @@ def write_rotation_field_data(
                 )
 
 
+def write_tri_rotation_field_data(
+    centres: list[tuple[float, float, float]],
+    volumes: list[float],
+    initial: list[float],
+    numerical: list[float],
+    data_output: Path,
+) -> None:
+    """Write initial/final data for solid rotation on triangular cells."""
+    if not (
+        len(centres)
+        == len(volumes)
+        == len(initial)
+        == len(numerical)
+    ):
+        raise RuntimeError("Triangular rotation field and geometry sizes do not match")
+
+    with data_output.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(
+            ["cell", "x", "y", "z", "volume", "initial", "numerical", "change", "absChange"]
+        )
+        for cell, ((x, y, z), volume, initial_value, numerical_value) in enumerate(
+            zip(centres, volumes, initial, numerical)
+        ):
+            change = numerical_value - initial_value
+            writer.writerow(
+                [
+                    cell,
+                    f"{x:.16e}",
+                    f"{y:.16e}",
+                    f"{z:.16e}",
+                    f"{volume:.16e}",
+                    f"{initial_value:.16e}",
+                    f"{numerical_value:.16e}",
+                    f"{change:.16e}",
+                    f"{abs(change):.16e}",
+                ]
+            )
+
+
 def write_tri_field_data(
     centres: list[tuple[float, float, float]],
     volumes: list[float],
@@ -354,6 +394,89 @@ def plot_rotation_final_contour(
     levels = np.linspace(0.05, max(float(np.max(numerical)), 0.05), 16)
     filled = axis.contourf(x_grid, y_grid, numerical, levels=levels, cmap="viridis")
     axis.contour(x_grid, y_grid, numerical, levels=levels, colors="black", linewidths=0.35, alpha=0.55)
+    axis.set_aspect("equal")
+    axis.set_xlabel("x")
+    axis.set_ylabel("y")
+    axis.set_title(f"Solid rotation final contours, t={final_time:g}")
+    fig.colorbar(filled, ax=axis, shrink=0.86)
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_tri_rotation_field_comparison(
+    triangulation: mtri.Triangulation,
+    initial: np.ndarray,
+    numerical: np.ndarray,
+    triangle_to_cell: list[int],
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot initial, final and cycle difference on a triangular mesh."""
+    initial_faces = initial[triangle_to_cell]
+    numerical_faces = numerical[triangle_to_cell]
+    change_faces = (numerical - initial)[triangle_to_cell]
+    maximum = max(
+        float(np.max(np.abs(initial_faces))),
+        float(np.max(np.abs(numerical_faces))),
+        1.0e-16,
+    )
+    change_maximum = max(float(np.max(np.abs(change_faces))), 1.0e-16)
+    panels = [
+        (initial_faces, "Initial profile", -maximum, maximum, "viridis"),
+        (numerical_faces, f"Final profile, t={final_time:g}", -maximum, maximum, "viridis"),
+        (change_faces, "Final minus initial", -change_maximum, change_maximum, "coolwarm"),
+    ]
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.0, 4.2), constrained_layout=True)
+    for axis, (values, title, lower, upper, cmap) in zip(axes, panels):
+        image = axis.tripcolor(
+            triangulation,
+            facecolors=values,
+            shading="flat",
+            cmap=cmap,
+            vmin=lower,
+            vmax=upper,
+        )
+        axis.triplot(triangulation, color="black", linewidth=0.25, alpha=0.25)
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(title)
+        fig.colorbar(image, ax=axis, shrink=0.82)
+    fig.suptitle("Solid-rotation advection on triangular cells")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_tri_rotation_final_contour(
+    triangulation: mtri.Triangulation,
+    numerical: np.ndarray,
+    triangle_to_cell: list[int],
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot final solid-rotation contours on the actual triangular mesh."""
+    values = numerical[triangle_to_cell]
+    maximum = max(float(np.max(values)), 0.05)
+    levels = np.linspace(0.05, maximum, 16)
+    fig, axis = plt.subplots(figsize=(6.0, 5.4), constrained_layout=True)
+    filled = axis.tripcolor(
+        triangulation,
+        facecolors=values,
+        shading="flat",
+        cmap="viridis",
+        vmin=0.0,
+        vmax=maximum,
+    )
+    axis.tricontour(
+        triangulation,
+        values,
+        levels=levels,
+        colors="black",
+        linewidths=0.35,
+        alpha=0.55,
+    )
+    axis.triplot(triangulation, color="black", linewidth=0.18, alpha=0.2)
     axis.set_aspect("equal")
     axis.set_xlabel("x")
     axis.set_ylabel("y")
@@ -796,10 +919,124 @@ def _postprocess_quad_solid_rotation_case(
     return summary
 
 
+def _postprocess_tri_solid_rotation_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process solid rotation on the actual triangular mesh."""
+    case = case.resolve()
+    centres, volumes = read_cell_geometry(case)
+    geometry_metadata = read_tri_geometry_metadata(case / "mesh" / "mesh_geometry.json")
+    triangulation = _triangulation_from_metadata(geometry_metadata)
+    triangle_to_cell = _match_triangles_to_cells(centres, triangulation)
+
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / "T")
+    numerical_values = read_scalar_field(final_dir / "T")
+    if len(initial_values) != len(centres) or len(numerical_values) != len(centres):
+        raise RuntimeError(
+            f"Field size does not match triangular mesh in {case}: "
+            f"cells={len(centres)}, initial={len(initial_values)}, "
+            f"final={len(numerical_values)}"
+        )
+
+    initial = np.asarray(initial_values, dtype=float)
+    numerical = np.asarray(numerical_values, dtype=float)
+    volumes_array = np.asarray(volumes, dtype=float)
+    records = parse_solver_log(case / "log.explicitAdvectionFoamStudent")
+    initial_mass = float(np.dot(initial, volumes_array))
+    final_mass = float(np.dot(numerical, volumes_array))
+    mass_scale = float(np.dot(np.abs(initial), volumes_array))
+    mass_change = final_mass - initial_mass
+    cycle_l1 = (
+        float(np.dot(np.abs(numerical - initial), volumes_array)) / mass_scale
+        if mass_scale
+        else 0.0
+    )
+    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+
+    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
+    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_tri_rotation_field_data(
+        centres,
+        volumes,
+        initial_values,
+        numerical_values,
+        data_dir / "field_data.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "caseName": case.parent.name,
+        "mesh": "tri",
+        "problem": "solid_rotation_advection",
+        "resolution": int(json.loads((case / "metadata.json").read_text(encoding="utf-8"))["resolution"]),
+        "nominalH": 1.0 / int(json.loads((case / "metadata.json").read_text(encoding="utf-8"))["resolution"]),
+        "nCells": len(centres),
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "cycleL1AgainstInitial": cycle_l1,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "minInitial": float(initial.min()),
+        "maxInitial": float(initial.max()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_tri_rotation_field_comparison(
+        triangulation,
+        initial,
+        numerical,
+        triangle_to_cell,
+        figure_dir / "field_comparison.png",
+        final_time,
+    )
+    plot_tri_rotation_final_contour(
+        triangulation,
+        numerical,
+        triangle_to_cell,
+        figure_dir / "contour_final.png",
+        final_time,
+    )
+    plot_cfl_history(records, figure_dir / "cfl_history.png", target_co)
+
+    print(f"case={case}")
+    print(f"resolution={summary['resolution']}")
+    print("mesh=tri")
+    print(f"nCells={len(centres)}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"cycleL1AgainstInitial={cycle_l1:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
 def _postprocess_tri_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
     """Post-process a triangular-prism case using real cell geometry."""
+    if _read_problem(case) == "solid_rotation_advection":
+        return _postprocess_tri_solid_rotation_case(case, output_root, target_co)
     case = case.resolve()
     velocity = _case_velocity(case)
     centres, volumes = read_cell_geometry(case)

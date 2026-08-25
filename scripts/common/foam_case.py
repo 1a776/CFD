@@ -14,7 +14,9 @@ from pathlib import Path
 
 from advection_rotation import (
     write_case_initial_field as write_rotation_initial_field,
+    write_case_initial_field_from_centres as write_rotation_initial_field_from_centres,
     write_case_velocity_field as write_rotation_velocity_field,
+    write_case_velocity_field_from_centres as write_rotation_velocity_field_from_centres,
 )
 from advection_sine import (
     write_case_initial_field as write_sine_initial_field,
@@ -178,6 +180,13 @@ def _patch_block_mesh_outer_boundaries(case: Path) -> None:
 def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     """Apply the configured constant velocity to the template field."""
     if config.problem == "solid_rotation_advection":
+        if config.mesh_type == "tri":
+            centres, _ = read_cell_geometry(case)
+            return write_rotation_velocity_field_from_centres(
+                case,
+                centres,
+                config.velocity_model,
+            )
         if config.mesh_type != "quad":
             raise NotImplementedError("Solid rotation velocity is currently implemented for quad mesh")
         nx, ny = mesh_resolution(case)
@@ -192,42 +201,41 @@ def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     return patch_uniform_vector_field(path, config.velocity)
 
 
-def _write_create_patch_dict(case: Path) -> Path:
-    """Create cyclic/empty patches from the six Gmsh source patches."""
+def _write_create_patch_dict(case: Path, config: CaseConfig) -> Path:
+    """Create the final Gmsh patches for periodic or outer-boundary cases."""
     path = case / "system" / "createPatchDict"
-    path.write_text(
-        """/*--------------------------------*- C++ -*----------------------------------*\\
-  =========                 |
-  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\\\    /    O peration     | Mesh patch construction
-\\*---------------------------------------------------------------------------*/
-FoamFile
-{
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      createPatchDict;
-}
-
-pointSync false;
-writeCyclicMatch false;
-
-patches
-{
-    zMin
+    if config.boundary_condition == "zeroScalarAtOuterBoundary":
+        horizontal_patches = """
+    xMin
     {
-        patchInfo { type empty; }
+        patchInfo { type patch; }
         constructFrom patches;
-        patches (zMinSource);
+        patches (xMinSource);
     }
 
-    zMax
+    xMax
     {
-        patchInfo { type empty; }
+        patchInfo { type patch; }
         constructFrom patches;
-        patches (zMaxSource);
+        patches (xMaxSource);
     }
 
+    yMin
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMinSource);
+    }
+
+    yMax
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMaxSource);
+    }
+"""
+    else:
+        horizontal_patches = """
     xMin
     {
         patchInfo
@@ -279,7 +287,41 @@ patches
         constructFrom patches;
         patches (yMaxSource);
     }
-}
+"""
+    path.write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O peration     | Mesh patch construction
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createPatchDict;
+}}
+
+pointSync false;
+writeCyclicMatch false;
+
+patches
+{{
+    zMin
+    {{
+        patchInfo {{ type empty; }}
+        constructFrom patches;
+        patches (zMinSource);
+    }}
+
+    zMax
+    {{
+        patchInfo {{ type empty; }}
+        constructFrom patches;
+        patches (zMaxSource);
+    }}
+{horizontal_patches}
+}}
 """,
         encoding="utf-8",
     )
@@ -299,8 +341,13 @@ def _write_initial_field(case: Path, config: CaseConfig) -> Path:
                 config.velocity,
             )
     if config.problem == "solid_rotation_advection":
-        if config.mesh_type != "quad":
-            raise NotImplementedError("Solid rotation initial field is currently implemented for quad mesh")
+        if config.mesh_type == "tri":
+            centres, _ = read_cell_geometry(case)
+            return write_rotation_initial_field_from_centres(
+                case,
+                centres,
+                config.initial_profile,
+            )
         nx, ny = mesh_resolution(case)
         return write_rotation_initial_field(
             case,
@@ -472,7 +519,7 @@ def prepare_case(
         block_mesh_dict = target / "system" / "blockMeshDict"
         if block_mesh_dict.exists():
             block_mesh_dict.unlink()
-        _write_create_patch_dict(target)
+        _write_create_patch_dict(target, config)
         (target / "mesh").mkdir(parents=True, exist_ok=True)
     _patch_fv_schemes(target, config)
     _patch_control_dict(target, config)
