@@ -181,6 +181,11 @@ def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     """Apply the configured constant velocity to the template field."""
     if config.problem == "solid_rotation_advection":
         if config.mesh_type == "tri":
+            # The first preparation pass happens before Gmsh creates
+            # constant/C.  The real cell-centred velocity is written later
+            # by Allrun's --refresh-initial-only step.
+            if not (case / "constant" / "C").exists():
+                return case / "0.orig" / "U"
             centres, _ = read_cell_geometry(case)
             return write_rotation_velocity_field_from_centres(
                 case,

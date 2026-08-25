@@ -311,18 +311,18 @@ python3 scripts/run_study.py \
 
 ## 5. 第二案例：当前四边形多 N
 
-当前第二案例配置已经包含：
+当前第二案例四边形配置已经包含：
 
 ```json
 "problem": "solid_rotation_advection",
 "meshType": "quad",
-"resolutions": [100]
+"resolutions": [50, 100, 200]
 ```
 
 如果想跑：
 
 ```text
-N=50,100,150
+N=50,100,200
 ```
 
 不改 JSON，直接：
@@ -332,14 +332,14 @@ source /opt/openfoam14/etc/bashrc
 
 python3 scripts/run_study.py \
     --config scripts/configs/04_solid_rotation_quad_upwind.json \
-    --resolutions 50,100,150 \
+    --resolutions 50,100,200 \
     --overwrite
 ```
 
 如果希望保存为默认研究方案，修改 JSON：
 
 ```json
-"resolutions": [50, 100, 150]
+"resolutions": [50, 100, 200]
 ```
 
 再运行：
@@ -355,7 +355,7 @@ python3 scripts/run_study.py \
 ```text
 cases/04_solid_rotation_quad_upwind/N50/
 cases/04_solid_rotation_quad_upwind/N100/
-cases/04_solid_rotation_quad_upwind/N150/
+cases/04_solid_rotation_quad_upwind/N200/
 ```
 
 第二案例的 `N` 含义是每条边的 cell 数：
@@ -596,6 +596,80 @@ figures/analysis/<caseName>/convergence_order.png
 对于当前第二案例，`run_study.py` 会完成每个 N 的单案例后处理，但不会调用
 第一案例专用的 `collect/analyse/plot` 收敛分析。这是因为第二案例当前主要求
 是最终等值线图，而不是正弦波解析解误差。
+
+### 11.1 第二案例三角形网格
+
+三角形旋转配置为：
+
+```text
+scripts/configs/04_solid_rotation_tri_upwind.json
+```
+
+当前三角形配置默认也测试 `N=50,100,200`：
+
+```json
+"problem": "solid_rotation_advection",
+"meshType": "tri",
+"resolutions": [50, 100, 200]
+```
+
+运行三角形的三个网格：
+
+```bash
+source /opt/openfoam14/etc/bashrc
+
+python3 scripts/run_study.py \
+    --config scripts/configs/04_solid_rotation_tri_upwind.json \
+    --resolutions 50,100,200 \
+    --overwrite
+```
+
+执行流程：
+
+```text
+Gmsh 生成三角形棱柱网格
+    -> gmshToFoam
+    -> createPatch
+    -> xMin/xMax/yMin/yMax 生成普通外边界
+    -> foamPostProcess 写 constant/C 和 constant/Vc
+    -> 根据真实 cell centre 生成 U 和 T
+    -> 运行到 t=2*pi
+    -> 三角形后处理和绘图
+```
+
+结果位置：
+
+```text
+cases/04_solid_rotation_tri_upwind/N100/
+cases/04_solid_rotation_tri_upwind/N200/
+data/cases/04_solid_rotation_tri_upwind/N100/
+data/cases/04_solid_rotation_tri_upwind/N200/
+figures/cases/04_solid_rotation_tri_upwind/N100/
+figures/cases/04_solid_rotation_tri_upwind/N200/
+```
+
+主要图片：
+
+```text
+figures/cases/04_solid_rotation_tri_upwind/N100/field_comparison.png
+figures/cases/04_solid_rotation_tri_upwind/N100/contour_final.png
+figures/cases/04_solid_rotation_tri_upwind/N100/cfl_history.png
+```
+
+三角形案例不能把场值强行 reshape 成 `N x N`。旋转三角形后处理使用：
+
+```text
+constant/C
+    -> 真实 cell centre
+
+constant/Vc
+    -> 真实 cell 体积
+
+mesh/mesh_geometry.json
+    -> 三角形节点和连接关系
+```
+
+因此初始场、旋转速度、周期后的体积加权差异和图像都基于实际三角形网格。
 
 ## 12. 只做后处理
 

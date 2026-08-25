@@ -426,6 +426,7 @@ int main(int argc, char *argv[])
     (
         1.0e-12*max(1.0, mag(endTime))
     );
+    const scalar startTime = runTime.value();
     label step = 0;
 
     Info<< "Starting Stage 5 time loop" << nl
@@ -436,26 +437,45 @@ int main(int argc, char *argv[])
 
     while (endTime - runTime.value() > timeTolerance)
     {
-        // Time remaining before the requested end time.
-        const scalar remainingTime = endTime - runTime.value();
+        /*
+         * Do not advance time by repeatedly adding deltaT to the previous
+         * floating-point value.  That accumulation can eventually produce a
+         * time name which OpenFOAM cannot distinguish from its rounded form.
+         *
+         * Instead, calculate the next target from the integer step number:
+         *
+         *     t_target = min(t_start + (step+1)*deltaT_CFL, endTime)
+         *
+         * The integer multiplication prevents long-run drift, and the final
+         * min() makes the last step land exactly on endTime.
+         */
+        const scalar oldTime = runTime.value();
+        const scalar targetTime
+        (
+            min
+            (
+                startTime + (step + 1)*deltaT,
+                endTime
+            )
+        );
 
-        // Use the CFL step normally, but shorten only the final step if needed.
-        const scalar stepDeltaT = min(deltaT, remainingTime);
+        // The actual step is the difference between the target and old time.
+        const scalar stepDeltaT = targetTime - oldTime;
 
         if (stepDeltaT <= SMALL)
         {
             FatalErrorInFunction
                 << "The remaining time is too small for another step: "
-                << remainingTime
+                << (endTime - oldTime)
                 << exit(FatalError);
         }
 
         // Store the selected step in OpenFOAM's Time object.
         runTime.setDeltaT(stepDeltaT);
 
-        // Advance the time label to t^(n+1).  T still contains T^n here.
-        runTime++;
+        // Advance to the precomputed target time.  T still contains T^n here.
         ++step;
+        runTime.setTime(targetTime, step);
 
         Info<< "Time = " << runTime.name()
             << "  step = " << step

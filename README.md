@@ -13,9 +13,9 @@ $$\frac{\partial \phi}{\partial t}+\nabla\cdot(\boldsymbol{u}\phi)=0.$$
 - `N10/N20/N40/N80` 多网格误差与收敛阶分析。
 
 四边形和三角形网格、两种对流格式都已经接入 JSON 驱动流程。
-固体旋转算例仍是规划项。需要注意：配置标记为
-`"implemented": true` 只表示脚本链路已经可以接受该配置，不等于所有
-`N10/N20/N40/N80` 组合都已经完成物理验证。
+固体旋转算例已经接入四边形和三角形两种网格。需要注意：
+配置标记为 `"implemented": true` 表示脚本链路已经可以生成、运行和后处理
+该配置，不等于所有网格分辨率和格式组合都已经完成物理验证。
 
 ## 目录结构
 
@@ -66,7 +66,8 @@ student_project/
 │   │   ├── 02_sine_wave_quad_linearUpwind.json
 │   │   ├── 03_sine_wave_tri_upwind.json
 │   │   ├── 03_sine_wave_tri_linearUpwind.json
-│   │   └── 04_solid_rotation_quad_upwind.json
+│   │   ├── 04_solid_rotation_quad_upwind.json
+│   │   └── 04_solid_rotation_tri_upwind.json
 │   └── common/
 │       ├── paths.py
 │       ├── case_config.py
@@ -89,10 +90,17 @@ student_project/
 │
 └── docs/
     ├── 01/
-    └── compare/
+    ├── compare/
+    └── bug_log.md
 ```
 
 旧的 `scripts/01_sine_wave_quad/` 和 `scripts/02_sine_wave_quad_linearUpwind/` 已删除。现在所有案例统一通过顶层脚本和 JSON 配置运行。
+
+开发、运行和后处理过程中遇到的 Bug、日志证据、解决方式和验证标准统一记录在：
+
+```text
+docs/bug_log.md
+```
 
 ## 配置文件
 
@@ -134,7 +142,8 @@ JSON 配置文件区分。脚本入口不直接写死案例名称，而是先读
 | `02_sine_wave_quad_linearUpwind.json` | `02_sine_wave_quad_linearUpwind` | 四边形 | `blockMesh` | `Gauss linearUpwind grad(T)` | 已实现 |
 | `03_sine_wave_tri_upwind.json` | `03_sine_wave_tri_upwind` | 三角形棱柱 | `gmsh` | `Gauss upwind` | 已实现 |
 | `03_sine_wave_tri_linearUpwind.json` | `03_sine_wave_tri_linearUpwind` | 三角形棱柱 | `gmsh` | `Gauss linearUpwind grad(T)` | 已接入，需完成完整收敛验证 |
-| `04_solid_rotation_quad_upwind.json` | `04_solid_rotation_quad_upwind` | 四边形 | `blockMesh` | `Gauss upwind` | 规划中 |
+| `04_solid_rotation_quad_upwind.json` | `04_solid_rotation_quad_upwind` | 四边形 | `blockMesh` | `Gauss upwind` | 已接入 |
+| `04_solid_rotation_tri_upwind.json` | `04_solid_rotation_tri_upwind` | 三角形棱柱 | `gmsh` | `Gauss upwind` | 已接入 |
 
 当前可运行配置：
 
@@ -145,13 +154,14 @@ scripts/configs/03_sine_wave_tri_upwind.json
 scripts/configs/03_sine_wave_tri_linearUpwind.json
 ```
 
-规划配置：
+旋转配置：
 
 ```text
 scripts/configs/04_solid_rotation_quad_upwind.json
+scripts/configs/04_solid_rotation_tri_upwind.json
 ```
 
-规划配置中的 `"implemented"` 为 `false`，脚本会拒绝运行，避免误以为已经完成。
+两个旋转配置都已经接入统一脚本流程。
 
 ### 配置之间的关系
 
@@ -209,6 +219,19 @@ templateResolution = 20
 
 这个模板只提供通用的 `0.orig/`、`system/` 和 `constant/` 输入。
 三角形网格本身由 `scripts/common/gmsh_tri_mesh.py` 在运行时生成。
+
+旋转三角形案例使用同一个 Gmsh 网格生成器，但采用不同的边界和场生成
+分支：
+
+```text
+boundaryCondition=zeroScalarAtOuterBoundary
+    -> xMin/xMax/yMin/yMax 为普通外边界 patch
+    -> T 的外边界为 fixedValue 0
+
+solid_rotation_advection
+    -> 先生成真实三角形 cell centre
+    -> 再在这些 centre 上生成旋转速度 U 和初始场 T
+```
 
 ## 命令总览和前置条件
 
@@ -684,7 +707,8 @@ scripts/common/study_analysis.py
 | `02_sine_wave_quad_linearUpwind` | `implemented=true` | `N10/N20/N40/N80` 有结果 | 四边形 + linearUpwind |
 | `03_sine_wave_tri_upwind` | `implemented=true` | `N10/N20/N40/N80` 有结果 | 三角形 + upwind |
 | `03_sine_wave_tri_linearUpwind` | `implemented=true` | 配置和案例目录已建立；完整四级结果待补 | `N10` 已做最小运行验证 |
-| `04_solid_rotation_quad_upwind` | `implemented=false` | 不应运行 | 固体旋转、slotted disk 等尚未接入 |
+| `04_solid_rotation_quad_upwind` | `implemented=true` | 已接入 | 四边形固体旋转 |
+| `04_solid_rotation_tri_upwind` | `implemented=true` | 已接入 | 三角形固体旋转 |
 
 三角形 `linearUpwind` 的最小 `N10` 验证结果为：
 

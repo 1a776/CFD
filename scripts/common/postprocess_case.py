@@ -459,6 +459,13 @@ def plot_tri_rotation_final_contour(
     values = numerical[triangle_to_cell]
     maximum = max(float(np.max(values)), 0.05)
     levels = np.linspace(0.05, maximum, 16)
+    node_values = np.zeros(len(triangulation.x), dtype=float)
+    node_counts = np.zeros(len(triangulation.x), dtype=float)
+    for triangle_index, nodes in enumerate(triangulation.triangles):
+        node_values[nodes] += values[triangle_index]
+        node_counts[nodes] += 1.0
+    node_values /= np.maximum(node_counts, 1.0)
+
     fig, axis = plt.subplots(figsize=(6.0, 5.4), constrained_layout=True)
     filled = axis.tripcolor(
         triangulation,
@@ -470,7 +477,7 @@ def plot_tri_rotation_final_contour(
     )
     axis.tricontour(
         triangulation,
-        values,
+        node_values,
         levels=levels,
         colors="black",
         linewidths=0.35,
@@ -971,13 +978,15 @@ def _postprocess_tri_solid_rotation_case(
         data_dir / "field_data.csv",
     )
 
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    resolution = int(metadata["resolution"])
     summary: dict[str, object] = {
         "case": str(case),
         "caseName": case.parent.name,
         "mesh": "tri",
         "problem": "solid_rotation_advection",
-        "resolution": int(json.loads((case / "metadata.json").read_text(encoding="utf-8"))["resolution"]),
-        "nominalH": 1.0 / int(json.loads((case / "metadata.json").read_text(encoding="utf-8"))["resolution"]),
+        "resolution": resolution,
+        "nominalH": 1.0 / resolution,
         "nCells": len(centres),
         "finalTime": final_time,
         "finalDirectory": str(final_dir),
