@@ -64,12 +64,12 @@
 
 ## 改动代码
 
-- `report/01/report.md`
+- `report/01_advection_equation/report.md`
   - 增加实验结果表；
   - 增加图 1 至图 45；
   - 增加图片尺寸、图注和正文交叉引用；
   - 增加不同网格和插值格式的现象分析。
-- `report/01/evidence_index.md`
+- `report/01_advection_equation/evidence_index.md`
   - 更新实验数据、图片和报告证据路径。
 
 ## 遇到 Bug
@@ -78,7 +78,7 @@
 
 - **现象：** 报告中部分图片无法显示；
 - **原因：** 报告目录调整后，相对路径层级没有同步修改；
-- **修复：** 更新 `report/01/report.md` 中的图片相对路径；
+- **修复：** 更新 `report/01_advection_equation/report.md` 中的图片相对路径；
 - **验证：** 检查全部图片路径，确认缺失图片数量为 `0`。
 ```
 

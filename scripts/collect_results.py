@@ -30,7 +30,7 @@ def main() -> None:
     resolutions = args.resolutions if args.resolutions is not None else list(config.resolutions)
     from study_analysis import collect
 
-    collect(config.case_name, resolutions)
+    collect(config.solver_family, config.case_name, resolutions)
 
 
 if __name__ == "__main__":

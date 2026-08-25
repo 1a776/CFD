@@ -1,0 +1,79 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       polyBoundaryMesh;
+    location    "constant/polyMesh";
+    object      boundary;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+6
+(
+    zMin
+    {
+        type            empty;
+        inGroups        List<word> 1(empty);
+        nFaces          12800;
+        startFace       19040;
+    }
+    zMax
+    {
+        type            empty;
+        inGroups        List<word> 1(empty);
+        nFaces          12800;
+        startFace       31840;
+    }
+    xMin
+    {
+        type            cyclic;
+        inGroups        List<word> 1(cyclic);
+        nFaces          80;
+        startFace       44640;
+        matchTolerance  0.0001;
+        neighbourPatch  xMax;
+        transformType   translational;
+        separation      (-1 0 0);
+    }
+    xMax
+    {
+        type            cyclic;
+        inGroups        List<word> 1(cyclic);
+        nFaces          80;
+        startFace       44720;
+        matchTolerance  0.0001;
+        neighbourPatch  xMin;
+        transformType   translational;
+        separation      (1 0 0);
+    }
+    yMin
+    {
+        type            cyclic;
+        inGroups        List<word> 1(cyclic);
+        nFaces          80;
+        startFace       44800;
+        matchTolerance  0.0001;
+        neighbourPatch  yMax;
+        transformType   translational;
+        separation      (0 -1 0);
+    }
+    yMax
+    {
+        type            cyclic;
+        inGroups        List<word> 1(cyclic);
+        nFaces          80;
+        startFace       44880;
+        matchTolerance  0.0001;
+        neighbourPatch  yMin;
+        transformType   translational;
+        separation      (0 1 0);
+    }
+)
+
+// ************************************************************************* //

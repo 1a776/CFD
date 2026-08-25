@@ -118,7 +118,7 @@ JSON 配置文件区分。脚本入口不直接写死案例名称，而是先读
 | `meshType` | 必需 | 选择网格流程 | `quad` 走 `blockMesh`，`tri` 走 Gmsh |
 | `meshBackend` | 可选 | 记录网格后端 | quad 默认 `blockMesh`；tri 当前使用 `gmsh` |
 | `templateCaseName` | tri 推荐填写 | 指定基础案例族 | 与 `templateResolution` 共同定位模板 |
-| `templateResolution` | 可选 | 指定基础模板的 N | 默认 `20`，例如 `cases/01_sine_wave_quad/N20/` |
+| `templateResolution` | 可选 | 指定基础模板的 N | 默认 `20`，例如 `cases/01_advection_equation/01_sine_wave_quad/N20/` |
 | `gmshPython` | tri 可选 | 指定 Gmsh Python 解释器 | 未填写时使用 `/home/a776/vibeflow/python-env/bin/python` |
 | `schemeName` | 可选 | 给人看的格式名称 | 写入 `metadata.json`，便于识别 |
 | `divScheme` | 必需 | 对流散度离散格式 | 写入 `system/fvSchemes` 的 `div(phi,T)` |
@@ -148,17 +148,17 @@ JSON 配置文件区分。脚本入口不直接写死案例名称，而是先读
 当前可运行配置：
 
 ```text
-scripts/configs/01_sine_wave_quad_upwind.json
-scripts/configs/02_sine_wave_quad_linearUpwind.json
-scripts/configs/03_sine_wave_tri_upwind.json
-scripts/configs/03_sine_wave_tri_linearUpwind.json
+scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json
+scripts/configs/01_advection_equation/02_sine_wave_quad_linearUpwind.json
+scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json
+scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json
 ```
 
 旋转配置：
 
 ```text
-scripts/configs/04_solid_rotation_quad_upwind.json
-scripts/configs/04_solid_rotation_tri_upwind.json
+scripts/configs/01_advection_equation/04_solid_rotation_quad_upwind.json
+scripts/configs/01_advection_equation/04_solid_rotation_tri_upwind.json
 ```
 
 两个旋转配置都已经接入统一脚本流程。
@@ -168,7 +168,7 @@ scripts/configs/04_solid_rotation_tri_upwind.json
 对于任意一个配置，目录关系可以按下面的链条理解：
 
 ```text
-scripts/configs/<config>.json
+scripts/configs/01_advection_equation/<config>.json
     |
     v
 CaseConfig
@@ -214,7 +214,7 @@ meshType = tri
 ```text
 templateCaseName = 01_sine_wave_quad
 templateResolution = 20
-实际模板 = cases/01_sine_wave_quad/N20/
+实际模板 = cases/01_advection_equation/01_sine_wave_quad/N20/
 ```
 
 这个模板只提供通用的 `0.orig/`、`system/` 和 `constant/` 输入。
@@ -256,7 +256,7 @@ cd /home/a776/workdocuments/上交船舶/slover/student_project
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --resolutions 10,20,40,80 \
     --prepare-only \
     --overwrite
@@ -290,7 +290,7 @@ export VIBEFLOW_PYTHON=/path/to/python-with-gmsh
 
 | 脚本 | 主要参数 | 功能 |
 |---|---|---|
-| `build_student_solver.sh` | 无 | 编译 UDF 求解器到 `build/bin/` |
+| `build_student_solver.sh` | 无 | 编译 UDF 求解器到 `build/01_advection_equation/bin/` |
 | `prepare_case.py` | `--config`、`--N`、`--overwrite` | 准备一个 N |
 | `prepare_case.py` | `--refresh-initial-only` | 网格已生成后，只重写 tri 的 `0.orig/T` |
 | `run_case.py` | `--config`、`--N`、`--overwrite` | 准备、运行、后处理一个 N |
@@ -308,7 +308,7 @@ export VIBEFLOW_PYTHON=/path/to/python-with-gmsh
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --resolutions 20,40 \
     --prepare-only \
     --overwrite
@@ -332,7 +332,7 @@ sh scripts/build_student_solver.sh
 编译产物：
 
 ```text
-build/bin/explicitAdvectionFoamStudent
+build/01_advection_equation/bin/explicitAdvectionFoamStudent
 ```
 
 ## 只准备案例
@@ -341,7 +341,7 @@ build/bin/explicitAdvectionFoamStudent
 
 ```bash
 python3 scripts/prepare_case.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --N 40 \
     --overwrite
 ```
@@ -350,7 +350,7 @@ python3 scripts/prepare_case.py \
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --prepare-only \
     --overwrite
 ```
@@ -359,7 +359,7 @@ python3 scripts/run_study.py \
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/02_sine_wave_quad_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/02_sine_wave_quad_linearUpwind.json \
     --prepare-only \
     --overwrite
 ```
@@ -369,7 +369,7 @@ python3 scripts/run_study.py \
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_upwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json \
     --prepare-only \
     --overwrite
 ```
@@ -378,7 +378,7 @@ python3 scripts/run_study.py \
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --prepare-only \
     --overwrite
 ```
@@ -395,7 +395,7 @@ source /opt/openfoam14/etc/bashrc
 
 ```bash
 python3 scripts/run_case.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --N 40 \
     --overwrite
 ```
@@ -404,7 +404,7 @@ python3 scripts/run_case.py \
 
 ```bash
 python3 scripts/run_case.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --N 40 \
     --no-prepare
 ```
@@ -413,7 +413,7 @@ python3 scripts/run_case.py \
 
 ```bash
 python3 scripts/postprocess_case.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --N 40
 ```
 
@@ -421,7 +421,7 @@ python3 scripts/postprocess_case.py \
 
 ```bash
 python3 scripts/run_case.py \
-    --config scripts/configs/03_sine_wave_tri_upwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json \
     --N 20 \
     --overwrite
 ```
@@ -430,7 +430,7 @@ python3 scripts/run_case.py \
 
 ```bash
 python3 scripts/run_case.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --N 20 \
     --overwrite
 ```
@@ -441,7 +441,7 @@ python3 scripts/run_case.py \
 source /opt/openfoam14/etc/bashrc
 
 python3 scripts/run_study.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --resolutions 10,20,40,80 \
     --overwrite
 ```
@@ -472,7 +472,7 @@ collect_results
 source /opt/openfoam14/etc/bashrc
 
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_upwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json \
     --resolutions 10,20,40,80 \
     --overwrite
 ```
@@ -483,7 +483,7 @@ python3 scripts/run_study.py \
 source /opt/openfoam14/etc/bashrc
 
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --resolutions 10,20,40,80 \
     --overwrite
 ```
@@ -507,7 +507,7 @@ Gmsh Python
 以 `03_sine_wave_tri_linearUpwind/N20` 为例：
 
 ```text
-cases/03_sine_wave_tri_linearUpwind/N20/
+cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N20/
 ├── 0.orig/
 │   ├── U                 # JSON velocity 写入的常速度
 │   └── T                 # 运行时按真实 cell centre 生成
@@ -585,14 +585,14 @@ tri + linearUpwind
 如果每个 N 已经有：
 
 ```text
-data/cases/<caseName>/Nxx/summary.json
+data/01_advection_equation/cases/<caseName>/Nxx/summary.json
 ```
 
 可以只收集：
 
 ```bash
 python3 scripts/collect_results.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json \
     --resolutions 10,20,40,80
 ```
 
@@ -600,14 +600,14 @@ python3 scripts/collect_results.py \
 
 ```bash
 python3 scripts/analyze_study.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json
 ```
 
 重新绘制总体图：
 
 ```bash
 python3 scripts/plot_study.py \
-    --config scripts/configs/01_sine_wave_quad_upwind.json
+    --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json
 ```
 
 这些命令不会运行 OpenFOAM，只读取已有结果。
@@ -617,7 +617,7 @@ python3 scripts/plot_study.py \
 单个 N 的数据：
 
 ```text
-data/cases/<caseName>/N40/
+data/01_advection_equation/cases/<caseName>/N40/
 ├── summary.json
 ├── time_history.csv
 ├── field_data.csv
@@ -638,7 +638,7 @@ cell,x,y,z,volume,initial,numerical,exact,error,absError
 单个 N 的图片：
 
 ```text
-figures/cases/<caseName>/N40/
+figures/01_advection_equation/cases/<caseName>/N40/
 ├── field_comparison.png
 ├── diagonal_profile.png
 ├── amplitude_history.png
@@ -648,7 +648,7 @@ figures/cases/<caseName>/N40/
 所有 N 的分析：
 
 ```text
-data/analysis/<caseName>/
+data/01_advection_equation/analysis/<caseName>/
 ├── raw_results.csv
 ├── convergence_summary.csv
 ├── run_manifest.json
@@ -658,7 +658,7 @@ data/analysis/<caseName>/
 所有 N 的总体图片：
 
 ```text
-figures/analysis/<caseName>/
+figures/01_advection_equation/analysis/<caseName>/
 ├── convergence_errors.png
 ├── convergence_order.png
 └── all_N_comparison.png
@@ -757,7 +757,7 @@ gradSchemes
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --resolutions 10,20,40,80 \
     --prepare-only \
     --overwrite
@@ -767,7 +767,7 @@ python3 scripts/run_study.py \
 不是当前学生求解器本身的参数。不要手动执行：
 
 ```bash
-./build/bin/explicitAdvectionFoamStudent -overwrite
+./build/01_advection_equation/bin/explicitAdvectionFoamStudent -overwrite
 ```
 
 暂未实现：
@@ -780,7 +780,7 @@ python3 scripts/run_study.py \
 清理单个案例：
 
 ```bash
-sh cases/01_sine_wave_quad/N40/Allclean
+sh cases/01_advection_equation/01_sine_wave_quad/N40/Allclean
 ```
 
 `Allclean` 只删除可重新生成的运行产物，不删除 `0.orig/`、`system/` 和常量输入文件。
@@ -788,7 +788,7 @@ sh cases/01_sine_wave_quad/N40/Allclean
 三角形案例的清理命令：
 
 ```bash
-sh cases/03_sine_wave_tri_upwind/N20/Allclean
+sh cases/01_advection_equation/03_sine_wave_tri_upwind/N20/Allclean
 ```
 
 tri 版除四边形运行产物外，还会清理 `mesh/`、`constant/C`、
@@ -822,9 +822,9 @@ scripts/common/postprocess_case.py
 scripts/common/study_analysis.py
     -> 汇总 N、计算观察收敛阶、生成总体图
 
-UDF/solver/explicitAdvectionFoamStudent/
+UDF/solver/01_advection_equation/explicitAdvectionFoamStudent/
     -> 学生版 OpenFOAM 求解器源码
 
-build/bin/explicitAdvectionFoamStudent
+build/01_advection_equation/bin/explicitAdvectionFoamStudent
     -> 编译后的可执行文件
 ```

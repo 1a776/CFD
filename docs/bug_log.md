@@ -112,7 +112,7 @@ sh scripts/build_student_solver.sh
 求解器成功生成：
 
 ```text
-build/bin/explicitAdvectionFoamStudent
+build/01_advection_equation/bin/explicitAdvectionFoamStudent
 ```
 
 ### 5. 经验
@@ -198,7 +198,7 @@ _patch_fv_schemes()
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/03_sine_wave_tri_linearUpwind.json \
+    --config scripts/configs/01_advection_equation/03_sine_wave_tri_linearUpwind.json \
     --resolutions 10,20,40,80 \
     --prepare-only \
     --overwrite
@@ -207,7 +207,7 @@ python3 scripts/run_study.py \
 检查：
 
 ```bash
-sed -n '20,60p' cases/03_sine_wave_tri_linearUpwind/N10/system/fvSchemes
+sed -n '20,60p' cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N10/system/fvSchemes
 ```
 
 必须看到顶层结构：
@@ -365,7 +365,7 @@ fixedValue uniform 0;
 
 ```bash
 grep -A5 -E "xMin|xMax|yMin|yMax" \
-    cases/04_solid_rotation_tri_upwind/N100/system/createPatchDict
+    cases/01_advection_equation/04_solid_rotation_tri_upwind/N100/system/createPatchDict
 ```
 
 并查看 `log.createPatch`，应出现：
@@ -454,7 +454,7 @@ cfl_history.png
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/04_solid_rotation_tri_upwind.json \
+    --config scripts/configs/01_advection_equation/04_solid_rotation_tri_upwind.json \
     --resolutions 100 \
     --overwrite
 ```
@@ -462,8 +462,8 @@ python3 scripts/run_study.py \
 案例目录中存在大量时间目录和求解器日志，但没有：
 
 ```text
-data/cases/04_solid_rotation_tri_upwind/N100/summary.json
-figures/cases/04_solid_rotation_tri_upwind/N100/contour_final.png
+data/01_advection_equation/cases/04_solid_rotation_tri_upwind/N100/summary.json
+figures/01_advection_equation/cases/04_solid_rotation_tri_upwind/N100/contour_final.png
 ```
 
 ### 2. 日志证据
@@ -518,7 +518,7 @@ Mesh OK.
 文件：
 
 ```text
-UDF/solver/explicitAdvectionFoamStudent/explicitAdvectionFoamStudent.C
+UDF/solver/01_advection_equation/explicitAdvectionFoamStudent/explicitAdvectionFoamStudent.C
 ```
 
 时间循环改为根据整数步号计算目标时间：
@@ -567,12 +567,12 @@ sh scripts/build_student_solver.sh
 
 ```bash
 python3 scripts/run_study.py \
-    --config scripts/configs/04_solid_rotation_quad_upwind.json \
+    --config scripts/configs/01_advection_equation/04_solid_rotation_quad_upwind.json \
     --resolutions 50,100,200 \
     --overwrite
 
 python3 scripts/run_study.py \
-    --config scripts/configs/04_solid_rotation_tri_upwind.json \
+    --config scripts/configs/01_advection_equation/04_solid_rotation_tri_upwind.json \
     --resolutions 50,100,200 \
     --overwrite
 ```
@@ -647,7 +647,7 @@ opal_ifinit: socket() failed with errno=1
 随后 `wmake` 仍然完成了目标文件编译和链接，生成：
 
 ```text
-build/bin/explicitAdvectionFoamStudent
+build/01_advection_equation/bin/explicitAdvectionFoamStudent
 ```
 
 因此这两个提示没有导致当前求解器构建失败。
@@ -657,7 +657,7 @@ build/bin/explicitAdvectionFoamStudent
 先看最终退出状态和实际产物：
 
 ```bash
-test -x build/bin/explicitAdvectionFoamStudent && echo solver-present
+test -x build/01_advection_equation/bin/explicitAdvectionFoamStudent && echo solver-present
 ```
 
 如果只是环境脚本提示，但编译和运行成功，不要把它误判成求解器算法
@@ -692,8 +692,8 @@ End
 ### 第三步：看后处理目录
 
 ```bash
-find data/cases/<caseName>/N<N> -maxdepth 1 -type f
-find figures/cases/<caseName>/N<N> -maxdepth 1 -type f
+find data/01_advection_equation/cases/<caseName>/N<N> -maxdepth 1 -type f
+find figures/01_advection_equation/cases/<caseName>/N<N> -maxdepth 1 -type f
 ```
 
 ### 第四步：判断外层 Python 是否提前退出
@@ -748,7 +748,7 @@ grep -E "Stage 5 time loop completed|final time|End|FOAM FATAL ERROR" \
     cases/<caseName>/N<N>/log.explicitAdvectionFoamStudent
 
 # 5. 后处理产物检查
-find data/cases/<caseName>/N<N> figures/cases/<caseName>/N<N> \
+find data/01_advection_equation/cases/<caseName>/N<N> figures/01_advection_equation/cases/<caseName>/N<N> \
     -maxdepth 1 -type f
 ```
 

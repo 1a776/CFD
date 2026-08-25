@@ -36,6 +36,7 @@ from advection_tools import (
     read_scalar_field,
 )
 from foam_fields import read_cell_geometry, read_tri_geometry_metadata
+from paths import solver_data_dir, solver_figure_dir
 
 THICKNESS = 0.1
 DEFAULT_VELOCITY = (1.0, 1.0, 0.0)
@@ -46,8 +47,21 @@ def default_case(default_case_name: str | None) -> Path:
     if environment_case:
         return Path(environment_case).expanduser().resolve()
     if default_case_name:
-        return PROJECT_ROOT / "cases" / default_case_name / "N20"
+        return PROJECT_ROOT / "cases" / "01_advection_equation" / default_case_name / "N20"
     raise SystemExit("Please provide --case-dir or set VIBEFLOW_CASE_DIR")
+
+
+def _case_namespace(case: Path) -> tuple[str, str]:
+    """Return solver family and case name from the namespaced case path."""
+    metadata_path = case / "metadata.json"
+    if metadata_path.exists():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        family = metadata.get("solverFamily")
+        name = metadata.get("caseName")
+        if family and name:
+            return str(family), str(name)
+    resolved = case.resolve()
+    return resolved.parent.parent.name, resolved.parent.name
 
 
 def _case_velocity(case: Path) -> tuple[float, float, float]:
@@ -760,8 +774,9 @@ def _postprocess_quad_case(
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 1.0)
 
-    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
-    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, int(nx))
+    figure_dir = solver_figure_dir(solver_family, case_name, int(nx))
     data_dir.mkdir(parents=True, exist_ok=True)
     figure_dir.mkdir(parents=True, exist_ok=True)
 
@@ -776,7 +791,8 @@ def _postprocess_quad_case(
 
     summary: dict[str, object] = {
         "case": str(case),
-        "caseName": case.parent.name,
+        "solverFamily": solver_family,
+        "caseName": case_name,
         "mesh": "quad",
         "problem": "sine",
         "resolution": nx,
@@ -863,9 +879,12 @@ def _postprocess_quad_solid_rotation_case(
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    resolution = int(metadata["resolution"])
 
-    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
-    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, int(nx))
+    figure_dir = solver_figure_dir(solver_family, case_name, int(nx))
     data_dir.mkdir(parents=True, exist_ok=True)
     figure_dir.mkdir(parents=True, exist_ok=True)
 
@@ -874,7 +893,8 @@ def _postprocess_quad_solid_rotation_case(
 
     summary: dict[str, object] = {
         "case": str(case),
-        "caseName": case.parent.name,
+        "solverFamily": solver_family,
+        "caseName": case_name,
         "mesh": "quad",
         "problem": "solid_rotation_advection",
         "resolution": nx,
@@ -963,9 +983,12 @@ def _postprocess_tri_solid_rotation_case(
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    resolution = int(metadata["resolution"])
 
-    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
-    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, resolution)
+    figure_dir = solver_figure_dir(solver_family, case_name, resolution)
     data_dir.mkdir(parents=True, exist_ok=True)
     figure_dir.mkdir(parents=True, exist_ok=True)
 
@@ -978,11 +1001,10 @@ def _postprocess_tri_solid_rotation_case(
         data_dir / "field_data.csv",
     )
 
-    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
-    resolution = int(metadata["resolution"])
     summary: dict[str, object] = {
         "case": str(case),
-        "caseName": case.parent.name,
+        "solverFamily": solver_family,
+        "caseName": case_name,
         "mesh": "tri",
         "problem": "solid_rotation_advection",
         "resolution": resolution,
@@ -1084,8 +1106,9 @@ def _postprocess_tri_case(
     case_metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
     resolution = int(case_metadata.get("resolution", geometry_metadata["resolution"]))
 
-    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
-    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, resolution)
+    figure_dir = solver_figure_dir(solver_family, case_name, resolution)
     data_dir.mkdir(parents=True, exist_ok=True)
     figure_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1102,7 +1125,8 @@ def _postprocess_tri_case(
 
     summary: dict[str, object] = {
         "case": str(case),
-        "caseName": case.parent.name,
+        "solverFamily": solver_family,
+        "caseName": case_name,
         "mesh": "tri",
         "problem": "sine",
         "resolution": resolution,

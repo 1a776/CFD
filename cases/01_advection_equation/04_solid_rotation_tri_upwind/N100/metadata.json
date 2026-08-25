@@ -1,0 +1,58 @@
+{
+  "solverFamily": "01_advection_equation",
+  "caseName": "04_solid_rotation_tri_upwind",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/01_advection_equation/04_solid_rotation_tri_upwind.json",
+  "equation": "advection",
+  "problem": "solid_rotation_advection",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "schemeName": "upwind",
+  "divScheme": "Gauss upwind",
+  "resolution": 100,
+  "solver": "explicitAdvectionFoamStudent",
+  "velocity": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "domain": [
+    0.0,
+    1.0,
+    0.0,
+    1.0
+  ],
+  "velocityModel": {
+    "type": "solidRotation",
+    "center": [
+      0.5,
+      0.5
+    ],
+    "angularVelocity": 1.0
+  },
+  "initialProfile": {
+    "type": "slottedDiskConeCosineHump",
+    "radius": 0.15,
+    "diskCenter": [
+      0.5,
+      0.75
+    ],
+    "coneCenter": [
+      0.5,
+      0.25
+    ],
+    "humpCenter": [
+      0.25,
+      0.5
+    ],
+    "slotHalfWidth": 0.025,
+    "slotTopY": 0.85
+  },
+  "boundaryCondition": "zeroScalarAtOuterBoundary",
+  "postprocess": {
+    "type": "finalContour",
+    "compareWithInitialAfterCycle": true
+  },
+  "endTime": 6.283185307179586,
+  "maxCo": 0.2,
+  "initialField": "generated-after-mesh"
+}

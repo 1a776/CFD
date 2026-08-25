@@ -1,0 +1,19 @@
+{
+  "caseName": "03_sine_wave_tri_upwind",
+  "solverFamily": "01_advection_equation",
+  "description": "Sine-wave advection on a structured triangular prism mesh with first-order upwind interpolation.",
+  "problem": "sine_wave_advection",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "templateCaseName": "01_sine_wave_quad",
+  "schemeName": "upwind",
+  "divScheme": "Gauss upwind",
+  "solver": "explicitAdvectionFoamStudent",
+  "templateResolution": 20,
+  "resolutions": [10, 20, 40, 80],
+  "velocity": [1.0, 1.0, 0.0],
+  "endTime": 1.0,
+  "maxCo": 0.2,
+  "thickness": 0.1,
+  "implemented": true
+}

@@ -15,6 +15,14 @@ MPLCONFIGDIR = PROJECT_ROOT / "build" / "matplotlib"
 MPLCONFIGDIR.mkdir(parents=True, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", str(MPLCONFIGDIR))
 
+from paths import (
+    solver_analysis_dir,
+    solver_analysis_figure_dir,
+    solver_cases_dir,
+    solver_data_dir,
+    solver_figure_dir,
+)
+
 
 RAW_FIELDS = [
     "case",
@@ -51,26 +59,22 @@ RAW_FIELDS = [
 ]
 
 
-def analysis_dirs(case_name: str) -> tuple[Path, Path]:
+def analysis_dirs(solver_family: str, case_name: str) -> tuple[Path, Path]:
     return (
-        PROJECT_ROOT / "data" / "analysis" / case_name,
-        PROJECT_ROOT / "figures" / "analysis" / case_name,
+        solver_analysis_dir(solver_family, case_name),
+        solver_analysis_figure_dir(solver_family, case_name),
     )
 
 
-def collect(case_name: str, resolutions: list[int]) -> Path:
-    data_dir, _ = analysis_dirs(case_name)
+def collect(solver_family: str, case_name: str, resolutions: list[int]) -> Path:
+    data_dir, _ = analysis_dirs(solver_family, case_name)
     data_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, object]] = []
-    case_root = PROJECT_ROOT / "cases" / case_name
+    case_root = solver_cases_dir(solver_family) / case_name
 
     for resolution in sorted(resolutions):
         summary_path = (
-            PROJECT_ROOT
-            / "data"
-            / "cases"
-            / case_name
-            / f"N{resolution}"
+            solver_data_dir(solver_family, case_name, resolution)
             / "summary.json"
         )
         if not summary_path.exists():
@@ -85,16 +89,17 @@ def collect(case_name: str, resolutions: list[int]) -> Path:
             writer.writerow({field: row.get(field, "") for field in RAW_FIELDS})
 
     manifest = {
+        "solverFamily": solver_family,
         "caseName": case_name,
         "resolutions": sorted(resolutions),
         "caseRoot": str(case_root),
         "caseDirectories": [str(case_root / f"N{n}") for n in sorted(resolutions)],
         "dataDirectories": [
-            str(PROJECT_ROOT / "data" / "cases" / case_name / f"N{n}")
+            str(solver_data_dir(solver_family, case_name, n))
             for n in sorted(resolutions)
         ],
         "figureDirectories": [
-            str(PROJECT_ROOT / "figures" / "cases" / case_name / f"N{n}")
+            str(solver_figure_dir(solver_family, case_name, n))
             for n in sorted(resolutions)
         ],
         "rawResults": str(raw_path),
@@ -116,8 +121,8 @@ def observed_order(previous_error: float, current_error: float, ratio: float) ->
     return math.log(previous_error / current_error) / math.log(ratio)
 
 
-def analyse(case_name: str) -> Path:
-    data_dir, _ = analysis_dirs(case_name)
+def analyse(solver_family: str, case_name: str) -> Path:
+    data_dir, _ = analysis_dirs(solver_family, case_name)
     raw_path = data_dir / "raw_results.csv"
     with raw_path.open(newline="", encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream))
@@ -139,7 +144,8 @@ def analyse(case_name: str) -> Path:
             order_linf = observed_order(_float(previous, "normalizedLinf"), _float(row, "normalizedLinf"), ratio)
         summary_rows.append(
             {
-                "case": row.get("case", ""),
+            "case": row.get("case", ""),
+            "solverFamily": solver_family,
                 "mesh": row.get("mesh", "quad"),
                 "resolution": resolution,
                 "nominalH": _float(row, "nominalH"),
@@ -222,7 +228,7 @@ def analyse(case_name: str) -> Path:
             "",
             f"L1 误差从 `{first_error:.8e}` 变为 `{last_error:.8e}`。",
             order_conclusion,
-            "每个 N 的详细场数据、时间历史、日志和单案例图保存在对应的 `cases/<case>/Nxx`、`data/cases/<case>/Nxx` 和 `figures/cases/<case>/Nxx` 目录。",
+            f"每个 N 的详细场数据、时间历史、日志和单案例图保存在 `{solver_family}/cases/<case>/Nxx`、`data/{solver_family}/cases/<case>/Nxx` 和 `figures/{solver_family}/cases/<case>/Nxx` 目录。",
             "",
         ]
     )
@@ -233,14 +239,14 @@ def analyse(case_name: str) -> Path:
     return summary_path
 
 
-def plot(case_name: str) -> None:
+def plot(solver_family: str, case_name: str) -> None:
     import matplotlib
 
     matplotlib.use("Agg")
 
     import matplotlib.pyplot as plt
 
-    data_dir, figure_dir = analysis_dirs(case_name)
+    data_dir, figure_dir = analysis_dirs(solver_family, case_name)
     summary_path = data_dir / "convergence_summary.csv"
     figure_dir.mkdir(parents=True, exist_ok=True)
     with summary_path.open(newline="", encoding="utf-8") as stream:

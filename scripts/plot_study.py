@@ -23,7 +23,7 @@ def main() -> None:
     config = load_config(args.config)
     from study_analysis import plot
 
-    plot(config.case_name)
+    plot(config.solver_family, config.case_name)
 
 
 if __name__ == "__main__":

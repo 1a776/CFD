@@ -1,0 +1,82 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : gmshToFoam /home/a776/workdocuments/上交船舶/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_upwind/N40/mesh/mesh.msh
+Date   : Aug 25 2026
+Time   : 17:59:58
+Host   : "DELL"
+PID    : 2066
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_upwind/N40
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Starting to read mesh format at line 2
+Read format version 2.2  ascii 0
+
+Starting to read physical names at line 5
+Physical names:7
+    Surface 1	xMaxSource
+    Surface 2	xMinSource
+    Surface 3	yMaxSource
+    Surface 4	yMinSource
+    Surface 5	zMaxSource
+    Surface 6	zMinSource
+    Volume 7	fluid
+
+Starting to read points at line 15
+Vertices to be read:3362
+Vertices read:3362
+
+Starting to read cells at line 3380
+Cells to be read:9920
+
+Mapping region 6 to Foam patch 0
+Mapping region 4 to Foam patch 1
+Mapping region 1 to Foam patch 2
+Mapping region 3 to Foam patch 3
+Mapping region 2 to Foam patch 4
+Mapping region 5 to Foam patch 5
+Mapping region 7 to Foam cellZone 0
+Cells:
+    total:3200
+    hex  :0
+    prism:3200
+    pyr  :0
+    tet  :0
+
+CellZones:
+Zone	Size
+    0	3200
+
+Skipping tag  at line 13303
+Patch 0 gets name zMinSource
+Patch 1 gets name yMinSource
+Patch 2 gets name xMaxSource
+Patch 3 gets name yMaxSource
+Patch 4 gets name xMinSource
+Patch 5 gets name zMaxSource
+
+Finding faces of patch 0
+Finding faces of patch 1
+Finding faces of patch 2
+Finding faces of patch 3
+Finding faces of patch 4
+Finding faces of patch 5
+
+FaceZones:
+Zone	Size
+
+Writing zone 0 to cellZone fluid and cellSet
+End
+

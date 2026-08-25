@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+solverPath="$projectRoot/build/01_advection_equation/bin/explicitAdvectionFoamStudent"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "$projectRoot/scripts/configs/01_advection_equation/02_sine_wave_quad_linearUpwind.json" \
+    --N 10 \
+    --refresh-initial-only
+cp -R "$caseDir/0.orig" "$caseDir/0"
+runApplication -overwrite blockMesh
+runApplication -overwrite checkMesh
+runApplication -overwrite "$solverPath"

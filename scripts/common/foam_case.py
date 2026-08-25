@@ -374,7 +374,9 @@ def _config_reference(config: CaseConfig) -> str:
 
 def _write_case_scripts(case: Path, config: CaseConfig, resolution: int) -> None:
     config_reference = _config_reference(config)
-    solver_path = f"$projectRoot/build/bin/{config.solver}"
+    solver_path = (
+        f"$projectRoot/build/{config.solver_family}/bin/{config.solver}"
+    )
     allclean = """#!/bin/sh
 
 set -eu
@@ -398,7 +400,7 @@ rm -f constant/C constant/Cc* constant/Vc
 set -eu
 
 caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-projectRoot=$(CDPATH= cd -- "$caseDir/../../.." && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
 cd "$caseDir"
 
 : "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
@@ -428,7 +430,7 @@ runApplication -overwrite "$solverPath"
 set -eu
 
 caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-projectRoot=$(CDPATH= cd -- "$caseDir/../../.." && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
 cd "$caseDir"
 
 : "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
@@ -535,6 +537,7 @@ def prepare_case(
     _write_case_scripts(target, config, resolution)
 
     metadata = {
+        "solverFamily": config.solver_family,
         "caseName": config.case_name,
         "config": str(config.path),
         "equation": config.equation,
@@ -617,6 +620,6 @@ def run_study(
     if not prepare_only and config.problem == "sine_wave_advection":
         from study_analysis import analyse, collect, plot
 
-        collect(config.case_name, resolutions)
-        analyse(config.case_name)
-        plot(config.case_name)
+        collect(config.solver_family, config.case_name, resolutions)
+        analyse(config.solver_family, config.case_name)
+        plot(config.solver_family, config.case_name)

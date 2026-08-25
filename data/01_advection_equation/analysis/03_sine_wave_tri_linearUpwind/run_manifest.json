@@ -1,0 +1,30 @@
+{
+  "solverFamily": "01_advection_equation",
+  "caseName": "03_sine_wave_tri_linearUpwind",
+  "resolutions": [
+    10,
+    20,
+    40,
+    80
+  ],
+  "caseRoot": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_linearUpwind",
+  "caseDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/03_sine_wave_tri_linearUpwind/N80"
+  ],
+  "dataDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N80"
+  ],
+  "figureDirectories": [
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N10",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N20",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N40",
+    "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/figures/01_advection_equation/cases/03_sine_wave_tri_linearUpwind/N80"
+  ],
+  "rawResults": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/data/01_advection_equation/analysis/03_sine_wave_tri_linearUpwind/raw_results.csv"
+}

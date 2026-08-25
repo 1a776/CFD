@@ -1,0 +1,80 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : createPatch
+Date   : Aug 25 2026
+Time   : 09:42:43
+Host   : "DELL"
+PID    : 1542
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/01_advection_equation/04_solid_rotation_tri_upwind/N100
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Reading "createPatchDict"
+
+Adding new patch zMin as patch 6 from 
+{
+    type            empty;
+}
+
+Adding new patch zMax as patch 7 from 
+{
+    type            empty;
+}
+
+Adding new patch xMin as patch 8 from 
+{
+    type            patch;
+}
+
+Adding new patch xMax as patch 9 from 
+{
+    type            patch;
+}
+
+Adding new patch yMin as patch 10 from 
+{
+    type            patch;
+}
+
+Adding new patch yMax as patch 11 from 
+{
+    type            patch;
+}
+
+
+Moving faces from patch zMinSource to patch 6
+Moving faces from patch zMaxSource to patch 7
+Moving faces from patch xMinSource to patch 8
+Moving faces from patch xMaxSource to patch 9
+Moving faces from patch yMinSource to patch 10
+Moving faces from patch yMaxSource to patch 11
+
+Doing topology modification to order faces.
+
+Removing patches with no faces in them.
+
+Removing zero-sized patch zMinSource type patch at position 0
+Removing zero-sized patch yMinSource type patch at position 1
+Removing zero-sized patch xMaxSource type patch at position 2
+Removing zero-sized patch yMaxSource type patch at position 3
+Removing zero-sized patch xMinSource type patch at position 4
+Removing zero-sized patch zMaxSource type patch at position 5
+Removing patches.
+Writing repatched mesh to 0
+
+End
+

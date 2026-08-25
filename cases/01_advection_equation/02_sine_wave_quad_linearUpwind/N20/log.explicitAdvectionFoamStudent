@@ -1,0 +1,1462 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : /home/a776/workdocuments/上交船舶/slover/student_project/build/01_advection_equation/bin/explicitAdvectionFoamStudent
+Date   : Aug 25 2026
+Time   : 17:59:43
+Host   : "DELL"
+PID    : 1532
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/01_advection_equation/02_sine_wave_quad_linearUpwind/N20
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Student checkpoint: reading fields
+  case       = "N20"
+  time       = 0
+  cells      = 400
+  velocity   = U
+  advected   = T
+
+  U dimensions = [0 1 -1 0 0 0 0]
+  T dimensions = []
+  T min       = -1
+  T max       = 1
+
+  phi min     = -0.005
+  phi max     = 0.005
+
+  rate max    = 80
+  maxCo       = 0.2
+  CFL deltaT  = 0.005
+
+  residual dimensions = [0 0 -1 0 0 0 0]
+  residual min        = -12.6631671396
+  residual max        = 12.6631671396
+  residual integral   = -1.56125112838e-17
+
+Starting Stage 5 time loop
+  start time   = 0
+  end time     = 1
+  target deltaT = 0.005
+
+Time = 0.0049999999999999784  step = 1  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.6631671396
+  residual max      = 12.6631671396
+  residual integral = -1.56125112838e-17
+  T min             = -0.99976045354
+  T max             = 0.99976045354
+
+Time = 0.0099999999999999568  step = 2  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.6571003059
+  residual max      = 12.6571003059
+  residual integral = 3.03576608296e-18
+  T min             = -0.995512069413
+  T max             = 0.995512069413
+
+Time = 0.014999999999999935  step = 3  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.600270344
+  residual max      = 12.600270344
+  residual integral = -4.33680868994e-19
+  T min             = -0.997528349068
+  T max             = 0.997528349068
+
+Time = 0.019999999999999914  step = 4  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.6378452084
+  residual max      = 12.6378452084
+  residual integral = 1.21430643318e-17
+  T min             = -1.00518845947
+  T max             = 1.00518845947
+
+Time = 0.02499999999999989  step = 5  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.7318191156
+  residual max      = 12.7318191156
+  residual integral = 1.73472347598e-18
+  T min             = -1.00884585627
+  T max             = 1.00884585627
+
+Time = 0.029999999999999871  step = 6  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.7750834803
+  residual max      = 12.7750834803
+  residual integral = 3.85975973405e-17
+  T min             = -1.00847174811
+  T max             = 1.00847174811
+
+Time = 0.034999999999999851  step = 7  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.7672858602
+  residual max      = 12.7672858602
+  residual integral = 8.67361737988e-19
+  T min             = -1.00405340413
+  T max             = 1.00405340413
+
+Time = 0.039999999999999827  step = 8  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.7082772738
+  residual max      = 12.7082772738
+  residual integral = -1.04083408559e-17
+  T min             = -1.00661330452
+  T max             = 1.00661330452
+
+Time = 0.044999999999999804  step = 9  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.7528424214
+  residual max      = 12.7528424214
+  residual integral = -1.82145964978e-17
+  T min             = -1.01420899729
+  T max             = 1.01420899729
+
+Time = 0.049999999999999781  step = 10  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.8459730503
+  residual max      = 12.8459730503
+  residual integral = 1.38777878078e-17
+  T min             = -1.01776558617
+  T max             = 1.01776558617
+
+Time = 0.054999999999999764  step = 11  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.8879335223
+  residual max      = 12.8879335223
+  residual integral = 5.63785129692e-18
+  T min             = -1.01725455548
+  T max             = 1.01725455548
+
+Time = 0.059999999999999741  step = 12  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.8783749964
+  residual max      = 12.8783749964
+  residual integral = 4.33680868994e-18
+  T min             = -1.0126635958
+  T max             = 1.0126635958
+
+Time = 0.064999999999999725  step = 13  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.8171539375
+  residual max      = 12.8171539375
+  residual integral = -3.03576608296e-18
+  T min             = -1.0157765679
+  T max             = 1.0157765679
+
+Time = 0.069999999999999701  step = 14  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.8688299338
+  residual max      = 12.8688299338
+  residual integral = -2.60208521397e-18
+  T min             = -1.02330607047
+  T max             = 1.02330607047
+
+Time = 0.074999999999999678  step = 15  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.9610946007
+  residual max      = 12.9610946007
+  residual integral = 1.08420217249e-17
+  T min             = -1.02675976577
+  T max             = 1.02675976577
+
+Time = 0.079999999999999655  step = 16  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.0017245372
+  residual max      = 13.0017245372
+  residual integral = -7.48099499015e-18
+  T min             = -1.02610942107
+  T max             = 1.02610942107
+
+Time = 0.084999999999999631  step = 17  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.9903745964
+  residual max      = 12.9903745964
+  residual integral = -2.47198095327e-17
+  T min             = -1.02134315688
+  T max             = 1.02134315688
+
+Time = 0.089999999999999608  step = 18  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.9269067981
+  residual max      = 12.9269067981
+  residual integral = 2.08166817117e-17
+  T min             = -1.02501877397
+  T max             = 1.02501877397
+
+Time = 0.094999999999999585  step = 19  deltaT = 0.005  maxCo = 0.2
+  residual min      = -12.9858157641
+  residual max      = 12.9858157641
+  residual integral = -9.54097911787e-18
+  T min             = -1.03248028773
+  T max             = 1.03248028773
+
+Time = 0.099999999999999561  step = 20  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.0771914537
+  residual max      = 13.0771914537
+  residual integral = 3.12250225676e-17
+  T min             = -1.03582897522
+  T max             = 1.03582897522
+
+Time = 0.10499999999999955  step = 21  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.1164638482
+  residual max      = 13.1164638482
+  residual integral = -1.21430643318e-17
+  T min             = -1.03503689403
+  T max             = 1.03503689403
+
+Time = 0.10999999999999953  step = 22  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.1032915892
+  residual max      = 13.1032915892
+  residual integral = -4.33680868994e-18
+  T min             = -1.03009260322
+  T max             = 1.03009260322
+
+Time = 0.11499999999999951  step = 23  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.0375423612
+  residual max      = 13.0375423612
+  residual integral = 6.07153216592e-18
+  T min             = -1.03434056225
+  T max             = 1.03434056225
+
+Time = 0.11999999999999948  step = 24  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.1038079906
+  residual max      = 13.1038079906
+  residual integral = 0
+  T min             = -1.04173226223
+  T max             = 1.04173226223
+
+Time = 0.12499999999999946  step = 25  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.1942713522
+  residual max      = 13.1942713522
+  residual integral = 9.54097911787e-18
+  T min             = -1.0449737988
+  T max             = 1.0449737988
+
+Time = 0.12999999999999945  step = 26  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.2321588305
+  residual max      = 13.2321588305
+  residual integral = 1.56125112838e-17
+  T min             = -1.04403752728
+  T max             = 1.04403752728
+
+Time = 0.13499999999999943  step = 27  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.2171329509
+  residual max      = 13.2171329509
+  residual integral = -1.86482773668e-17
+  T min             = -1.03891245407
+  T max             = 1.03891245407
+
+Time = 0.1399999999999994  step = 28  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.1490671748
+  residual max      = 13.1490671748
+  residual integral = -1.47451495458e-17
+  T min             = -1.04374257704
+  T max             = 1.04374257704
+
+Time = 0.14499999999999938  step = 29  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.2228147524
+  residual max      = 13.2228147524
+  residual integral = 8.67361737988e-19
+  T min             = -1.05106261163
+  T max             = 1.05106261163
+
+Time = 0.14999999999999936  step = 30  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.3123420954
+  residual max      = 13.3123420954
+  residual integral = -1.04083408559e-17
+  T min             = -1.05419482489
+  T max             = 1.05419482489
+
+Time = 0.15499999999999933  step = 31  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.3488169111
+  residual max      = 13.3488169111
+  residual integral = 1.69135538908e-17
+  T min             = -1.05311187752
+  T max             = 1.05311187752
+
+Time = 0.15999999999999931  step = 32  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.3319057057
+  residual max      = 13.3319057057
+  residual integral = 2.55871712707e-17
+  T min             = -1.04780323208
+  T max             = 1.04780323208
+
+Time = 0.16499999999999929  step = 33  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.2614878303
+  residual max      = 13.2614878303
+  residual integral = 1.04083408559e-17
+  T min             = -1.05322546749
+  T max             = 1.05322546749
+
+Time = 0.16999999999999926  step = 34  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.3428442494
+  residual max      = 13.3428442494
+  residual integral = -1.73472347598e-18
+  T min             = -1.06047195805
+  T max             = 1.06047195805
+
+Time = 0.17499999999999924  step = 35  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.4314115394
+  residual max      = 13.4314115394
+  residual integral = -3.90312782095e-17
+  T min             = -1.06349264607
+  T max             = 1.06349264607
+
+Time = 0.17999999999999922  step = 36  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.4664455696
+  residual max      = 13.4664455696
+  residual integral = 5.16080234103e-17
+  T min             = -1.06226050526
+  T max             = 1.06226050526
+
+Time = 0.18499999999999919  step = 37  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.4476169252
+  residual max      = 13.4476169252
+  residual integral = -7.3725747729e-18
+  T min             = -1.05676546334
+  T max             = 1.05676546334
+
+Time = 0.18999999999999917  step = 38  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.3748109618
+  residual max      = 13.3748109618
+  residual integral = 3.03576608296e-18
+  T min             = -1.06278988759
+  T max             = 1.06278988759
+
+Time = 0.19499999999999915  step = 39  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.4639047424
+  residual max      = 13.4639047424
+  residual integral = 3.46944695195e-18
+  T min             = -1.06996092819
+  T max             = 1.06996092819
+
+Time = 0.19999999999999912  step = 40  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.5514875974
+  residual max      = 13.5514875974
+  residual integral = -6.93889390391e-18
+  T min             = -1.07286785909
+  T max             = 1.07286785909
+
+Time = 0.20499999999999913  step = 41  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.5850523384
+  residual max      = 13.5850523384
+  residual integral = -5.20417042793e-18
+  T min             = -1.07148397483
+  T max             = 1.07148397483
+
+Time = 0.2099999999999991  step = 42  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.5642737295
+  residual max      = 13.5642737295
+  residual integral = 2.42861286637e-17
+  T min             = -1.06579967737
+  T max             = 1.06579967737
+
+Time = 0.21499999999999908  step = 43  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.489043247
+  residual max      = 13.489043247
+  residual integral = -2.34187669257e-17
+  T min             = -1.0724364962
+  T max             = 1.0724364962
+
+Time = 0.21999999999999906  step = 44  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.5860045542
+  residual max      = 13.5860045542
+  residual integral = 1.08420217249e-17
+  T min             = -1.07953015327
+  T max             = 1.07953015327
+
+Time = 0.22499999999999903  step = 45  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.67257824
+  residual max      = 13.67257824
+  residual integral = 9.10729824888e-18
+  T min             = -1.08232106491
+  T max             = 1.08232106491
+
+Time = 0.22999999999999901  step = 46  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.7046448028
+  residual max      = 13.7046448028
+  residual integral = 6.93889390391e-18
+  T min             = -1.08078285441
+  T max             = 1.08078285441
+
+Time = 0.23499999999999899  step = 47  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.681883287
+  residual max      = 13.681883287
+  residual integral = -2.08166817117e-17
+  T min             = -1.07490640719
+  T max             = 1.07490640719
+
+Time = 0.23999999999999896  step = 48  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.604191407
+  residual max      = 13.604191407
+  residual integral = 5.20417042793e-18
+  T min             = -1.08216595714
+  T max             = 1.08216595714
+
+Time = 0.24499999999999894  step = 49  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.7091520696
+  residual max      = 13.7091520696
+  residual integral = -4.33680868994e-19
+  T min             = -1.08918026911
+  T max             = 1.08918026911
+
+Time = 0.24999999999999892  step = 50  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.7946914956
+  residual max      = 13.7946914956
+  residual integral = 1.30104260698e-18
+  T min             = -1.09185286873
+  T max             = 1.09185286873
+
+Time = 0.25499999999999889  step = 51  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.8252306018
+  residual max      = 13.8252306018
+  residual integral = 1.77809156288e-17
+  T min             = -1.09015771604
+  T max             = 1.09015771604
+
+Time = 0.2599999999999989  step = 52  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.8004528149
+  residual max      = 13.8004528149
+  residual integral = 5.63785129692e-18
+  T min             = -1.08408618926
+  T max             = 1.08408618926
+
+Time = 0.26499999999999885  step = 53  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.7202622069
+  residual max      = 13.7202622069
+  residual integral = -6.07153216592e-18
+  T min             = -1.09197893915
+  T max             = 1.09197893915
+
+Time = 0.26999999999999885  step = 54  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.8333557357
+  residual max      = 13.8333557357
+  residual integral = -6.93889390391e-18
+  T min             = -1.09891191617
+  T max             = 1.09891191617
+
+Time = 0.2749999999999988  step = 55  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.9178354511
+  residual max      = 13.9178354511
+  residual integral = 3.72965547335e-17
+  T min             = -1.10146388002
+  T max             = 1.10146388002
+
+Time = 0.27999999999999881  step = 56  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.9468174278
+  residual max      = 13.9468174278
+  residual integral = 2.51534904017e-17
+  T min             = -1.09960913565
+  T max             = 1.09960913565
+
+Time = 0.28499999999999875  step = 57  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.919989579
+  residual max      = 13.919989579
+  residual integral = -3.46944695195e-18
+  T min             = -1.09333956357
+  T max             = 1.09333956357
+
+Time = 0.28999999999999876  step = 58  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.8372624557
+  residual max      = 13.8372624557
+  residual integral = -2.81892564846e-17
+  T min             = -1.10187611596
+  T max             = 1.10187611596
+
+Time = 0.29499999999999871  step = 59  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.9586240627
+  residual max      = 13.9586240627
+  residual integral = 7.3725747729e-18
+  T min             = -1.10872573952
+  T max             = 1.10872573952
+
+Time = 0.29999999999999871  step = 60  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.0420182517
+  residual max      = 14.0420182517
+  residual integral = -2.60208521397e-18
+  T min             = -1.11115471254
+  T max             = 1.11115471254
+
+Time = 0.30499999999999866  step = 61  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.0694130272
+  residual max      = 14.0694130272
+  residual integral = -1.95156391047e-17
+  T min             = -1.1091376931
+  T max             = 1.1091376931
+
+Time = 0.30999999999999867  step = 62  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.0405008949
+  residual max      = 14.0405008949
+  residual integral = -2.16840434497e-17
+  T min             = -1.10266707361
+  T max             = 1.10266707361
+
+Time = 0.31499999999999861  step = 63  deltaT = 0.005  maxCo = 0.2
+  residual min      = -13.9551990065
+  residual max      = 13.9551990065
+  residual integral = 6.07153216592e-18
+  T min             = -1.11185816634
+  T max             = 1.11185816634
+
+Time = 0.31999999999999862  step = 64  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.0849656239
+  residual max      = 14.0849656239
+  residual integral = 6.93889390391e-18
+  T min             = -1.11862238894
+  T max             = 1.11862238894
+
+Time = 0.32499999999999862  step = 65  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.1672481015
+  residual max      = 14.1672481015
+  residual integral = 2.60208521397e-18
+  T min             = -1.12092598434
+  T max             = 1.12092598434
+
+Time = 0.32999999999999857  step = 66  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.193025201
+  residual max      = 14.193025201
+  residual integral = -2.08166817117e-17
+  T min             = -1.11874397216
+  T max             = 1.11874397216
+
+Time = 0.33499999999999858  step = 67  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.1619941271
+  residual max      = 14.1619941271
+  residual integral = 7.3725747729e-18
+  T min             = -1.11206926641
+  T max             = 1.11206926641
+
+Time = 0.33999999999999853  step = 68  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.0747538897
+  residual max      = 14.0747538897
+  residual integral = 4.77048955894e-17
+  T min             = -1.12192577409
+  T max             = 1.12192577409
+
+Time = 0.34499999999999853  step = 69  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.2123890564
+  residual max      = 14.2123890564
+  residual integral = 1.21430643318e-17
+  T min             = -1.12860251888
+  T max             = 1.12860251888
+
+Time = 0.34999999999999848  step = 70  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.2935332642
+  residual max      = 14.2935332642
+  residual integral = -2.77555756156e-17
+  T min             = -1.13077831784
+  T max             = 1.13077831784
+
+Time = 0.35499999999999848  step = 71  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.3176618047
+  residual max      = 14.3176618047
+  residual integral = 1.51788304148e-17
+  T min             = -1.12842856056
+  T max             = 1.12842856056
+
+Time = 0.35999999999999843  step = 72  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.2844766904
+  residual max      = 14.2844766904
+  residual integral = -2.51534904017e-17
+  T min             = -1.12154669256
+  T max             = 1.12154669256
+
+Time = 0.36499999999999844  step = 73  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.2039156082
+  residual max      = 14.2039156082
+  residual integral = 2.60208521397e-18
+  T min             = -1.1320796281
+  T max             = 1.1320796281
+
+Time = 0.36999999999999839  step = 74  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.3409030614
+  residual max      = 14.3409030614
+  residual integral = -2.94902990916e-17
+  T min             = -1.13866678857
+  T max             = 1.13866678857
+
+Time = 0.37499999999999839  step = 75  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.4208820629
+  residual max      = 14.4208820629
+  residual integral = -7.8062556419e-18
+  T min             = -1.1407123398
+  T max             = 1.1407123398
+
+Time = 0.37999999999999834  step = 76  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.4433307487
+  residual max      = 14.4433307487
+  residual integral = 3.25260651746e-18
+  T min             = -1.13819205003
+  T max             = 1.13819205003
+
+Time = 0.38499999999999834  step = 77  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.4079560493
+  residual max      = 14.4079560493
+  residual integral = 7.3725747729e-18
+  T min             = -1.13128443007
+  T max             = 1.13128443007
+
+Time = 0.38999999999999829  step = 78  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.3341994962
+  residual max      = 14.3341994962
+  residual integral = -1.82145964978e-17
+  T min             = -1.14232042239
+  T max             = 1.14232042239
+
+Time = 0.3949999999999983  step = 79  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.4705164047
+  residual max      = 14.4705164047
+  residual integral = 1.73472347598e-18
+  T min             = -1.14881586197
+  T max             = 1.14881586197
+
+Time = 0.39999999999999825  step = 80  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.5493028808
+  residual max      = 14.5493028808
+  residual integral = 1.73472347598e-18
+  T min             = -1.1507286814
+  T max             = 1.1507286814
+
+Time = 0.40499999999999825  step = 81  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.5700399989
+  residual max      = 14.5700399989
+  residual integral = 1.56125112838e-17
+  T min             = -1.14803503626
+  T max             = 1.14803503626
+
+Time = 0.40999999999999825  step = 82  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.5324397188
+  residual max      = 14.5324397188
+  residual integral = 1.17093834628e-17
+  T min             = -1.14166516085
+  T max             = 1.14166516085
+
+Time = 0.4149999999999982  step = 83  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.465614735
+  residual max      = 14.465614735
+  residual integral = 3.03576608296e-18
+  T min             = -1.15264885611
+  T max             = 1.15264885611
+
+Time = 0.41999999999999821  step = 84  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.6012379171
+  residual max      = 14.6012379171
+  residual integral = -2.16840434497e-17
+  T min             = -1.15905040784
+  T max             = 1.15905040784
+
+Time = 0.42499999999999816  step = 85  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.6788041618
+  residual max      = 14.6788041618
+  residual integral = 7.3725747729e-18
+  T min             = -1.1608279782
+  T max             = 1.1608279782
+
+Time = 0.42999999999999816  step = 86  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.6977975767
+  residual max      = 14.6977975767
+  residual integral = 1.86482773668e-17
+  T min             = -1.15795811898
+  T max             = 1.15795811898
+
+Time = 0.43499999999999811  step = 87  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.6579352645
+  residual max      = 14.6579352645
+  residual integral = 1.82145964978e-17
+  T min             = -1.15213607248
+  T max             = 1.15213607248
+
+Time = 0.43999999999999811  step = 88  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.5981705752
+  residual max      = 14.5981705752
+  residual integral = 1.34441069388e-17
+  T min             = -1.16306563362
+  T max             = 1.16306563362
+
+Time = 0.44499999999999806  step = 89  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.7330764947
+  residual max      = 14.7330764947
+  residual integral = -1.21430643318e-17
+  T min             = -1.16937109978
+  T max             = 1.16937109978
+
+Time = 0.44999999999999807  step = 90  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.8093944102
+  residual max      = 14.8093944102
+  residual integral = -1.73472347598e-18
+  T min             = -1.17101087024
+  T max             = 1.17101087024
+
+Time = 0.45499999999999802  step = 91  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.8266115596
+  residual max      = 14.8266115596
+  residual integral = 5.20417042793e-17
+  T min             = -1.16796190197
+  T max             = 1.16796190197
+
+Time = 0.45999999999999802  step = 92  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.7844503025
+  residual max      = 14.7844503025
+  residual integral = 8.67361737988e-18
+  T min             = -1.16269790271
+  T max             = 1.16269790271
+
+Time = 0.46499999999999797  step = 93  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.7318763381
+  residual max      = 14.7318763381
+  residual integral = 1.90819582357e-17
+  T min             = -1.17357146449
+  T max             = 1.17357146449
+
+Time = 0.46999999999999797  step = 94  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.8660410994
+  residual max      = 14.8660410994
+  residual integral = 2.16840434497e-18
+  T min             = -1.17977861623
+  T max             = 1.17977861623
+
+Time = 0.47499999999999792  step = 95  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.9410821919
+  residual max      = 14.9410821919
+  residual integral = -8.67361737988e-18
+  T min             = -1.181278002
+  T max             = 1.181278002
+
+Time = 0.47999999999999793  step = 96  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.9564900811
+  residual max      = 14.9564900811
+  residual integral = 1.25767452008e-17
+  T min             = -1.17804699306
+  T max             = 1.17804699306
+
+Time = 0.48499999999999793  step = 97  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.9119925007
+  residual max      = 14.9119925007
+  residual integral = -3.85975973405e-17
+  T min             = -1.1733513949
+  T max             = 1.1733513949
+
+Time = 0.48999999999999788  step = 98  deltaT = 0.005  maxCo = 0.2
+  residual min      = -14.8667414152
+  residual max      = 14.8667414152
+  residual integral = -2.25514051877e-17
+  T min             = -1.18416706353
+  T max             = 1.18416706353
+
+Time = 0.49499999999999789  step = 99  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.0001407595
+  residual max      = 15.0001407595
+  residual integral = 3.03576608296e-18
+  T min             = -1.19027364052
+  T max             = 1.19027364052
+
+Time = 0.49999999999999784  step = 100  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.073876134
+  residual max      = 15.073876134
+  residual integral = -2.38524477947e-17
+  T min             = -1.19163002246
+  T max             = 1.19163002246
+
+Time = 0.50499999999999778  step = 101  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.0874413316
+  residual max      = 15.0874413316
+  residual integral = 2.60208521397e-17
+  T min             = -1.18821400417
+  T max             = 1.18821400417
+
+Time = 0.50999999999999779  step = 102  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.0405695778
+  residual max      = 15.0405695778
+  residual integral = -9.54097911787e-18
+  T min             = -1.18409729804
+  T max             = 1.18409729804
+
+Time = 0.51499999999999779  step = 103  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.0027752695
+  residual max      = 15.0027752695
+  residual integral = 8.67361737988e-18
+  T min             = -1.19485315087
+  T max             = 1.19485315087
+
+Time = 0.5199999999999978  step = 104  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.1353845699
+  residual max      = 15.1353845699
+  residual integral = -2.08166817117e-17
+  T min             = -1.2008568609
+  T max             = 1.2008568609
+
+Time = 0.52499999999999769  step = 105  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.2077849258
+  residual max      = 15.2077849258
+  residual integral = -1.21430643318e-17
+  T min             = -1.20206758515
+  T max             = 1.20206758515
+
+Time = 0.5299999999999977  step = 106  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.2194735583
+  residual max      = 15.2194735583
+  residual integral = -1.30104260698e-18
+  T min             = -1.19846355132
+  T max             = 1.19846355132
+
+Time = 0.5349999999999977  step = 107  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.1701893045
+  residual max      = 15.1701893045
+  residual integral = 6.07153216592e-18
+  T min             = -1.19493636678
+  T max             = 1.19493636678
+
+Time = 0.5399999999999977  step = 108  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.1399874355
+  residual max      = 15.1399874355
+  residual integral = 8.67361737988e-18
+  T min             = -1.20563045192
+  T max             = 1.20563045192
+
+Time = 0.5449999999999976  step = 109  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.2717816927
+  residual max      = 15.2717816927
+  residual integral = -1.21430643318e-17
+  T min             = -1.21152897055
+  T max             = 1.21152897055
+
+Time = 0.5499999999999976  step = 110  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.3428173187
+  residual max      = 15.3428173187
+  residual integral = 1.04083408559e-17
+  T min             = -1.21259134811
+  T max             = 1.21259134811
+
+Time = 0.55499999999999761  step = 111  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.3525950657
+  residual max      = 15.3525950657
+  residual integral = -2.08166817117e-17
+  T min             = -1.20879625468
+  T max             = 1.20879625468
+
+Time = 0.55999999999999761  step = 112  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.3008595035
+  residual max      = 15.3008595035
+  residual integral = 1.30104260698e-18
+  T min             = -1.20586936152
+  T max             = 1.20586936152
+
+Time = 0.56499999999999762  step = 113  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.2783875197
+  residual max      = 15.2783875197
+  residual integral = -2.99239799606e-17
+  T min             = -1.2164996975
+  T max             = 1.2164996975
+
+Time = 0.56999999999999751  step = 114  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.4093413574
+  residual max      = 15.4093413574
+  residual integral = -8.67361737988e-18
+  T min             = -1.22229066765
+  T max             = 1.22229066765
+
+Time = 0.57499999999999751  step = 115  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.4789821271
+  residual max      = 15.4789821271
+  residual integral = 8.67361737988e-19
+  T min             = -1.22320197397
+  T max             = 1.22320197397
+
+Time = 0.57999999999999752  step = 116  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.486814216
+  residual max      = 15.486814216
+  residual integral = -2.16840434497e-17
+  T min             = -1.21921273855
+  T max             = 1.21921273855
+
+Time = 0.58499999999999752  step = 117  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.4325880495
+  residual max      = 15.4325880495
+  residual integral = 2.60208521397e-18
+  T min             = -1.21689704838
+  T max             = 1.21689704838
+
+Time = 0.58999999999999742  step = 118  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.4179852013
+  residual max      = 15.4179852013
+  residual integral = -3.36102673471e-18
+  T min             = -1.22746162377
+  T max             = 1.22746162377
+
+Time = 0.59499999999999742  step = 119  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.5480728615
+  residual max      = 15.5480728615
+  residual integral = -8.67361737988e-19
+  T min             = -1.23314265537
+  T max             = 1.23314265537
+
+Time = 0.59999999999999742  step = 120  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.6162882284
+  residual max      = 15.6162882284
+  residual integral = 4.33680868994e-19
+  T min             = -1.23390012997
+  T max             = 1.23390012997
+
+Time = 0.60499999999999743  step = 121  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.6221394292
+  residual max      = 15.6221394292
+  residual integral = 4.77048955894e-17
+  T min             = -1.22971363141
+  T max             = 1.22971363141
+
+Time = 0.60999999999999732  step = 122  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.5653828701
+  residual max      = 15.5653828701
+  residual integral = 2.60208521397e-18
+  T min             = -1.2280201993
+  T max             = 1.2280201993
+
+Time = 0.61499999999999733  step = 123  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.5587902326
+  residual max      = 15.5587902326
+  residual integral = -4.33680868994e-19
+  T min             = -1.23851697236
+  T max             = 1.23851697236
+
+Time = 0.61999999999999733  step = 124  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.6879855712
+  residual max      = 15.6879855712
+  residual integral = 4.33680868994e-18
+  T min             = -1.24408564193
+  T max             = 1.24408564193
+
+Time = 0.62499999999999734  step = 125  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.7547445633
+  residual max      = 15.7547445633
+  residual integral = -1.90819582357e-17
+  T min             = -1.24468648796
+  T max             = 1.24468648796
+
+Time = 0.62999999999999723  step = 126  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.7585791836
+  residual max      = 15.7585791836
+  residual integral = 8.67361737988e-18
+  T min             = -1.24029956596
+  T max             = 1.24029956596
+
+Time = 0.63499999999999723  step = 127  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.6992519453
+  residual max      = 15.6992519453
+  residual integral = -1.82145964978e-17
+  T min             = -1.23923959205
+  T max             = 1.23923959205
+
+Time = 0.63999999999999724  step = 128  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.7008124395
+  residual max      = 15.7008124395
+  residual integral = -1.30104260698e-17
+  T min             = -1.24966649034
+  T max             = 1.24966649034
+
+Time = 0.64499999999999724  step = 129  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.8290889213
+  residual max      = 15.8290889213
+  residual integral = -1.64798730218e-17
+  T min             = -1.2551203406
+  T max             = 1.2551203406
+
+Time = 0.64999999999999725  step = 130  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.8943601365
+  residual max      = 15.8943601365
+  residual integral = -6.07153216592e-18
+  T min             = -1.25556172445
+  T max             = 1.25556172445
+
+Time = 0.65499999999999714  step = 131  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.8961420162
+  residual max      = 15.8961420162
+  residual integral = 7.8062556419e-18
+  T min             = -1.25097117909
+  T max             = 1.25097117909
+
+Time = 0.65999999999999714  step = 132  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.8342033085
+  residual max      = 15.8342033085
+  residual integral = 5.20417042793e-18
+  T min             = -1.25055601025
+  T max             = 1.25055601025
+
+Time = 0.66499999999999715  step = 133  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.844061722
+  residual max      = 15.844061722
+  residual integral = -2.51534904017e-17
+  T min             = -1.26091093028
+  T max             = 1.26091093028
+
+Time = 0.66999999999999715  step = 134  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.9713924161
+  residual max      = 15.9713924161
+  residual integral = 3.46944695195e-18
+  T min             = -1.26624746978
+  T max             = 1.26624746978
+
+Time = 0.67499999999999705  step = 135  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.0351440172
+  residual max      = 16.0351440172
+  residual integral = -1.51788304148e-17
+  T min             = -1.26652652064
+  T max             = 1.26652652064
+
+Time = 0.67999999999999705  step = 136  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.0348365229
+  residual max      = 16.0348365229
+  residual integral = 6.07153216592e-18
+  T min             = -1.26172911193
+  T max             = 1.26172911193
+
+Time = 0.68499999999999706  step = 137  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.9702450462
+  residual max      = 15.9702450462
+  residual integral = -2.60208521397e-18
+  T min             = -1.26197024346
+  T max             = 1.26197024346
+
+Time = 0.68999999999999706  step = 138  deltaT = 0.005  maxCo = 0.2
+  residual min      = -15.9885480544
+  residual max      = 15.9885480544
+  residual integral = 5.63785129692e-18
+  T min             = -1.27225105029
+  T max             = 1.27225105029
+
+Time = 0.69499999999999695  step = 139  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.1149056295
+  residual max      = 16.1149056295
+  residual integral = -1.51788304148e-17
+  T min             = -1.27746775297
+  T max             = 1.27746775297
+
+Time = 0.69999999999999696  step = 140  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.1771053389
+  residual max      = 16.1771053389
+  residual integral = -3.59955121265e-17
+  T min             = -1.27758156242
+  T max             = 1.27758156242
+
+Time = 0.70499999999999696  step = 141  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.1746713587
+  residual max      = 16.1746713587
+  residual integral = -1.38777878078e-17
+  T min             = -1.2725740099
+  T max             = 1.2725740099
+
+Time = 0.70999999999999697  step = 142  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.1073852988
+  residual max      = 16.1073852988
+  residual integral = 4.33680868994e-18
+  T min             = -1.27348308718
+  T max             = 1.27348308718
+
+Time = 0.71499999999999686  step = 143  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.1342814866
+  residual max      = 16.1342814866
+  residual integral = 9.54097911787e-18
+  T min             = -1.28368761403
+  T max             = 1.28368761403
+
+Time = 0.71999999999999686  step = 144  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.2596382057
+  residual max      = 16.2596382057
+  residual integral = 6.93889390391e-18
+  T min             = -1.28878191885
+  T max             = 1.28878191885
+
+Time = 0.72499999999999687  step = 145  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.3202533003
+  residual max      = 16.3202533003
+  residual integral = 1.21430643318e-17
+  T min             = -1.28872754045
+  T max             = 1.28872754045
+
+Time = 0.72999999999999687  step = 146  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.3156552386
+  residual max      = 16.3156552386
+  residual integral = -1.64798730218e-17
+  T min             = -1.28350652268
+  T max             = 1.28350652268
+
+Time = 0.73499999999999688  step = 147  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.2456322605
+  residual max      = 16.2456322605
+  residual integral = -1.30104260698e-17
+  T min             = -1.28509534289
+  T max             = 1.28509534289
+
+Time = 0.73999999999999677  step = 148  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.2812721435
+  residual max      = 16.2812721435
+  residual integral = -1.47451495458e-17
+  T min             = -1.29522139081
+  T max             = 1.29522139081
+
+Time = 0.74499999999999678  step = 149  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.4055998597
+  residual max      = 16.4055998597
+  residual integral = 1.47451495458e-17
+  T min             = -1.30019070131
+  T max             = 1.30019070131
+
+Time = 0.74999999999999678  step = 150  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.4645971657
+  residual max      = 16.4645971657
+  residual integral = 2.60208521397e-18
+  T min             = -1.2999651501
+  T max             = 1.2999651501
+
+Time = 0.75499999999999678  step = 151  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.4577969371
+  residual max      = 16.4577969371
+  residual integral = 2.16840434497e-17
+  T min             = -1.29452730428
+  T max             = 1.29452730428
+
+Time = 0.75999999999999668  step = 152  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.3849941796
+  residual max      = 16.3849941796
+  residual integral = 3.03576608296e-18
+  T min             = -1.29680781812
+  T max             = 1.29680781812
+
+Time = 0.76499999999999668  step = 153  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.4295302266
+  residual max      = 16.4295302266
+  residual integral = -1.56125112838e-17
+  T min             = -1.30685315552
+  T max             = 1.30685315552
+
+Time = 0.76999999999999669  step = 154  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.5528003774
+  residual max      = 16.5528003774
+  residual integral = -5.63785129692e-18
+  T min             = -1.31169483943
+  T max             = 1.31169483943
+
+Time = 0.77499999999999669  step = 155  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.6101462651
+  residual max      = 16.6101462651
+  residual integral = -2.60208521397e-18
+  T min             = -1.31129509157
+  T max             = 1.31129509157
+
+Time = 0.77999999999999658  step = 156  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.6011052895
+  residual max      = 16.6011052895
+  residual integral = -2.25514051877e-17
+  T min             = -1.30563701302
+  T max             = 1.30563701302
+
+Time = 0.78499999999999659  step = 157  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.5254793591
+  residual max      = 16.5254793591
+  residual integral = -1.51788304148e-17
+  T min             = -1.30862132646
+  T max             = 1.30862132646
+
+Time = 0.78999999999999659  step = 158  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.5790660136
+  residual max      = 16.5790660136
+  residual integral = -1.04083408559e-17
+  T min             = -1.31858368879
+  T max             = 1.31858368879
+
+Time = 0.7949999999999966  step = 159  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.7012496163
+  residual max      = 16.7012496163
+  residual integral = -3.29597460436e-17
+  T min             = -1.32329507757
+  T max             = 1.32329507757
+
+Time = 0.79999999999999649  step = 160  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.7569099947
+  residual max      = 16.7569099947
+  residual integral = 6.07153216592e-18
+  T min             = -1.32271806987
+  T max             = 1.32271806987
+
+Time = 0.8049999999999965  step = 161  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.7455891913
+  residual max      = 16.7455891913
+  residual integral = 2.60208521397e-18
+  T min             = -1.31683631159
+  T max             = 1.31683631159
+
+Time = 0.8099999999999965  step = 162  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.6670961566
+  residual max      = 16.6670961566
+  residual integral = -4.33680868994e-18
+  T min             = -1.32053668763
+  T max             = 1.32053668763
+
+Time = 0.81499999999999651  step = 163  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.7298898597
+  residual max      = 16.7298898597
+  residual integral = -6.07153216592e-18
+  T min             = -1.33041377691
+  T max             = 1.33041377691
+
+Time = 0.81999999999999651  step = 164  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.8509575063
+  residual max      = 16.8509575063
+  residual integral = 5.20417042793e-18
+  T min             = -1.33499216538
+  T max             = 1.33499216538
+
+Time = 0.8249999999999964  step = 165  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.9048978175
+  residual max      = 16.9048978175
+  residual integral = -2.77555756156e-17
+  T min             = -1.33423479484
+  T max             = 1.33423479484
+
+Time = 0.82999999999999641  step = 166  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.8912575993
+  residual max      = 16.8912575993
+  residual integral = -2.51534904017e-17
+  T min             = -1.32812586705
+  T max             = 1.32812586705
+
+Time = 0.83499999999999641  step = 167  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.8098529848
+  residual max      = 16.8098529848
+  residual integral = -4.42354486374e-17
+  T min             = -1.33255472748
+  T max             = 1.33255472748
+
+Time = 0.83999999999999642  step = 168  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.8820121973
+  residual max      = 16.8820121973
+  residual integral = 1.34441069388e-17
+  T min             = -1.34234421195
+  T max             = 1.34234421195
+
+Time = 0.84499999999999631  step = 169  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.0019340492
+  residual max      = 17.0019340492
+  residual integral = -1.99493199737e-17
+  T min             = -1.34678685784
+  T max             = 1.34678685784
+
+Time = 0.84999999999999631  step = 170  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.0541192635
+  residual max      = 17.0541192635
+  residual integral = -2.25514051877e-17
+  T min             = -1.3458459812
+  T max             = 1.3458459812
+
+Time = 0.85499999999999632  step = 171  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.0381195314
+  residual max      = 17.0381195314
+  residual integral = 3.55618312575e-17
+  T min             = -1.33950635087
+  T max             = 1.33950635087
+
+Time = 0.85999999999999632  step = 172  deltaT = 0.005  maxCo = 0.2
+  residual min      = -16.9537583117
+  residual max      = 16.9537583117
+  residual integral = -1.56125112838e-17
+  T min             = -1.34467627808
+  T max             = 1.34467627808
+
+Time = 0.86499999999999622  step = 173  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.0354435373
+  residual max      = 17.0354435373
+  residual integral = -6.93889390391e-18
+  T min             = -1.35437579177
+  T max             = 1.35437579177
+
+Time = 0.86999999999999622  step = 174  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.1541893203
+  residual max      = 17.1541893203
+  residual integral = 3.46944695195e-18
+  T min             = -1.35867991527
+  T max             = 1.35867991527
+
+Time = 0.87499999999999623  step = 175  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.2045839302
+  residual max      = 17.2045839302
+  residual integral = -6.93889390391e-18
+  T min             = -1.35755234856
+  T max             = 1.35755234856
+
+Time = 0.87999999999999623  step = 176  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.1861840673
+  residual max      = 17.1861840673
+  residual integral = -2.16840434497e-17
+  T min             = -1.35097843892
+  T max             = 1.35097843892
+
+Time = 0.88499999999999623  step = 177  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.0988206612
+  residual max      = 17.0988206612
+  residual integral = -4.33680868994e-18
+  T min             = -1.35690217771
+  T max             = 1.35690217771
+
+Time = 0.88999999999999613  step = 178  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.1901944691
+  residual max      = 17.1901944691
+  residual integral = 1.99493199737e-17
+  T min             = -1.36650932004
+  T max             = 1.36650932004
+
+Time = 0.89499999999999613  step = 179  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.307733468
+  residual max      = 17.307733468
+  residual integral = 7.8062556419e-18
+  T min             = -1.37067210337
+  T max             = 1.37067210337
+
+Time = 0.89999999999999614  step = 180  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.3563014828
+  residual max      = 17.3563014828
+  residual integral = 2.68882138776e-17
+  T min             = -1.36935462148
+  T max             = 1.36935462148
+
+Time = 0.90499999999999614  step = 181  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.3354603488
+  residual max      = 17.3354603488
+  residual integral = -1.21430643318e-17
+  T min             = -1.36254281152
+  T max             = 1.36254281152
+
+Time = 0.90999999999999603  step = 182  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.2450486126
+  residual max      = 17.2450486126
+  residual integral = -2.60208521397e-18
+  T min             = -1.36923327096
+  T max             = 1.36923327096
+
+Time = 0.91499999999999604  step = 183  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.3462756613
+  residual max      = 17.3462756613
+  residual integral = -3.03576608296e-17
+  T min             = -1.3787456063
+  T max             = 1.3787456063
+
+Time = 0.91999999999999604  step = 184  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.4625767146
+  residual max      = 17.4625767146
+  residual integral = 1.21430643318e-17
+  T min             = -1.38276419329
+  T max             = 1.38276419329
+
+Time = 0.92499999999999605  step = 185  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.5092816549
+  residual max      = 17.5092816549
+  residual integral = -8.67361737988e-18
+  T min             = -1.38125352945
+  T max             = 1.38125352945
+
+Time = 0.92999999999999594  step = 186  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.4859575798
+  residual max      = 17.4859575798
+  residual integral = 1.38777878078e-17
+  T min             = -1.37420015348
+  T max             = 1.37420015348
+
+Time = 0.93499999999999595  step = 187  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.3924508018
+  residual max      = 17.3924508018
+  residual integral = 9.97465998687e-18
+  T min             = -1.38167040872
+  T max             = 1.38167040872
+
+Time = 0.93999999999999595  step = 188  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.5036978623
+  residual max      = 17.5036978623
+  residual integral = 1.73472347598e-17
+  T min             = -1.39108546598
+  T max             = 1.39108546598
+
+Time = 0.94499999999999595  step = 189  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.6187293571
+  residual max      = 17.6187293571
+  residual integral = 5.20417042793e-18
+  T min             = -1.3949569616
+  T max             = 1.3949569616
+
+Time = 0.94999999999999585  step = 190  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.6635342489
+  residual max      = 17.6635342489
+  residual integral = -7.8062556419e-18
+  T min             = -1.39324980695
+  T max             = 1.39324980695
+
+Time = 0.95499999999999585  step = 191  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.6376850272
+  residual max      = 17.6376850272
+  residual integral = 2.77555756156e-17
+  T min             = -1.38595115408
+  T max             = 1.38595115408
+
+Time = 0.95999999999999586  step = 192  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.541035921
+  residual max      = 17.541035921
+  residual integral = -1.12757025938e-17
+  T min             = -1.39421444824
+  T max             = 1.39421444824
+
+Time = 0.96499999999999586  step = 193  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.6624719006
+  residual max      = 17.6624719006
+  residual integral = 1.30104260698e-17
+  T min             = -1.40352972045
+  T max             = 1.40352972045
+
+Time = 0.96999999999999587  step = 194  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.7762017668
+  residual max      = 17.7762017668
+  residual integral = 1.64798730218e-17
+  T min             = -1.40725119037
+  T max             = 1.40725119037
+
+Time = 0.97499999999999576  step = 195  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.8190691362
+  residual max      = 17.8190691362
+  residual integral = -8.67361737988e-18
+  T min             = -1.40534419347
+  T max             = 1.40534419347
+
+Time = 0.97999999999999576  step = 196  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.7906520208
+  residual max      = 17.7906520208
+  residual integral = 1.82145964978e-17
+  T min             = -1.39779650711
+  T max             = 1.39779650711
+
+Time = 0.98499999999999577  step = 197  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.6908127193
+  residual max      = 17.6908127193
+  residual integral = 1.99493199737e-17
+  T min             = -1.40686625319
+  T max             = 1.40686625319
+
+Time = 0.98999999999999577  step = 198  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.8226086855
+  residual max      = 17.8226086855
+  residual integral = -4.42354486374e-17
+  T min             = -1.41607919706
+  T max             = 1.41607919706
+
+Time = 0.99499999999999567  step = 199  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.9350043907
+  residual max      = 17.9350043907
+  residual integral = 3.81639164715e-17
+  T min             = -1.41964766718
+  T max             = 1.41964766718
+
+Time = 0.99999999999999567  step = 200  deltaT = 0.005  maxCo = 0.2
+  residual min      = -17.9758962575
+  residual max      = 17.9758962575
+  residual integral = 4.33680868994e-18
+  T min             = -1.41753743353
+  T max             = 1.41753743353
+
+Stage 5 time loop completed.
+  final time = 1
+  time steps = 200
+  final field written at = 0.99999999999999567
+  T min      = -1.41753743353
+  T max      = 1.41753743353
+End
+

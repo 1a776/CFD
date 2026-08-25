@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from paths import CASES_DIR, CONFIG_DIR, PROJECT_ROOT
+from paths import CONFIG_DIR, PROJECT_ROOT, solver_case_dir, solver_cases_dir
 
 
 DEFAULT_RESOLUTIONS = (10, 20, 40, 80)
@@ -21,6 +21,7 @@ class CaseConfig:
     """Small typed view of one JSON case configuration."""
 
     path: Path
+    solver_family: str
     case_name: str
     template_case_name: str
     description: str
@@ -48,14 +49,18 @@ class CaseConfig:
 
     @property
     def case_root(self) -> Path:
-        return CASES_DIR / self.case_name
+        return solver_cases_dir(self.solver_family) / self.case_name
 
     @property
     def template_case(self) -> Path:
-        return CASES_DIR / self.template_case_name / f"N{self.template_resolution}"
+        return solver_case_dir(
+            self.solver_family,
+            self.template_case_name,
+            self.template_resolution,
+        )
 
     def case_dir(self, resolution: int) -> Path:
-        return self.case_root / f"N{resolution}"
+        return solver_case_dir(self.solver_family, self.case_name, resolution)
 
     def require_implemented(self) -> None:
         if not self.implemented:
@@ -122,6 +127,7 @@ def load_config(value: str | Path) -> CaseConfig:
 
     return CaseConfig(
         path=path,
+        solver_family=str(data.get("solverFamily", "01_advection_equation")),
         case_name=str(data["caseName"]),
         template_case_name=str(data.get("templateCaseName", data["caseName"])),
         description=str(data.get("description", "")),
