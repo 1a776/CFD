@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import json
 from pathlib import Path
+from typing import Any
 
 
 _SCALAR_FIELD_PATTERN = re.compile(
@@ -57,17 +58,27 @@ def read_vector_field(path: Path) -> list[tuple[float, float, float]]:
     return values
 
 
+def _boundary_entry(patch: str, spec: str | dict[str, Any]) -> str:
+    """Format one OpenFOAM boundaryField entry."""
+    if isinstance(spec, dict):
+        lines = [f"        {key} {value};" for key, value in spec.items()]
+        body = "\n".join(lines)
+    else:
+        body = f"        type {spec};"
+    return f"    {patch}\n    {{\n{body}\n    }}"
+
+
 def write_scalar_field(
     path: Path,
     values: list[float],
-    boundary_types: dict[str, str],
+    boundary_types: dict[str, str | dict[str, Any]],
     object_name: str = "T",
     location: str = "0",
 ) -> Path:
     """Write a nonuniform OpenFOAM volScalarField."""
     body = "\n".join(f"    {value:.16e}" for value in values)
     boundary_body = "\n".join(
-        f"    {patch}\n    {{\n        type {patch_type};\n    }}"
+        _boundary_entry(patch, patch_type)
         for patch, patch_type in boundary_types.items()
     )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -88,6 +99,54 @@ FoamFile
 dimensions      [0 0 0 0 0 0 0];
 
 internalField   nonuniform List<scalar>
+{len(values)}
+(
+{body}
+);
+
+boundaryField
+{{
+{boundary_body}
+}}
+""",
+        encoding="utf-8",
+    )
+    return path
+
+
+def write_vector_field(
+    path: Path,
+    values: list[tuple[float, float, float]],
+    boundary_types: dict[str, str | dict[str, Any]],
+    object_name: str = "U",
+    location: str = "0",
+) -> Path:
+    """Write a nonuniform OpenFOAM volVectorField."""
+    body = "\n".join(
+        f"    ({x:.16e} {y:.16e} {z:.16e})" for x, y, z in values
+    )
+    boundary_body = "\n".join(
+        _boundary_entry(patch, patch_type)
+        for patch, patch_type in boundary_types.items()
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O peration     | M anipulation
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       volVectorField;
+    location    "{location}";
+    object      {object_name};
+}}
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   nonuniform List<vector>
 {len(values)}
 (
 {body}
@@ -155,4 +214,5 @@ __all__ = [
     "patch_uniform_vector_field",
     "read_tri_geometry_metadata",
     "write_scalar_field",
+    "write_vector_field",
 ]

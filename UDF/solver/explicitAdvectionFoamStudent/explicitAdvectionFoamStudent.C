@@ -507,13 +507,36 @@ int main(int argc, char *argv[])
             << endl;
 
         // AUTO_WRITE on T and writeInterval in controlDict decide whether
-        // this time level is written to disk.
+        // this intermediate time level is written to disk.
         runTime.write();
+    }
+
+    /*
+     * The regular runTime.write() call follows writeControl/writeInterval.
+     * Therefore the last, shortened time step may reach endTime without
+     * creating an output directory at that exact time.
+     *
+     * Force one final write after the loop:
+     *
+     *     t_final = endTime
+     *
+     * This is important for verification cases whose requested output time
+     * is a mathematical value such as t = 2*pi.
+     */
+    const bool finalWriteOK = runTime.writeNow();
+
+    if (!finalWriteOK)
+    {
+        FatalErrorInFunction
+            << "Failed to write the final field at time "
+            << runTime.name()
+            << exit(FatalError);
     }
 
     Info<< "Stage 5 time loop completed." << nl
         << "  final time = " << runTime.value() << nl
         << "  time steps = " << step << nl
+        << "  final field written at = " << runTime.name() << nl
         << "  T min      = " << min(T).value() << nl
         << "  T max      = " << max(T).value() << nl
         << "End" << nl

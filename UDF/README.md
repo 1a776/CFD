@@ -288,6 +288,18 @@ No time loop has been implemented yet.
 
 需要你控制终止时间、设置时间步、修正边界、输出字段和日志。
 
+时间循环中的普通 `runTime.write()` 仍然遵守 `writeControl` 和 `writeInterval`。
+因此循环结束后，求解器会额外调用：
+
+```cpp
+const bool finalWriteOK = runTime.writeNow();
+```
+
+这一步强制写出终止时间的最终场，避免最后一个缩短时间步没有恰好落在
+`writeInterval` 上时，后处理只能读取上一个输出目录。案例脚本也使用高精度格式
+写入 `controlDict/endTime`，并提高 `timePrecision`，因此像旋转案例的
+$t=2\pi$ 不会在终止时间或时间目录名中被提前截断。
+
 ### Stage 6：守恒和误差检查
 
 最后加入体积分、归一化质量误差和正弦波 L1 误差。

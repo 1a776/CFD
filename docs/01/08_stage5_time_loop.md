@@ -175,6 +175,34 @@ writeInterval   10;
 `T` 的 `IOobject` 使用了 `AUTO_WRITE`，所以 `runTime.write()` 会把它写出。
 速度场 `U` 是 `NO_WRITE`，不会被重复输出。
 
+### 2.8 为什么循环结束后还要强制写一次
+
+`runTime.write()` 服从 `writeControl` 和 `writeInterval`。因此最后一个时间步虽然
+已经把求解器推进到
+
+$$
+t_{\mathrm{end}},
+$$
+
+但如果这个时间步不是第 `writeInterval` 个步，最后场可能不会自动生成对应的时间目录。
+这会导致后处理读取到上一个写出时刻，而不是题目要求的最终时刻。
+
+因此时间循环结束后，学生版求解器额外调用：
+
+```cpp
+const bool finalWriteOK = runTime.writeNow();
+```
+
+它强制把当前时间层的 `T` 写出。对于刚体旋转案例，当前时间层就是：
+
+$$
+t_{\mathrm{end}}=2\pi.
+$$
+
+同时，案例生成脚本使用高精度把 JSON 中的 `endTime` 写入 `controlDict`，并将
+`timePrecision` 提高到 17，避免把
+$2\pi=6.283185307179586\ldots$ 截断为 `6.28319` 或在时间目录名中丢失有效数字。
+
 ## 3. 为什么 `phi` 在循环外，而 `residual` 在循环内
 
 当前代码的结构是：

@@ -135,6 +135,35 @@ def write_field_data(
                 )
 
 
+def write_rotation_field_data(
+    initial: np.ndarray,
+    numerical: np.ndarray,
+    data_output: Path,
+) -> None:
+    """Write structured solid-rotation final field data."""
+    ny, nx = numerical.shape
+    with data_output.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["i", "j", "x", "y", "initial", "numerical", "change", "absChange"])
+        for j in range(ny):
+            y = (j + 0.5) / ny
+            for i in range(nx):
+                x = (i + 0.5) / nx
+                change = float(numerical[j, i] - initial[j, i])
+                writer.writerow(
+                    [
+                        i,
+                        j,
+                        f"{x:.16e}",
+                        f"{y:.16e}",
+                        f"{initial[j, i]:.16e}",
+                        f"{numerical[j, i]:.16e}",
+                        f"{change:.16e}",
+                        f"{abs(change):.16e}",
+                    ]
+                )
+
+
 def write_tri_field_data(
     centres: list[tuple[float, float, float]],
     volumes: list[float],
@@ -266,6 +295,70 @@ def plot_field_comparison(
         fig.colorbar(image, ax=axis, shrink=0.86)
 
     fig.suptitle("Periodic linear-advection field comparison")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_rotation_field_comparison(
+    initial: np.ndarray,
+    numerical: np.ndarray,
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot initial, final and cycle-change fields for solid rotation."""
+    change = numerical - initial
+    maximum = max(float(np.max(initial)), float(np.max(numerical)), 1.0e-16)
+    change_maximum = max(float(np.max(np.abs(change))), 1.0e-16)
+    ny, nx = numerical.shape
+    x_edges = np.linspace(0.0, 1.0, nx + 1)
+    y_edges = np.linspace(0.0, 1.0, ny + 1)
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.0, 4.2), constrained_layout=True)
+    panels = [
+        (axes[0], initial, "Initial profile", 0.0, maximum, "viridis"),
+        (axes[1], numerical, f"Final profile, t={final_time:g}", 0.0, maximum, "viridis"),
+        (axes[2], change, "Final minus initial", -change_maximum, change_maximum, "coolwarm"),
+    ]
+    for axis, values, title, lower, upper, cmap in panels:
+        image = axis.pcolormesh(
+            x_edges,
+            y_edges,
+            values,
+            shading="auto",
+            cmap=cmap,
+            vmin=lower,
+            vmax=upper,
+        )
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(title)
+        fig.colorbar(image, ax=axis, shrink=0.82)
+    fig.suptitle("Solid-rotation advection profile")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_rotation_final_contour(
+    numerical: np.ndarray,
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot the final contour requested by the solid-rotation benchmark."""
+    ny, nx = numerical.shape
+    x = (np.arange(nx) + 0.5) / nx
+    y = (np.arange(ny) + 0.5) / ny
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    fig, axis = plt.subplots(figsize=(6.0, 5.4), constrained_layout=True)
+    levels = np.linspace(0.05, max(float(np.max(numerical)), 0.05), 16)
+    filled = axis.contourf(x_grid, y_grid, numerical, levels=levels, cmap="viridis")
+    axis.contour(x_grid, y_grid, numerical, levels=levels, colors="black", linewidths=0.35, alpha=0.55)
+    axis.set_aspect("equal")
+    axis.set_xlabel("x")
+    axis.set_ylabel("y")
+    axis.set_title(f"Solid rotation final contours, t={final_time:g}")
+    fig.colorbar(filled, ax=axis, shrink=0.86)
     fig.savefig(output, dpi=220)
     plt.close(fig)
 
@@ -495,9 +588,20 @@ def _read_mesh_type(case: Path) -> str:
     return str(metadata.get("meshType", "quad"))
 
 
+def _read_problem(case: Path) -> str:
+    metadata_path = case / "metadata.json"
+    if not metadata_path.exists():
+        return "sine_wave_advection"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    return str(metadata.get("problem", "sine_wave_advection"))
+
+
 def _postprocess_quad_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
+    if _read_problem(case) == "solid_rotation_advection":
+        return _postprocess_quad_solid_rotation_case(case, output_root, target_co)
+
     case = case.resolve()
     velocity = _case_velocity(case)
     nx, ny = mesh_resolution(case)
@@ -595,6 +699,98 @@ def _postprocess_quad_case(
     print(f"normalizedL1={l1:.16e}")
     print(f"normalizedL2={l2:.16e}")
     print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_quad_solid_rotation_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the structured solid-rotation benchmark."""
+    case = case.resolve()
+    nx, ny = mesh_resolution(case)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / "T")
+    numerical_values = read_scalar_field(final_dir / "T")
+    if len(initial_values) != nx * ny or len(numerical_values) != nx * ny:
+        raise RuntimeError(f"Field size does not match mesh in {case}")
+
+    initial = np.asarray(initial_values, dtype=float).reshape(ny, nx)
+    numerical = np.asarray(numerical_values, dtype=float).reshape(ny, nx)
+    records = parse_solver_log(case / "log.explicitAdvectionFoamStudent")
+    cell_volume = THICKNESS / (nx * ny)
+    initial_mass = float(np.sum(initial) * cell_volume)
+    final_mass = float(np.sum(numerical) * cell_volume)
+    mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
+    cycle_l1 = (
+        float(np.sum(np.abs(numerical - initial)) * cell_volume) / mass_scale
+        if mass_scale
+        else 0.0
+    )
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+
+    data_dir = output_root / "data" / "cases" / case.parent.name / case.name
+    figure_dir = output_root / "figures" / "cases" / case.parent.name / case.name
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_rotation_field_data(initial, numerical, data_dir / "field_data.csv")
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "caseName": case.parent.name,
+        "mesh": "quad",
+        "problem": "solid_rotation_advection",
+        "resolution": nx,
+        "nominalH": 1.0 / nx,
+        "nCells": nx * ny,
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "cycleL1AgainstInitial": cycle_l1,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "minInitial": float(initial.min()),
+        "maxInitial": float(initial.max()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_rotation_field_comparison(
+        initial,
+        numerical,
+        figure_dir / "field_comparison.png",
+        final_time,
+    )
+    plot_rotation_final_contour(
+        numerical,
+        figure_dir / "contour_final.png",
+        final_time,
+    )
+    plot_cfl_history(records, figure_dir / "cfl_history.png", target_co)
+
+    print(f"case={case}")
+    print(f"resolution={nx}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"cycleL1AgainstInitial={cycle_l1:.16e}")
     print(f"data={data_dir}")
     print(f"figures={figure_dir}")
     return summary

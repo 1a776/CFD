@@ -12,6 +12,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from advection_rotation import (
+    write_case_initial_field as write_rotation_initial_field,
+    write_case_velocity_field as write_rotation_velocity_field,
+)
 from advection_sine import (
     write_case_initial_field as write_sine_initial_field,
     write_case_initial_field_from_centres,
@@ -20,6 +24,42 @@ from case_config import CaseConfig
 from foam_fields import patch_uniform_vector_field, read_cell_geometry
 from mesh_tools import mesh_resolution, patch_block_mesh_resolution
 from paths import PROJECT_ROOT
+
+
+OUTER_PATCH_BOUNDARY = """boundary
+(
+    xMin
+    {
+        type patch;
+        faces ((0 4 7 3));
+    }
+    xMax
+    {
+        type patch;
+        faces ((1 2 6 5));
+    }
+    yMin
+    {
+        type patch;
+        faces ((0 1 5 4));
+    }
+    yMax
+    {
+        type patch;
+        faces ((3 7 6 2));
+    }
+    zMin
+    {
+        type empty;
+        faces ((0 3 2 1));
+    }
+    zMax
+    {
+        type empty;
+        faces ((4 5 6 7));
+    }
+);
+"""
 
 
 def _copy_constant_inputs(template: Path, target: Path) -> None:
@@ -111,12 +151,43 @@ def _patch_fv_schemes(case: Path, config: CaseConfig) -> None:
 def _patch_control_dict(case: Path, config: CaseConfig) -> None:
     path = case / "system" / "controlDict"
     _replace_or_append_dictionary_entry(path, "application", config.solver)
-    _replace_or_append_dictionary_entry(path, "endTime", f"{config.end_time:g}")
+    # Preserve the configured terminal time, especially values such as 2*pi.
+    # The previous ":g" formatting rounded 2*pi to 6.28319 before OpenFOAM
+    # read it, which shifted the requested final time.
+    _replace_or_append_dictionary_entry(
+        path,
+        "endTime",
+        format(config.end_time, ".17g"),
+    )
     _replace_or_append_dictionary_entry(path, "maxCo", f"{config.max_co:g}")
+    # Keep the final time directory name consistent with the configured
+    # terminal time, including values such as 2*pi.
+    _replace_or_append_dictionary_entry(path, "timePrecision", "17")
+
+
+def _patch_block_mesh_outer_boundaries(case: Path) -> None:
+    """Use non-cyclic outer patches for compact support rotation profiles."""
+    path = case / "system" / "blockMeshDict"
+    text = path.read_text(encoding="utf-8")
+    updated, count = re.subn(r"boundary\s*\(.*\)\s*;", OUTER_PATCH_BOUNDARY, text, count=1, flags=re.S)
+    if count != 1:
+        raise RuntimeError(f"Cannot replace boundary block in {path}")
+    path.write_text(updated, encoding="utf-8")
 
 
 def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     """Apply the configured constant velocity to the template field."""
+    if config.problem == "solid_rotation_advection":
+        if config.mesh_type != "quad":
+            raise NotImplementedError("Solid rotation velocity is currently implemented for quad mesh")
+        nx, ny = mesh_resolution(case)
+        return write_rotation_velocity_field(
+            case,
+            nx,
+            ny,
+            config.domain,
+            config.velocity_model,
+        )
     path = case / "0.orig" / "U"
     return patch_uniform_vector_field(path, config.velocity)
 
@@ -227,6 +298,17 @@ def _write_initial_field(case: Path, config: CaseConfig) -> Path:
                 centres,
                 config.velocity,
             )
+    if config.problem == "solid_rotation_advection":
+        if config.mesh_type != "quad":
+            raise NotImplementedError("Solid rotation initial field is currently implemented for quad mesh")
+        nx, ny = mesh_resolution(case)
+        return write_rotation_initial_field(
+            case,
+            nx,
+            ny,
+            config.domain,
+            config.initial_profile,
+        )
     raise NotImplementedError(f"Unsupported problem for initial field: {config.problem}")
 
 
@@ -356,6 +438,8 @@ def prepare_case(
     if refresh_initial_only:
         if not target.exists():
             raise RuntimeError(f"Case directory does not exist: {target}")
+        if config.problem == "solid_rotation_advection":
+            _patch_velocity_field(target, config)
         output = _write_initial_field(target, config)
         print(f"case={target}")
         print(f"resolution={resolution}")
@@ -382,6 +466,8 @@ def prepare_case(
 
     if config.mesh_type == "quad":
         patch_block_mesh_resolution(target, resolution)
+        if config.boundary_condition != "periodicXY":
+            _patch_block_mesh_outer_boundaries(target)
     else:
         block_mesh_dict = target / "system" / "blockMeshDict"
         if block_mesh_dict.exists():
@@ -399,6 +485,7 @@ def prepare_case(
     metadata = {
         "caseName": config.case_name,
         "config": str(config.path),
+        "equation": config.equation,
         "problem": config.problem,
         "meshType": config.mesh_type,
         "meshBackend": config.mesh_backend,
@@ -407,6 +494,11 @@ def prepare_case(
         "resolution": resolution,
         "solver": config.solver,
         "velocity": list(config.velocity),
+        "domain": list(config.domain),
+        "velocityModel": config.velocity_model,
+        "initialProfile": config.initial_profile,
+        "boundaryCondition": config.boundary_condition,
+        "postprocess": config.postprocess,
         "endTime": config.end_time,
         "maxCo": config.max_co,
         "initialField": str(initial_field) if initial_field else "generated-after-mesh",
@@ -440,7 +532,7 @@ def run_case(case: Path, bashrc: Path) -> None:
 
 def postprocess_configured_case(config: CaseConfig, resolution: int) -> None:
     """Post-process one configured case after it has run."""
-    if config.problem != "sine_wave_advection":
+    if config.problem not in {"sine_wave_advection", "solid_rotation_advection"}:
         raise NotImplementedError(f"Unsupported postprocess problem: {config.problem}")
     from postprocess_case import postprocess_case
 
@@ -470,7 +562,7 @@ def run_study(
         run_case(case, bashrc)
         postprocess_configured_case(config, resolution)
 
-    if not prepare_only:
+    if not prepare_only and config.problem == "sine_wave_advection":
         from study_analysis import analyse, collect, plot
 
         collect(config.case_name, resolutions)
