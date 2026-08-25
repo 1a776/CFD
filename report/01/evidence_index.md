@@ -78,7 +78,6 @@ data/cases/<caseName>/Nxx/error_field.csv
 |---|---|
 | 运行 Bug 记录 | `../../docs/bug_log.md` |
 | 时间精度问题修复 | `../../UDF/solver/explicitAdvectionFoamStudent/explicitAdvectionFoamStudent.C` |
-| 当前未完成事项 | `../README.md`、`../../docs/01/19_parameter_studies_and_commands.md` |
 
 ## 6. 证据使用规则
 

@@ -25,7 +25,7 @@
   - [4.1 正弦波算例](#41-正弦波算例)
   - [4.2 固体旋转算例](#42-固体旋转算例)
 - [5. 软件、网格和算例组织](#5-软件网格和算例组织)
-- [6. 正弦波算例：一阶迎风结果](#6-正弦波算例一阶迎风结果)
+- [6. 正弦波算例：结果与格式对比](#6-正弦波算例结果与格式对比)
   - [6.1 四边形网格](#61-四边形网格)
   - [6.2 三角形网格](#62-三角形网格)
   - [6.3 线性迎风扩展](#63-线性迎风扩展)
@@ -92,6 +92,17 @@ $$
 - `Gauss upwind` 与 `Gauss linearUpwind grad(T)` 的对比；
 - 多个网格分辨率下的自动化运行、误差收集和绘图；
 - 固体旋转案例的 `N=50,100,200` 网格测试。
+
+原题要求与本项目交付内容的对应关系如下：
+
+| 原题要求 | 本项目对应结果 | 报告位置 |
+|---|---|---|
+| 正弦波在周期方形区域平移 | 四边形、三角形网格均完成 | 第 6.1、6.2 节 |
+| 在 $t=1$ 给出 $L_1$ 误差 | 四组正弦波实验均给出 $L_1$ | 第 6 节各结果表 |
+| 给出网格收敛阶 | 四组正弦波实验均给出观察收敛阶 | 第 6 节各结果表和收敛阶图 |
+| 复杂轮廓旋转一周 | 四边形、三角形网格均推进至 $t=2\pi$ | 第 7 节 |
+| 给出旋转后的等值线图 | 每个网格分辨率均给出场图、等值线图和 CFL 图 | 第 7.2、7.3 节 |
+| 完成求解器开发与验证 | OpenFOAM 14 求解器、自动化脚本和数据后处理 | 第 3、5、14 节 |
 
 ## 扩展实验矩阵
 
@@ -372,7 +383,7 @@ scripts/configs/
 - `endTime` 决定终止时间；
 - `maxCo` 决定目标 CFL 数。
 
-## 6. 正弦波算例：一阶迎风结果
+## 6. 正弦波算例：结果与格式对比
 
 ### 6.1 四边形网格
 
@@ -561,6 +572,11 @@ CFL 历史保持在目标值附近，说明三角形网格导入后面通量、�
 | 20 | 400 | 0.436201 | 0.433847 | 0.433515 | 0.697056 | 0.200 | 1.417537 |
 | 40 | 1600 | 0.213482 | 0.213028 | 0.212900 | 1.030879 | 0.200 | 1.211436 |
 | 80 | 6400 | 0.103209 | 0.103147 | 0.103125 | 1.048551 | 0.200 | 1.102974 |
+
+这里的“最终振幅”是最终场的最大绝对值，应与连续初始场的振幅 `1` 比较。
+因此四边形线性迎风在 $N=10$ 时的 `1.588312` 是明显过冲，而不是“振幅保持得更好”。
+对于 $N=20,40,80$，最终振幅仍分别为 `1.417537`、`1.211436` 和 `1.102974`，
+说明网格加密会减小过冲，但当前未限制的线性重构仍没有完全恢复有界性。
 
 <figure id="fig-14">
   <img src="../../figures/analysis/02_sine_wave_quad_linearUpwind/convergence_errors.png" alt="四边形线性迎风误差收敛曲线" width="720">
@@ -865,236 +881,6 @@ $N=200$ 时最大值为 `0.727482`，`cycleL1AgainstInitial=0.685600`。这是�
 分辨率中轮廓保持最好的一组，如[图 43](#fig-43)和[图 44](#fig-44)所示；[图 45](#fig-45)
 中的 CFL 仍然稳定，说明加密网格有效减少了长时间推进中的空间耗散。
 
-<!--
-旧版集中式图像总览已由第 6、7 节中的逐实验直接嵌图和逐图分析替代。
-保留在源文件中仅用于历史追溯，不在正式报告中重复显示。
-
-本节把主要计算图像直接嵌入报告。图像中的每个分辨率、网格类型和空间格式都与前文
-表格一一对应，读者不需要离开报告寻找结果文件。
-
-### 8.1 正弦波误差与收敛阶
-
-#### 四边形网格，一阶迎风
-
-![四边形一阶迎风误差](../../figures/analysis/01_sine_wave_quad/convergence_errors.png)
-
-![四边形一阶迎风收敛阶](../../figures/analysis/01_sine_wave_quad/convergence_order.png)
-
-![四边形一阶迎风各分辨率场对比](../../figures/analysis/01_sine_wave_quad/all_N_comparison.png)
-
-#### 四边形网格，线性迎风
-
-![四边形线性迎风误差](../../figures/analysis/02_sine_wave_quad_linearUpwind/convergence_errors.png)
-
-![四边形线性迎风收敛阶](../../figures/analysis/02_sine_wave_quad_linearUpwind/convergence_order.png)
-
-![四边形线性迎风各分辨率场对比](../../figures/analysis/02_sine_wave_quad_linearUpwind/all_N_comparison.png)
-
-#### 三角形网格，一阶迎风
-
-![三角形一阶迎风误差](../../figures/analysis/03_sine_wave_tri_upwind/convergence_errors.png)
-
-![三角形一阶迎风收敛阶](../../figures/analysis/03_sine_wave_tri_upwind/convergence_order.png)
-
-![三角形一阶迎风各分辨率场对比](../../figures/analysis/03_sine_wave_tri_upwind/all_N_comparison.png)
-
-#### 三角形网格，线性迎风
-
-![三角形线性迎风误差](../../figures/analysis/03_sine_wave_tri_linearUpwind/convergence_errors.png)
-
-![三角形线性迎风收敛阶](../../figures/analysis/03_sine_wave_tri_linearUpwind/convergence_order.png)
-
-![三角形线性迎风各分辨率场对比](../../figures/analysis/03_sine_wave_tri_linearUpwind/all_N_comparison.png)
-
-### 8.2 正弦波单案例诊断图
-
-以下图像均为 $N=80$。场对比图用于观察数值场和精确场的形状差异，对角线剖面用于观察
-相位误差和振幅误差，振幅历史用于观察耗散或过冲，CFL 历史用于确认时间步控制。
-
-#### 四边形网格，一阶迎风，N=80
-
-![四边形一阶迎风场对比 N80](../../figures/cases/01_sine_wave_quad/N80/field_comparison.png)
-
-![四边形一阶迎风对角线剖面 N80](../../figures/cases/01_sine_wave_quad/N80/diagonal_profile.png)
-
-![四边形一阶迎风振幅历史 N80](../../figures/cases/01_sine_wave_quad/N80/amplitude_history.png)
-
-![四边形一阶迎风 CFL 历史 N80](../../figures/cases/01_sine_wave_quad/N80/cfl_history.png)
-
-#### 四边形网格，线性迎风，N=80
-
-![四边形线性迎风场对比 N80](../../figures/cases/02_sine_wave_quad_linearUpwind/N80/field_comparison.png)
-
-![四边形线性迎风对角线剖面 N80](../../figures/cases/02_sine_wave_quad_linearUpwind/N80/diagonal_profile.png)
-
-![四边形线性迎风振幅历史 N80](../../figures/cases/02_sine_wave_quad_linearUpwind/N80/amplitude_history.png)
-
-![四边形线性迎风 CFL 历史 N80](../../figures/cases/02_sine_wave_quad_linearUpwind/N80/cfl_history.png)
-
-#### 三角形网格，一阶迎风，N=80
-
-![三角形一阶迎风场对比 N80](../../figures/cases/03_sine_wave_tri_upwind/N80/field_comparison.png)
-
-![三角形一阶迎风对角线剖面 N80](../../figures/cases/03_sine_wave_tri_upwind/N80/diagonal_profile.png)
-
-![三角形一阶迎风振幅历史 N80](../../figures/cases/03_sine_wave_tri_upwind/N80/amplitude_history.png)
-
-![三角形一阶迎风 CFL 历史 N80](../../figures/cases/03_sine_wave_tri_upwind/N80/cfl_history.png)
-
-#### 三角形网格，线性迎风，N=80
-
-![三角形线性迎风场对比 N80](../../figures/cases/03_sine_wave_tri_linearUpwind/N80/field_comparison.png)
-
-![三角形线性迎风对角线剖面 N80](../../figures/cases/03_sine_wave_tri_linearUpwind/N80/diagonal_profile.png)
-
-![三角形线性迎风振幅历史 N80](../../figures/cases/03_sine_wave_tri_linearUpwind/N80/amplitude_history.png)
-
-![三角形线性迎风 CFL 历史 N80](../../figures/cases/03_sine_wave_tri_linearUpwind/N80/cfl_history.png)
-
-### 8.3 固体旋转图像
-
-固体旋转图像的三列含义为：初始场、$t=2\pi$ 的最终场以及最终场减初始场。
-`contour_final.png` 专门展示一圈后的最终等值线，`cfl_history.png` 用于确认长时间推进
-过程中的 CFL 控制。
-
-#### 四边形网格，N=50
-
-![四边形旋转场对比 N50](../../figures/cases/04_solid_rotation_quad_upwind/N50/field_comparison.png)
-
-![四边形旋转最终等值线 N50](../../figures/cases/04_solid_rotation_quad_upwind/N50/contour_final.png)
-
-![四边形旋转 CFL 历史 N50](../../figures/cases/04_solid_rotation_quad_upwind/N50/cfl_history.png)
-
-#### 四边形网格，N=100
-
-![四边形旋转场对比 N100](../../figures/cases/04_solid_rotation_quad_upwind/N100/field_comparison.png)
-
-![四边形旋转最终等值线 N100](../../figures/cases/04_solid_rotation_quad_upwind/N100/contour_final.png)
-
-![四边形旋转 CFL 历史 N100](../../figures/cases/04_solid_rotation_quad_upwind/N100/cfl_history.png)
-
-#### 四边形网格，N=200
-
-![四边形旋转场对比 N200](../../figures/cases/04_solid_rotation_quad_upwind/N200/field_comparison.png)
-
-![四边形旋转最终等值线 N200](../../figures/cases/04_solid_rotation_quad_upwind/N200/contour_final.png)
-
-![四边形旋转 CFL 历史 N200](../../figures/cases/04_solid_rotation_quad_upwind/N200/cfl_history.png)
-
-#### 三角形网格，N=50
-
-![三角形旋转场对比 N50](../../figures/cases/04_solid_rotation_tri_upwind/N50/field_comparison.png)
-
-![三角形旋转最终等值线 N50](../../figures/cases/04_solid_rotation_tri_upwind/N50/contour_final.png)
-
-![三角形旋转 CFL 历史 N50](../../figures/cases/04_solid_rotation_tri_upwind/N50/cfl_history.png)
-
-#### 三角形网格，N=100
-
-![三角形旋转场对比 N100](../../figures/cases/04_solid_rotation_tri_upwind/N100/field_comparison.png)
-
-![三角形旋转最终等值线 N100](../../figures/cases/04_solid_rotation_tri_upwind/N100/contour_final.png)
-
-![三角形旋转 CFL 历史 N100](../../figures/cases/04_solid_rotation_tri_upwind/N100/cfl_history.png)
-
-#### 三角形网格，N=200
-
-![三角形旋转场对比 N200](../../figures/cases/04_solid_rotation_tri_upwind/N200/field_comparison.png)
-
-![三角形旋转最终等值线 N200](../../figures/cases/04_solid_rotation_tri_upwind/N200/contour_final.png)
-
-![三角形旋转 CFL 历史 N200](../../figures/cases/04_solid_rotation_tri_upwind/N200/cfl_history.png)
-
-### 8.4 参数变化与图像现象的对应关系
-
-#### 1. 网格分辨率 $N$ 的作用
-
-在正弦波算例中，$N$ 增大意味着单元尺寸 $h$ 减小。相同 CFL 下，数值解每一步
-跨越的网格距离更小，离散误差和数值扩散减弱，因此表现为：
-
-- 正弦波峰值衰减减小；
-- 对角线剖面更接近精确解；
-- 误差曲线向下移动；
-- 观察收敛阶逐渐稳定；
-- 固体旋转后的圆盘、切口、圆锥和光滑峰值更加清晰；
-- `cycleL1AgainstInitial` 逐渐下降。
-
-例如四边形固体旋转的差异从 `1.305504` 降至 `0.885152`，最终峰值从
-`0.515869` 恢复到 `0.663497`。这说明网格加密主要改善的是空间离散误差和长期累积
-耗散，而不是改变物理速度场。
-
-#### 2. 一阶迎风格式的作用
-
-一阶迎风根据面通量方向选择上游单元值。它具有较强的稳定性和有界性，但会引入
-人工扩散。因此图像中通常出现：
-
-- 正弦波振幅随时间下降；
-- 峰谷变平；
-- 固体旋转的尖锐界面变宽；
-- 切口边缘逐渐模糊；
-- 误差随网格加密下降，但粗网格误差较大。
-
-这类“变平、变宽、不过冲”的图像特征是迎风耗散的典型表现，不应误判为物理扩散。
-
-#### 3. 线性迎风格式的作用
-
-线性迎风在上游信息基础上加入梯度重构，能够更好地恢复光滑场的空间变化，因此：
-
-- 正弦波峰值保持更好；
-- 对角线剖面更接近精确解；
-- $L_1$ 误差明显降低；
-- 细网格观察收敛阶更接近一阶。
-
-但梯度重构也会削弱一阶迎风的单调性。四边形 `N=10` 的最终振幅达到 `1.588312`，
-说明粗网格下出现过冲。因此看线性迎风图时，不能只看误差曲线，还必须同时看振幅历史
-和最终场的最大值。
-
-#### 4. 四边形和三角形网格的区别
-
-四边形网格的单元排列规则，坐标和单元编号容易对应，适合观察规则传播方向上的误差。
-三角形网格的单元方向更多，面法向和局部几何方向更复杂，能够更接近非结构网格上的
-实际情况。
-
-相同 $N$ 下三角形网格的单元数约为四边形的两倍，因此不能简单地说三角形结果一定
-更准确。比较时必须同时考虑：
-
-- 实际单元数；
-- 平均单元尺寸；
-- 面方向分布；
-- 网格质量；
-- 对流方向与网格面的夹角。
-
-三角形图中显示的细密三角形连接关系不是后处理装饰，而是实际参与通量计算的网格
-拓扑。三角形案例的误差计算使用真实 cell centre 和 cell volume，因此其数值结果
-没有通过规则矩阵 reshape 得到。
-
-#### 5. CFL 图应该如何理解
-
-CFL 历史图不是精度图，而是时间步稳定性检查图。它回答：
-
-```text
-每一步实际使用的最大 Courant 数是否满足目标值 0.2？
-```
-
-如果 CFL 图始终贴近 `0.2`，说明时间步由目标 CFL 控制；如果出现明显超过目标值的
-峰值，则应优先检查时间步计算、速度场、网格体积和面通量。
-
-#### 6. 固体旋转图应该如何理解
-
-在 $t=2\pi$ 时，连续方程的轮廓理论上回到初始位置。最终图中：
-
-- 位置基本回到原处，说明旋转速度和周期推进方向正确；
-- 峰值降低，说明存在数值耗散；
-- 切口变宽或边缘变钝，说明不连续界面被数值格式抹平；
-- 随 $N$ 增大轮廓更清晰，说明空间误差减弱；
-- 质量误差保持在 $10^{-13}$ 到 $10^{-14}$，说明耗散主要表现为局部形状改变，
-  而不是整体质量凭空产生或消失。
-
-因此，固体旋转案例同时检查了速度场、网格、边界、长时间推进、守恒性和空间格式，
-比单纯观察一个最终场更有验证价值。
-
--->
-
 ## 8. 跨实验比较：参数变化如何产生图像现象
 
 本节不重复列图，而是把第 6、7 节中已经直接显示的图片和表格联系起来，解释读者
@@ -1188,7 +974,7 @@ solverFatal = false
 maxCo = 0.2
 ```
 
-正弦波案例的归一化质量误差约为 $10^{-14}$ 到 $10^{-16}$；固体旋转案例的归一化质量
+正弦波案例的归一化质量误差约为 $10^{-13}$ 到 $10^{-16}$；固体旋转案例的归一化质量
 误差约为 $10^{-13}$ 到 $10^{-14}$。这说明内部面通量装配满足守恒性，周期边界下的
 总量误差主要处于浮点舍入误差量级。
 
@@ -1249,7 +1035,7 @@ maxCo = 0.2
 | 几何、网格和边界条件有说明 | 已完成 | 第 4-5 节、OpenFOAM case |
 | 关键结果有表格和图像 | 已完成 | 第 6-8 节、`data/`、`figures/` |
 | 关键结论有数据来源 | 已完成 | `report/01/evidence_index.md` |
-| 局限性和风险已说明 | 已完成 | 第 10 节、`docs/bug_log.md` |
+| 局限性和风险已说明 | 已完成 | 第 11 节、`docs/bug_log.md` |
 | 未解决阻塞错误已处理 | 已完成 | `summary.json` 中 `solverFatal=false` |
 | 报告是否等同于正式科研论文 | 否 | 当前为教学型工程验证报告 |
 
