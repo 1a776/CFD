@@ -1,0 +1,41 @@
+{
+  "solverFamily": "02_diffusion_equation",
+  "caseName": "02_discontinuous_tri",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/02_diffusion_equation/02_discontinuous_tri.json",
+  "equation": "diffusion",
+  "problem": "diffusion_discontinuity",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "schemeName": "Gauss_linear_corrected",
+  "divScheme": "",
+  "resolution": 80,
+  "solver": "explicitDiffusionFoamStudent",
+  "velocity": [
+    1.0,
+    1.0,
+    0.0
+  ],
+  "domain": [
+    -5.0,
+    5.0,
+    -5.0,
+    5.0
+  ],
+  "velocityModel": {},
+  "initialProfile": {},
+  "boundaryCondition": "homogeneousNeumann",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "erfDiscontinuousDiffusion",
+    "reportTime": 0.2
+  },
+  "scalarField": "phi",
+  "mu": 1.0,
+  "diffusionCo": 0.45,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 0.2,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.001,
+  "initialField": "generated-after-mesh"
+}

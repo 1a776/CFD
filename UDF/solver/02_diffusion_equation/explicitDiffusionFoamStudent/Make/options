@@ -1,0 +1,19 @@
+# OpenFOAM 头文件目录。
+#
+# finiteVolume 提供：
+#   - volScalarField / surfaceScalarField；
+#   - fvc::laplacian、fvc::surfaceSum 等有限体积离散接口。
+#
+# meshTools 提供网格相关工具和有限体积求解器常用的网格依赖。
+EXE_INC = \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude
+
+# 链接 OpenFOAM 库。
+#
+# -lfiniteVolume: 有限体积场和离散算子实现；
+# -lmeshTools: 网格工具；
+# OpenFOAM 主库由 wmake 的默认规则自动补上。
+EXE_LIBS = \
+    -lfiniteVolume \
+    -lmeshTools

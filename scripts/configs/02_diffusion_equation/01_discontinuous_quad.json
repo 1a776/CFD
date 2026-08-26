@@ -1,0 +1,30 @@
+{
+  "caseName": "01_discontinuous_quad",
+  "solverFamily": "02_diffusion_equation",
+  "description": "Diffusion equation with discontinuous initial condition on a structured quadrilateral mesh.",
+  "equation": "diffusion",
+  "problem": "diffusion_discontinuity",
+  "meshType": "quad",
+  "meshBackend": "blockMesh",
+  "schemeName": "Gauss_linear_corrected",
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "solver": "explicitDiffusionFoamStudent",
+  "templateResolution": 20,
+  "resolutions": [10, 20, 40, 80],
+  "domain": [-5.0, 5.0, -5.0, 5.0],
+  "resolutionMeaning": "cellsPerEdge",
+  "scalarField": "phi",
+  "mu": 1.0,
+  "boundaryCondition": "homogeneousNeumann",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "erfDiscontinuousDiffusion",
+    "reportTime": 0.2
+  },
+  "endTime": 0.2,
+  "diffusionCo": 0.45,
+  "maxDeltaT": 0.001,
+  "thickness": 0.1,
+  "implemented": true
+}

@@ -1,0 +1,222 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "0.20000000000000001";
+    object      phi;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [];
+
+internalField   nonuniform List<scalar> 
+100
+(
+2.14007126943e-08
+3.52759374451e-07
+3.97260722349e-06
+2.83293693462e-05
+9.92834121192e-05
+9.92834121192e-05
+2.83293693462e-05
+3.97260722349e-06
+3.52759374451e-07
+2.14007126943e-08
+3.52759374451e-07
+5.7946388195e-06
+6.50351563504e-05
+0.00046241913589
+0.00161756946232
+0.00161756946232
+0.00046241913589
+6.50351563504e-05
+5.7946388195e-06
+3.52759374451e-07
+3.97260722349e-06
+6.50351563504e-05
+0.00072753991788
+0.00515831553859
+0.0180100811514
+0.0180100811514
+0.00515831553859
+0.00072753991788
+6.50351563504e-05
+3.97260722349e-06
+2.83293693462e-05
+0.00046241913589
+0.00515831553859
+0.0364818405854
+0.127164713877
+0.127164713877
+0.0364818405854
+0.00515831553859
+0.00046241913589
+2.83293693462e-05
+9.92834121192e-05
+0.00161756946232
+0.0180100811514
+0.127164713877
+0.44277152571
+0.44277152571
+0.127164713877
+0.0180100811514
+0.00161756946232
+9.92834121192e-05
+9.92834121192e-05
+0.00161756946232
+0.0180100811514
+0.127164713877
+0.44277152571
+0.44277152571
+0.127164713877
+0.0180100811514
+0.00161756946232
+9.92834121192e-05
+2.83293693462e-05
+0.00046241913589
+0.00515831553859
+0.0364818405854
+0.127164713877
+0.127164713877
+0.0364818405854
+0.00515831553859
+0.00046241913589
+2.83293693462e-05
+3.97260722349e-06
+6.50351563504e-05
+0.00072753991788
+0.00515831553859
+0.0180100811514
+0.0180100811514
+0.00515831553859
+0.00072753991788
+6.50351563504e-05
+3.97260722349e-06
+3.52759374451e-07
+5.7946388195e-06
+6.50351563504e-05
+0.00046241913589
+0.00161756946232
+0.00161756946232
+0.00046241913589
+6.50351563504e-05
+5.7946388195e-06
+3.52759374451e-07
+2.14007126943e-08
+3.52759374451e-07
+3.97260722349e-06
+2.83293693462e-05
+9.92834121192e-05
+9.92834121192e-05
+2.83293693462e-05
+3.97260722349e-06
+3.52759374451e-07
+2.14007126943e-08
+)
+;
+
+boundaryField
+{
+    xMin
+    {
+        type            codedFixedValue;
+        value           nonuniform List<scalar> 10(6.71501163148e-12 5.71800415524e-10 1.60284947625e-08 1.47907974013e-07 4.49304752806e-07 4.49304752806e-07 1.47907974013e-07 1.60284947625e-08 5.71800415524e-10 6.71501163148e-12);
+        name            xMinGaussianDirichlet;
+        code            #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    xMax
+    {
+        type            codedFixedValue;
+        value           nonuniform List<scalar> 10(6.71501163148e-12 5.71800415524e-10 1.60284947625e-08 1.47907974013e-07 4.49304752806e-07 4.49304752806e-07 1.47907974013e-07 1.60284947625e-08 5.71800415524e-10 6.71501163148e-12);
+        name            xMaxGaussianDirichlet;
+        code            #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    yMin
+    {
+        type            codedFixedValue;
+        value           nonuniform List<scalar> 10(6.71501163148e-12 5.71800415524e-10 1.60284947625e-08 1.47907974013e-07 4.49304752806e-07 4.49304752806e-07 1.47907974013e-07 1.60284947625e-08 5.71800415524e-10 6.71501163148e-12);
+        name            yMinGaussianDirichlet;
+        code            #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    yMax
+    {
+        type            codedFixedValue;
+        value           nonuniform List<scalar> 10(6.71501163148e-12 5.71800415524e-10 1.60284947625e-08 1.47907974013e-07 4.49304752806e-07 4.49304752806e-07 1.47907974013e-07 1.60284947625e-08 5.71800415524e-10 6.71501163148e-12);
+        name            yMaxGaussianDirichlet;
+        code            #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    zMin
+    {
+        type            empty;
+    }
+    zMax
+    {
+        type            empty;
+    }
+}
+
+
+// ************************************************************************* //

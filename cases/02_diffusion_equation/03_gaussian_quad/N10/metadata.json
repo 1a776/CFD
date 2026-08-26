@@ -1,0 +1,41 @@
+{
+  "solverFamily": "02_diffusion_equation",
+  "caseName": "03_gaussian_quad",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/02_diffusion_equation/03_gaussian_quad.json",
+  "equation": "diffusion",
+  "problem": "diffusion_gaussian",
+  "meshType": "quad",
+  "meshBackend": "blockMesh",
+  "schemeName": "Gauss_linear_corrected",
+  "divScheme": "",
+  "resolution": 10,
+  "solver": "explicitDiffusionFoamStudent",
+  "velocity": [
+    1.0,
+    1.0,
+    0.0
+  ],
+  "domain": [
+    -5.0,
+    5.0,
+    -5.0,
+    5.0
+  ],
+  "velocityModel": {},
+  "initialProfile": {},
+  "boundaryCondition": "gaussianDirichlet",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "gaussianDiffusion",
+    "reportTime": 0.2
+  },
+  "scalarField": "phi",
+  "mu": 1.0,
+  "diffusionCo": 0.45,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 0.2,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.001,
+  "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N10/0.orig/phi"
+}

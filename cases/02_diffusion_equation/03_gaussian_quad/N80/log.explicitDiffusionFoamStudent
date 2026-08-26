@@ -1,0 +1,1473 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : /home/a776/workdocuments/上交船舶/slover/student_project/build/02_diffusion_equation/bin/explicitDiffusionFoamStudent
+Date   : Aug 26 2026
+Time   : 18:34:25
+Host   : "DELL"
+PID    : 3804537
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Using dynamicCode for codedFixedValue xMinGaussianDirichlet at line 6423 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/0/phi!boundaryField/xMin"
+Creating new library in "dynamicCode/xMinGaussianDirichlet/platforms/linux64GccDPInt32Opt/lib/libxMinGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMinGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMinGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMinGaussianDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMinGaussianDirichlet/../platforms/linux64GccDPInt32Opt/lib/libxMinGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so
+Using dynamicCode for codedFixedValue xMaxGaussianDirichlet at line 6445 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/0/phi!boundaryField/xMax"
+Creating new library in "dynamicCode/xMaxGaussianDirichlet/platforms/linux64GccDPInt32Opt/lib/libxMaxGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMaxGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMaxGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMaxGaussianDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/xMaxGaussianDirichlet/../platforms/linux64GccDPInt32Opt/lib/libxMaxGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so
+Using dynamicCode for codedFixedValue yMinGaussianDirichlet at line 6467 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/0/phi!boundaryField/yMin"
+Creating new library in "dynamicCode/yMinGaussianDirichlet/platforms/linux64GccDPInt32Opt/lib/libyMinGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMinGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMinGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMinGaussianDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMinGaussianDirichlet/../platforms/linux64GccDPInt32Opt/lib/libyMinGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so
+Using dynamicCode for codedFixedValue yMaxGaussianDirichlet at line 6489 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/0/phi!boundaryField/yMax"
+Creating new library in "dynamicCode/yMaxGaussianDirichlet/platforms/linux64GccDPInt32Opt/lib/libyMaxGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMaxGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMaxGaussianDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMaxGaussianDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/03_gaussian_quad/N80/dynamicCode/yMaxGaussianDirichlet/../platforms/linux64GccDPInt32Opt/lib/libyMaxGaussianDirichlet_fa4a0ea4674e0a9b971fc0ecbe38b5362f204b10.so
+Student explicit diffusion solver
+  case        = "N80"
+  time        = 0
+  cells       = 6400
+  scalarField = phi
+  mu          = 1
+  diffusionCo = 0.45
+  phi min     = 0
+  phi max     = 0.99221793826
+
+Time = 0.001  step = 1  deltaT = 0.001
+  Rphi min = -3.90749909182
+  Rphi max = 0.538885506774
+  phi min  = 4.35229148585e-22
+  phi max  = 0.988310439168
+  mass     = 0.314159265358
+
+Time = 0.002  step = 2  deltaT = 0.001
+  Rphi min = -3.87695921222
+  Rphi max = 0.53482053612
+  phi min  = 5.26927987744e-22
+  phi max  = 0.984433479956
+  mass     = 0.314159265358
+
+Time = 0.0030000000000000001  step = 3  deltaT = 0.001
+  Rphi min = -3.84677463621
+  Rphi max = 0.530770318158
+  phi min  = 6.36973490453e-22
+  phi max  = 0.98058670532
+  mass     = 0.314159265358
+
+Time = 0.0040000000000000001  step = 4  deltaT = 0.001
+  Rphi min = -3.81693989398
+  Rphi max = 0.526735117096
+  phi min  = 7.6884024459e-22
+  phi max  = 0.976769765426
+  mass     = 0.314159265357
+
+Time = 0.0050000000000000001  step = 5  deltaT = 0.001
+  Rphi min = -3.78744962017
+  Rphi max = 0.522715186439
+  phi min  = 9.26623378059e-22
+  phi max  = 0.972982315806
+  mass     = 0.314159265357
+
+Time = 0.0060000000000000001  step = 6  deltaT = 0.001
+  Rphi min = -3.75829855153
+  Rphi max = 0.518710769258
+  phi min  = 1.11514260265e-21
+  phi max  = 0.969224017254
+  mass     = 0.314159265357
+
+Time = 0.0070000000000000001  step = 7  deltaT = 0.001
+  Rphi min = -3.72948152457
+  Rphi max = 0.514722098469
+  phi min  = 1.34006254699e-21
+  phi max  = 0.96549453573
+  mass     = 0.314159265357
+
+Time = 0.0080000000000000002  step = 8  deltaT = 0.001
+  Rphi min = -3.70099347336
+  Rphi max = 0.510749397087
+  phi min  = 1.60803174389e-21
+  phi max  = 0.961793542256
+  mass     = 0.314159265357
+
+Time = 0.0090000000000000011  step = 9  deltaT = 0.001
+  Rphi min = -3.67282942725
+  Rphi max = 0.506792878493
+  phi min  = 1.9268429535e-21
+  phi max  = 0.958120712829
+  mass     = 0.314159265356
+
+Time = 0.01  step = 10  deltaT = 0.001
+  Rphi min = -3.64498450885
+  Rphi max = 0.502852746681
+  phi min  = 2.30561785782e-21
+  phi max  = 0.95447572832
+  mass     = 0.314159265356
+
+Time = 0.010999999999999999  step = 11  deltaT = 0.001
+  Rphi min = -3.61745393182
+  Rphi max = 0.498929196504
+  phi min  = 2.75501955879e-21
+  phi max  = 0.950858274388
+  mass     = 0.314159265356
+
+Time = 0.012  step = 12  deltaT = 0.001
+  Rphi min = -3.59023299895
+  Rphi max = 0.495022413921
+  phi min  = 3.28749675644e-21
+  phi max  = 0.947268041389
+  mass     = 0.314159265355
+
+Time = 0.013000000000000001  step = 13  deltaT = 0.001
+  Rphi min = -3.56331710012
+  Rphi max = 0.49113443503
+  phi min  = 3.91756397927e-21
+  phi max  = 0.943704724289
+  mass     = 0.314159265355
+
+Time = 0.014  step = 14  deltaT = 0.001
+  Rphi min = -3.5367017104
+  Rphi max = 0.4873769741
+  phi min  = 4.66212279273e-21
+  phi max  = 0.940168022579
+  mass     = 0.314159265354
+
+Time = 0.014999999999999999  step = 15  deltaT = 0.001
+  Rphi min = -3.51038238817
+  Rphi max = 0.483634981644
+  phi min  = 5.54082952883e-21
+  phi max  = 0.936657640191
+  mass     = 0.314159265354
+
+Time = 0.016  step = 16  deltaT = 0.001
+  Rphi min = -3.48435477328
+  Rphi max = 0.479908632592
+  phi min  = 6.57651576695e-21
+  phi max  = 0.933173285418
+  mass     = 0.314159265353
+
+Time = 0.017000000000000001  step = 17  deltaT = 0.001
+  Rphi min = -3.4586145853
+  Rphi max = 0.476198093926
+  phi min  = 7.7956685601e-21
+  phi max  = 0.929714670832
+  mass     = 0.314159265353
+
+Time = 0.018000000000000002  step = 18  deltaT = 0.001
+  Rphi min = -3.43315762175
+  Rphi max = 0.472503524886
+  phi min  = 9.22897825005e-21
+  phi max  = 0.92628151321
+  mass     = 0.314159265352
+
+Time = 0.019  step = 19  deltaT = 0.001
+  Rphi min = -3.40797975643
+  Rphi max = 0.468916005348
+  phi min  = 1.09119626567e-20
+  phi max  = 0.922873533454
+  mass     = 0.314159265352
+
+Time = 0.02  step = 20  deltaT = 0.001
+  Rphi min = -3.38307693776
+  Rphi max = 0.465463064708
+  phi min  = 1.28856774711e-20
+  phi max  = 0.919490456516
+  mass     = 0.314159265351
+
+Time = 0.021000000000000001  step = 21  deltaT = 0.001
+  Rphi min = -3.35844518717
+  Rphi max = 0.462023326863
+  phi min  = 1.51975238392e-20
+  phi max  = 0.916132011329
+  mass     = 0.31415926535
+
+Time = 0.021999999999999999  step = 22  deltaT = 0.001
+  Rphi min = -3.33408059755
+  Rphi max = 0.458596960404
+  phi min  = 1.79021654001e-20
+  phi max  = 0.912797930732
+  mass     = 0.314159265349
+
+Time = 0.023  step = 23  deltaT = 0.001
+  Rphi min = -3.30997933168
+  Rphi max = 0.455184126858
+  phi min  = 2.10625684579e-20
+  phi max  = 0.9094879514
+  mass     = 0.314159265348
+
+Time = 0.024  step = 24  deltaT = 0.001
+  Rphi min = -3.28613762079
+  Rphi max = 0.451784980867
+  phi min  = 2.47511805256e-20
+  phi max  = 0.906201813779
+  mass     = 0.314159265347
+
+Time = 0.025000000000000001  step = 25  deltaT = 0.001
+  Rphi min = -3.26255176308
+  Rphi max = 0.448399670356
+  phi min  = 2.90512641977e-20
+  phi max  = 0.902939262016
+  mass     = 0.314159265346
+
+Time = 0.026000000000000002  step = 26  deltaT = 0.001
+  Rphi min = -3.23921812228
+  Rphi max = 0.445028336703
+  phi min  = 3.40584052051e-20
+  phi max  = 0.899700043894
+  mass     = 0.314159265345
+
+Time = 0.027  step = 27  deltaT = 0.001
+  Rphi min = -3.21613312631
+  Rphi max = 0.441671114907
+  phi min  = 3.98822155884e-20
+  phi max  = 0.896483910767
+  mass     = 0.314159265344
+
+Time = 0.028000000000000001  step = 28  deltaT = 0.001
+  Rphi min = -3.1932932659
+  Rphi max = 0.438340232825
+  phi min  = 4.66482552171e-20
+  phi max  = 0.893290617502
+  mass     = 0.314159265342
+
+Time = 0.029000000000000001  step = 29  deltaT = 0.001
+  Rphi min = -3.1706950933
+  Rphi max = 0.435284387261
+  phi min  = 5.45001974001e-20
+  phi max  = 0.890119922408
+  mass     = 0.314159265341
+
+Time = 0.029999999999999999  step = 30  deltaT = 0.001
+  Rphi min = -3.14833522094
+  Rphi max = 0.432239021888
+  phi min  = 6.36022670901e-20
+  phi max  = 0.886971587187
+  mass     = 0.314159265339
+
+Time = 0.031  step = 31  deltaT = 0.001
+  Rphi min = -3.12621032025
+  Rphi max = 0.429204293362
+  phi min  = 7.41419832146e-20
+  phi max  = 0.883845376867
+  mass     = 0.314159265337
+
+Time = 0.032000000000000001  step = 32  deltaT = 0.001
+  Rphi min = -3.10431712037
+  Rphi max = 0.426180352417
+  phi min  = 8.63332399735e-20
+  phi max  = 0.880741059747
+  mass     = 0.314159265335
+
+Time = 0.033000000000000002  step = 33  deltaT = 0.001
+  Rphi min = -3.08265240701
+  Rphi max = 0.423167344008
+  phi min  = 1.00419765572e-19
+  phi max  = 0.87765840734
+  mass     = 0.314159265333
+
+Time = 0.034000000000000002  step = 34  deltaT = 0.001
+  Rphi min = -3.06121302125
+  Rphi max = 0.420165407444
+  phi min  = 1.16679000817e-19
+  phi max  = 0.874597194318
+  mass     = 0.314159265331
+
+Time = 0.035000000000000003  step = 35  deltaT = 0.001
+  Rphi min = -3.03999585841
+  Rphi max = 0.417174676527
+  phi min  = 1.35426444324e-19
+  phi max  = 0.87155719846
+  mass     = 0.314159265329
+
+Time = 0.036000000000000004  step = 36  deltaT = 0.001
+  Rphi min = -3.01899786693
+  Rphi max = 0.414195279676
+  phi min  = 1.57020515809e-19
+  phi max  = 0.868538200593
+  mass     = 0.314159265326
+
+Time = 0.036999999999999998  step = 37  deltaT = 0.001
+  Rphi min = -2.99821604733
+  Rphi max = 0.411227340059
+  phi min  = 1.81867994078e-19
+  phi max  = 0.865539984546
+  mass     = 0.314159265323
+
+Time = 0.037999999999999999  step = 38  deltaT = 0.001
+  Rphi min = -2.97764745109
+  Rphi max = 0.408270975719
+  phi min  = 2.10430091912e-19
+  phi max  = 0.862562337095
+  mass     = 0.314159265321
+
+Time = 0.039  step = 39  deltaT = 0.001
+  Rphi min = -2.95728917965
+  Rphi max = 0.405326299696
+  phi min  = 2.43229236166e-19
+  phi max  = 0.859605047915
+  mass     = 0.314159265317
+
+Time = 0.040000000000000001  step = 40  deltaT = 0.001
+  Rphi min = -2.9371383834
+  Rphi max = 0.402393420148
+  phi min  = 2.80856627989e-19
+  phi max  = 0.856667909532
+  mass     = 0.314159265314
+
+Time = 0.041000000000000002  step = 41  deltaT = 0.001
+  Rphi min = -2.91719226069
+  Rphi max = 0.399472440468
+  phi min  = 3.23980665284e-19
+  phi max  = 0.853750717271
+  mass     = 0.31415926531
+
+Time = 0.042000000000000003  step = 42  deltaT = 0.001
+  Rphi min = -2.89744805688
+  Rphi max = 0.396795475724
+  phi min  = 3.73356317325e-19
+  phi max  = 0.850853269214
+  mass     = 0.314159265306
+
+Time = 0.043000000000000003  step = 43  deltaT = 0.001
+  Rphi min = -2.87790306336
+  Rphi max = 0.394194567762
+  phi min  = 4.29835549907e-19
+  phi max  = 0.847975366151
+  mass     = 0.314159265302
+
+Time = 0.043999999999999997  step = 44  deltaT = 0.001
+  Rphi min = -2.85855461668
+  Rphi max = 0.391601718746
+  phi min  = 4.94378908561e-19
+  phi max  = 0.845116811534
+  mass     = 0.314159265298
+
+Time = 0.044999999999999998  step = 45  deltaT = 0.001
+  Rphi min = -2.83940009763
+  Rphi max = 0.389017058482
+  phi min  = 5.68068377307e-19
+  phi max  = 0.842277411436
+  mass     = 0.314159265293
+
+Time = 0.045999999999999999  step = 46  deltaT = 0.001
+  Rphi min = -2.82043693035
+  Rphi max = 0.38649956982
+  phi min  = 6.52121641126e-19
+  phi max  = 0.839456974506
+  mass     = 0.314159265288
+
+Time = 0.047  step = 47  deltaT = 0.001
+  Rphi min = -2.8016625815
+  Rphi max = 0.384044903806
+  phi min  = 7.4790789193e-19
+  phi max  = 0.836655311925
+  mass     = 0.314159265282
+
+Time = 0.048000000000000001  step = 48  deltaT = 0.001
+  Rphi min = -2.78307455942
+  Rphi max = 0.38159744334
+  phi min  = 8.56965330332e-19
+  phi max  = 0.833872237365
+  mass     = 0.314159265276
+
+Time = 0.049000000000000002  step = 49  deltaT = 0.001
+  Rphi min = -2.76467041329
+  Rphi max = 0.379157311445
+  phi min  = 9.81020529023e-19
+  phi max  = 0.831107566952
+  mass     = 0.31415926527
+
+Time = 0.050000000000000003  step = 50  deltaT = 0.001
+  Rphi min = -2.74644773234
+  Rphi max = 0.376724627052
+  phi min  = 1.12200983811e-18
+  phi max  = 0.828361119219
+  mass     = 0.314159265263
+
+Time = 0.051000000000000004  step = 51  deltaT = 0.001
+  Rphi min = -2.72840414511
+  Rphi max = 0.374299505091
+  phi min  = 1.28210302847e-18
+  phi max  = 0.825632715074
+  mass     = 0.314159265256
+
+Time = 0.052000000000000005  step = 52  deltaT = 0.001
+  Rphi min = -2.71053731861
+  Rphi max = 0.371882056572
+  phi min  = 1.46372938605e-18
+  phi max  = 0.822922177756
+  mass     = 0.314159265248
+
+Time = 0.052999999999999999  step = 53  deltaT = 0.001
+  Rphi min = -2.69284495763
+  Rphi max = 0.369472388677
+  phi min  = 1.66960648813e-18
+  phi max  = 0.820229332798
+  mass     = 0.31415926524
+
+Time = 0.053999999999999999  step = 54  deltaT = 0.001
+  Rphi min = -2.675324804
+  Rphi max = 0.367070604838
+  phi min  = 1.90277191232e-18
+  phi max  = 0.817554007994
+  mass     = 0.314159265231
+
+Time = 0.055  step = 55  deltaT = 0.001
+  Rphi min = -2.65797463586
+  Rphi max = 0.364676804822
+  phi min  = 2.16661814957e-18
+  phi max  = 0.814896033358
+  mass     = 0.314159265222
+
+Time = 0.056000000000000001  step = 56  deltaT = 0.001
+  Rphi min = -2.64079226701
+  Rphi max = 0.362291084809
+  phi min  = 2.46493101549e-18
+  phi max  = 0.812255241091
+  mass     = 0.314159265212
+
+Time = 0.057000000000000002  step = 57  deltaT = 0.001
+  Rphi min = -2.62377554614
+  Rphi max = 0.359913537473
+  phi min  = 2.801931878e-18
+  phi max  = 0.809631465545
+  mass     = 0.314159265201
+
+Time = 0.058000000000000003  step = 58  deltaT = 0.001
+  Rphi min = -2.60692235627
+  Rphi max = 0.357544252056
+  phi min  = 3.18232404525e-18
+  phi max  = 0.807024543189
+  mass     = 0.31415926519
+
+Time = 0.059000000000000004  step = 59  deltaT = 0.001
+  Rphi min = -2.590230614
+  Rphi max = 0.355184323768
+  phi min  = 3.61134368564e-18
+  phi max  = 0.804434312575
+  mass     = 0.314159265178
+
+Time = 0.059999999999999998  step = 60  deltaT = 0.001
+  Rphi min = -2.57369826896
+  Rphi max = 0.352891308015
+  phi min  = 4.09481568108e-18
+  phi max  = 0.801860614306
+  mass     = 0.314159265165
+
+Time = 0.060999999999999999  step = 61  deltaT = 0.001
+  Rphi min = -2.55732330313
+  Rphi max = 0.350606016841
+  phi min  = 4.63921484637e-18
+  phi max  = 0.799303291003
+  mass     = 0.314159265152
+
+Time = 0.062  step = 62  deltaT = 0.001
+  Rphi min = -2.54110373023
+  Rphi max = 0.348328534575
+  phi min  = 5.25173298167e-18
+  phi max  = 0.796762187273
+  mass     = 0.314159265138
+
+Time = 0.063  step = 63  deltaT = 0.001
+  Rphi min = -2.52503759515
+  Rphi max = 0.346058942428
+  phi min  = 5.94035226068e-18
+  phi max  = 0.794237149677
+  mass     = 0.314159265122
+
+Time = 0.064000000000000001  step = 64  deltaT = 0.001
+  Rphi min = -2.50912297337
+  Rphi max = 0.34379731857
+  phi min  = 6.71392549615e-18
+  phi max  = 0.791728026704
+  mass     = 0.314159265106
+
+Time = 0.065000000000000002  step = 65  deltaT = 0.001
+  Rphi min = -2.49335797037
+  Rphi max = 0.341578142328
+  phi min  = 7.58226386513e-18
+  phi max  = 0.789234668734
+  mass     = 0.314159265089
+
+Time = 0.066000000000000003  step = 66  deltaT = 0.001
+  Rphi min = -2.47774072105
+  Rphi max = 0.339442449091
+  phi min  = 8.55623272029e-18
+  phi max  = 0.786756928013
+  mass     = 0.314159265071
+
+Time = 0.067000000000000004  step = 67  deltaT = 0.001
+  Rphi min = -2.46226938925
+  Rphi max = 0.337313521105
+  phi min  = 9.64785616041e-18
+  phi max  = 0.784294658623
+  mass     = 0.314159265052
+
+Time = 0.068000000000000005  step = 68  deltaT = 0.001
+  Rphi min = -2.44694216716
+  Rphi max = 0.335191439247
+  phi min  = 1.08704310825e-17
+  phi max  = 0.781847716456
+  mass     = 0.314159265032
+
+Time = 0.069000000000000006  step = 69  deltaT = 0.001
+  Rphi min = -2.4317572748
+  Rphi max = 0.333076281585
+  phi min  = 1.22386514907e-17
+  phi max  = 0.779415959181
+  mass     = 0.31415926501
+
+Time = 0.070000000000000007  step = 70  deltaT = 0.001
+  Rphi min = -2.41671295955
+  Rphi max = 0.330968123439
+  phi min  = 1.37687438947e-17
+  phi max  = 0.776999246222
+  mass     = 0.314159264987
+
+Time = 0.071000000000000008  step = 71  deltaT = 0.001
+  Rphi min = -2.40180749559
+  Rphi max = 0.328867037435
+  phi min  = 1.54786146863e-17
+  phi max  = 0.774597438726
+  mass     = 0.314159264963
+
+Time = 0.072000000000000008  step = 72  deltaT = 0.001
+  Rphi min = -2.38703918348
+  Rphi max = 0.326773093569
+  phi min  = 1.73880104519e-17
+  phi max  = 0.772210399543
+  mass     = 0.314159264938
+
+Time = 0.072999999999999995  step = 73  deltaT = 0.001
+  Rphi min = -2.37240634959
+  Rphi max = 0.324686359256
+  phi min  = 1.95186922387e-17
+  phi max  = 0.769837993193
+  mass     = 0.314159264911
+
+Time = 0.073999999999999996  step = 74  deltaT = 0.001
+  Rphi min = -2.35790734573
+  Rphi max = 0.322606899388
+  phi min  = 2.18946248709e-17
+  phi max  = 0.767480085847
+  mass     = 0.314159264883
+
+Time = 0.074999999999999997  step = 75  deltaT = 0.001
+  Rphi min = -2.34354054861
+  Rphi max = 0.320645524366
+  phi min  = 2.45421824805e-17
+  phi max  = 0.765136545299
+  mass     = 0.314159264853
+
+Time = 0.075999999999999998  step = 76  deltaT = 0.001
+  Rphi min = -2.32930435943
+  Rphi max = 0.318725369417
+  phi min  = 2.74903715035e-17
+  phi max  = 0.762807240939
+  mass     = 0.314159264821
+
+Time = 0.076999999999999999  step = 77  deltaT = 0.001
+  Rphi min = -2.31519720344
+  Rphi max = 0.316810858867
+  phi min  = 3.07710724716e-17
+  phi max  = 0.760492043736
+  mass     = 0.314159264788
+
+Time = 0.078  step = 78  deltaT = 0.001
+  Rphi min = -2.30121752948
+  Rphi max = 0.31490206554
+  phi min  = 3.44193020229e-17
+  phi max  = 0.758190826206
+  mass     = 0.314159264752
+
+Time = 0.079000000000000001  step = 79  deltaT = 0.001
+  Rphi min = -2.2873638096
+  Rphi max = 0.312999059904
+  phi min  = 3.84734966458e-17
+  phi max  = 0.755903462397
+  mass     = 0.314159264715
+
+Time = 0.080000000000000002  step = 80  deltaT = 0.001
+  Rphi min = -2.27363453859
+  Rphi max = 0.311101910113
+  phi min  = 4.2975819774e-17
+  phi max  = 0.753629827858
+  mass     = 0.314159264676
+
+Time = 0.081000000000000003  step = 81  deltaT = 0.001
+  Rphi min = -2.26002823365
+  Rphi max = 0.309210682057
+  phi min  = 4.79724939521e-17
+  phi max  = 0.751369799625
+  mass     = 0.314159264635
+
+Time = 0.082000000000000003  step = 82  deltaT = 0.001
+  Rphi min = -2.24654343391
+  Rphi max = 0.307325439404
+  phi min  = 5.35141599052e-17
+  phi max  = 0.749123256191
+  mass     = 0.314159264591
+
+Time = 0.083000000000000004  step = 83  deltaT = 0.001
+  Rphi min = -2.23317870011
+  Rphi max = 0.305446243653
+  phi min  = 5.96562644613e-17
+  phi max  = 0.746890077491
+  mass     = 0.314159264546
+
+Time = 0.084000000000000005  step = 84  deltaT = 0.001
+  Rphi min = -2.21993261418
+  Rphi max = 0.303573154167
+  phi min  = 6.64594794003e-17
+  phi max  = 0.744670144876
+  mass     = 0.314159264498
+
+Time = 0.085000000000000006  step = 85  deltaT = 0.001
+  Rphi min = -2.20680377887
+  Rphi max = 0.301706228226
+  phi min  = 7.39901534317e-17
+  phi max  = 0.742463341098
+  mass     = 0.314159264447
+
+Time = 0.086000000000000007  step = 86  deltaT = 0.001
+  Rphi min = -2.19379081742
+  Rphi max = 0.299845521068
+  phi min  = 8.23207996421e-17
+  phi max  = 0.74026955028
+  mass     = 0.314159264394
+
+Time = 0.087000000000000008  step = 87  deltaT = 0.001
+  Rphi min = -2.18089237315
+  Rphi max = 0.297991085926
+  phi min  = 9.1530620896e-17
+  phi max  = 0.738088657907
+  mass     = 0.314159264338
+
+Time = 0.087999999999999995  step = 88  deltaT = 0.001
+  Rphi min = -2.16810710913
+  Rphi max = 0.296226665371
+  phi min  = 1.01706075826e-16
+  phi max  = 0.735920550798
+  mass     = 0.314159264279
+
+Time = 0.088999999999999996  step = 89  deltaT = 0.001
+  Rphi min = -2.15543370788
+  Rphi max = 0.294516207281
+  phi min  = 1.12941488207e-16
+  phi max  = 0.73376511709
+  mass     = 0.314159264217
+
+Time = 0.089999999999999997  step = 90  deltaT = 0.001
+  Rphi min = -2.14287087096
+  Rphi max = 0.292842792412
+  phi min  = 1.25339702679e-16
+  phi max  = 0.731622246219
+  mass     = 0.314159264152
+
+Time = 0.090999999999999998  step = 91  deltaT = 0.001
+  Rphi min = -2.13041731868
+  Rphi max = 0.291173955229
+  phi min  = 1.39012789949e-16
+  phi max  = 0.7294918289
+  mass     = 0.314159264084
+
+Time = 0.091999999999999998  step = 92  deltaT = 0.001
+  Rphi min = -2.11807178979
+  Rphi max = 0.289509704034
+  phi min  = 1.54082804809e-16
+  phi max  = 0.727373757111
+  mass     = 0.314159264012
+
+Time = 0.092999999999999999  step = 93  deltaT = 0.001
+  Rphi min = -2.10583304112
+  Rphi max = 0.287850098679
+  phi min  = 1.70682600472e-16
+  phi max  = 0.725267924069
+  mass     = 0.314159263937
+
+Time = 0.094  step = 94  deltaT = 0.001
+  Rphi min = -2.09369984731
+  Rphi max = 0.286195197194
+  phi min  = 1.88956702943e-16
+  phi max  = 0.723174224222
+  mass     = 0.314159263858
+
+Time = 0.095000000000000001  step = 95  deltaT = 0.001
+  Rphi min = -2.08167100049
+  Rphi max = 0.284545055823
+  phi min  = 2.09062249379e-16
+  phi max  = 0.721092553222
+  mass     = 0.314159263775
+
+Time = 0.096000000000000002  step = 96  deltaT = 0.001
+  Rphi min = -2.06974530999
+  Rphi max = 0.282899729057
+  phi min  = 2.31169994556e-16
+  phi max  = 0.719022807912
+  mass     = 0.314159263689
+
+Time = 0.097000000000000003  step = 97  deltaT = 0.001
+  Rphi min = -2.05792160202
+  Rphi max = 0.281259269672
+  phi min  = 2.55465389863e-16
+  phi max  = 0.71696488631
+  mass     = 0.314159263598
+
+Time = 0.098000000000000004  step = 98  deltaT = 0.001
+  Rphi min = -2.04619871943
+  Rphi max = 0.279623728756
+  phi min  = 2.82149739427e-16
+  phi max  = 0.71491868759
+  mass     = 0.314159263503
+
+Time = 0.099000000000000005  step = 99  deltaT = 0.001
+  Rphi min = -2.03457552137
+  Rphi max = 0.277993155745
+  phi min  = 3.11441438268e-16
+  phi max  = 0.712884112069
+  mass     = 0.314159263403
+
+Time = 0.10000000000000001  step = 100  deltaT = 0.001
+  Rphi min = -2.02305088309
+  Rphi max = 0.276390504727
+  phi min  = 3.43577297632e-16
+  phi max  = 0.710861061186
+  mass     = 0.314159263299
+
+Time = 0.10100000000000001  step = 101  deltaT = 0.001
+  Rphi min = -2.01162369558
+  Rphi max = 0.274867510516
+  phi min  = 3.78813962921e-16
+  phi max  = 0.70884943749
+  mass     = 0.314159263189
+
+Time = 0.10200000000000001  step = 102  deltaT = 0.001
+  Rphi min = -2.0002928654
+  Rphi max = 0.273348569585
+  phi min  = 4.17429429958e-16
+  phi max  = 0.706849144625
+  mass     = 0.314159263075
+
+Time = 0.10300000000000001  step = 103  deltaT = 0.001
+  Rphi min = -1.98905731434
+  Rphi max = 0.271833733242
+  phi min  = 4.59724665584e-16
+  phi max  = 0.70486008731
+  mass     = 0.314159262955
+
+Time = 0.10400000000000001  step = 104  deltaT = 0.001
+  Rphi min = -1.97791597922
+  Rphi max = 0.270323051281
+  phi min  = 5.06025338948e-16
+  phi max  = 0.702882171331
+  mass     = 0.31415926283
+
+Time = 0.105  step = 105  deltaT = 0.001
+  Rphi min = -1.96686781161
+  Rphi max = 0.268816572009
+  phi min  = 5.56683670138e-16
+  phi max  = 0.70091530352
+  mass     = 0.314159262699
+
+Time = 0.106  step = 106  deltaT = 0.001
+  Rphi min = -1.95591177759
+  Rphi max = 0.267314342274
+  phi min  = 6.12080403183e-16
+  phi max  = 0.698959391742
+  mass     = 0.314159262563
+
+Time = 0.107  step = 107  deltaT = 0.001
+  Rphi min = -1.94504685752
+  Rphi max = 0.26581640749
+  phi min  = 6.72626910772e-16
+  phi max  = 0.697014344884
+  mass     = 0.31415926242
+
+Time = 0.108  step = 108  deltaT = 0.001
+  Rphi min = -1.93427204581
+  Rphi max = 0.264322811671
+  phi min  = 7.38767438451e-16
+  phi max  = 0.695080072839
+  mass     = 0.31415926227
+
+Time = 0.109  step = 109  deltaT = 0.001
+  Rphi min = -1.92358635067
+  Rphi max = 0.262833597446
+  phi min  = 8.10981496411e-16
+  phi max  = 0.693156486488
+  mass     = 0.314159262114
+
+Time = 0.11  step = 110  deltaT = 0.001
+  Rphi min = -1.91298879388
+  Rphi max = 0.261379591966
+  phi min  = 8.8978640741e-16
+  phi max  = 0.691243497694
+  mass     = 0.314159261951
+
+Time = 0.111  step = 111  deltaT = 0.001
+  Rphi min = -1.90247841061
+  Rphi max = 0.259931194067
+  phi min  = 9.75740019771e-16
+  phi max  = 0.689341019283
+  mass     = 0.314159261781
+
+Time = 0.112  step = 112  deltaT = 0.001
+  Rphi min = -1.89205424914
+  Rphi max = 0.258486936628
+  phi min  = 1.06944359484e-15
+  phi max  = 0.687448965034
+  mass     = 0.314159261604
+
+Time = 0.113  step = 113  deltaT = 0.001
+  Rphi min = -1.88171537069
+  Rphi max = 0.257046860173
+  phi min  = 1.17154487878e-15
+  phi max  = 0.685567249664
+  mass     = 0.314159261419
+
+Time = 0.114  step = 114  deltaT = 0.001
+  Rphi min = -1.87146084921
+  Rphi max = 0.255611003954
+  phi min  = 1.2827413689e-15
+  phi max  = 0.683695788814
+  mass     = 0.314159261226
+
+Time = 0.115  step = 115  deltaT = 0.001
+  Rphi min = -1.86128977115
+  Rphi max = 0.254193001706
+  phi min  = 1.40378378549e-15
+  phi max  = 0.681834499043
+  mass     = 0.314159261024
+
+Time = 0.11600000000000001  step = 116  deltaT = 0.001
+  Rphi min = -1.85120123528
+  Rphi max = 0.252822649694
+  phi min  = 1.53547976032e-15
+  phi max  = 0.679983297808
+  mass     = 0.314159260814
+
+Time = 0.11700000000000001  step = 117  deltaT = 0.001
+  Rphi min = -1.84119435247
+  Rphi max = 0.251459336146
+  phi min  = 1.67869775364e-15
+  phi max  = 0.678142103456
+  mass     = 0.314159260595
+
+Time = 0.11800000000000001  step = 118  deltaT = 0.001
+  Rphi min = -1.83126824551
+  Rphi max = 0.250099724574
+  phi min  = 1.83437121217e-15
+  phi max  = 0.67631083521
+  mass     = 0.314159260367
+
+Time = 0.11900000000000001  step = 119  deltaT = 0.001
+  Rphi min = -1.82142204893
+  Rphi max = 0.248743853913
+  phi min  = 2.00350298087e-15
+  phi max  = 0.674489413161
+  mass     = 0.314159260129
+
+Time = 0.12  step = 120  deltaT = 0.001
+  Rphi min = -1.8116549088
+  Rphi max = 0.247391761938
+  phi min  = 2.18716998209e-15
+  phi max  = 0.672677758252
+  mass     = 0.314159259882
+
+Time = 0.121  step = 121  deltaT = 0.001
+  Rphi min = -1.80196598251
+  Rphi max = 0.246043485285
+  phi min  = 2.38652817626e-15
+  phi max  = 0.67087579227
+  mass     = 0.314159259624
+
+Time = 0.122  step = 122  deltaT = 0.001
+  Rphi min = -1.79235443868
+  Rphi max = 0.244699059474
+  phi min  = 2.60281781866e-15
+  phi max  = 0.669083437831
+  mass     = 0.314159259356
+
+Time = 0.123  step = 123  deltaT = 0.001
+  Rphi min = -1.7828194569
+  Rphi max = 0.243358518926
+  phi min  = 2.83736902805e-15
+  phi max  = 0.667300618374
+  mass     = 0.314159259077
+
+Time = 0.124  step = 124  deltaT = 0.001
+  Rphi min = -1.77336022757
+  Rphi max = 0.242021896985
+  phi min  = 3.09160768277e-15
+  phi max  = 0.665527258147
+  mass     = 0.314159258786
+
+Time = 0.125  step = 125  deltaT = 0.001
+  Rphi min = -1.76397595177
+  Rphi max = 0.240730258159
+  phi min  = 3.36706166141e-15
+  phi max  = 0.663763282195
+  mass     = 0.314159258484
+
+Time = 0.126  step = 126  deltaT = 0.001
+  Rphi min = -1.75466584106
+  Rphi max = 0.239482563118
+  phi min  = 3.6653674454e-15
+  phi max  = 0.662008616354
+  mass     = 0.314159258169
+
+Time = 0.127  step = 127  deltaT = 0.001
+  Rphi min = -1.74542911732
+  Rphi max = 0.238238007151
+  phi min  = 3.98827710164e-15
+  phi max  = 0.660263187236
+  mass     = 0.314159257842
+
+Time = 0.128  step = 128  deltaT = 0.001
+  Rphi min = -1.73626501258
+  Rphi max = 0.236996626708
+  phi min  = 4.33766566435e-15
+  phi max  = 0.658526922224
+  mass     = 0.314159257503
+
+Time = 0.129  step = 129  deltaT = 0.001
+  Rphi min = -1.72717276889
+  Rphi max = 0.235758457226
+  phi min  = 4.71553893562e-15
+  phi max  = 0.656799749455
+  mass     = 0.314159257149
+
+Time = 0.13  step = 130  deltaT = 0.001
+  Rphi min = -1.71815163814
+  Rphi max = 0.234523533145
+  phi min  = 5.12404172553e-15
+  phi max  = 0.655081597817
+  mass     = 0.314159256782
+
+Time = 0.13100000000000001  step = 131  deltaT = 0.001
+  Rphi min = -1.70920088191
+  Rphi max = 0.233291887926
+  phi min  = 5.56546655296e-15
+  phi max  = 0.653372396935
+  mass     = 0.314159256401
+
+Time = 0.13200000000000001  step = 132  deltaT = 0.001
+  Rphi min = -1.70031977133
+  Rphi max = 0.23206355407
+  phi min  = 6.04226282954e-15
+  phi max  = 0.651672077164
+  mass     = 0.314159256005
+
+Time = 0.13300000000000001  step = 133  deltaT = 0.001
+  Rphi min = -1.69150758692
+  Rphi max = 0.23083856313
+  phi min  = 6.55704654982e-15
+  phi max  = 0.649980569577
+  mass     = 0.314159255593
+
+Time = 0.13400000000000001  step = 134  deltaT = 0.001
+  Rphi min = -1.68276361844
+  Rphi max = 0.22962364925
+  phi min  = 7.11261051172e-15
+  phi max  = 0.648297805958
+  mass     = 0.314159255166
+
+Time = 0.13500000000000001  step = 135  deltaT = 0.001
+  Rphi min = -1.67408716479
+  Rphi max = 0.22845827462
+  phi min  = 7.71193509234e-15
+  phi max  = 0.646623718793
+  mass     = 0.314159254723
+
+Time = 0.13600000000000001  step = 136  deltaT = 0.001
+  Rphi min = -1.66547753382
+  Rphi max = 0.227295748951
+  phi min  = 8.35819960491e-15
+  phi max  = 0.64495824126
+  mass     = 0.314159254263
+
+Time = 0.13700000000000001  step = 137  deltaT = 0.001
+  Rphi min = -1.65693404221
+  Rphi max = 0.226136105287
+  phi min  = 9.05479426417e-15
+  phi max  = 0.643301307217
+  mass     = 0.314159253786
+
+Time = 0.13800000000000001  step = 138  deltaT = 0.001
+  Rphi min = -1.64845601534
+  Rphi max = 0.22497937578
+  phi min  = 9.80533278782e-15
+  phi max  = 0.641652851202
+  mass     = 0.31415925329
+
+Time = 0.13900000000000001  step = 139  deltaT = 0.001
+  Rphi min = -1.64004278716
+  Rphi max = 0.223825591705
+  phi min  = 1.06136656634e-14
+  phi max  = 0.640012808415
+  mass     = 0.314159252777
+
+Time = 0.14000000000000001  step = 140  deltaT = 0.001
+  Rphi min = -1.63169370006
+  Rphi max = 0.222696961404
+  phi min  = 1.14838941104e-14
+  phi max  = 0.638381114715
+  mass     = 0.314159252244
+
+Time = 0.14100000000000001  step = 141  deltaT = 0.001
+  Rphi min = -1.62340810473
+  Rphi max = 0.221574887893
+  phi min  = 1.24203847695e-14
+  phi max  = 0.63675770661
+  mass     = 0.314159251692
+
+Time = 0.14200000000000002  step = 142  deltaT = 0.001
+  Rphi min = -1.61518536004
+  Rphi max = 0.220455561846
+  phi min  = 1.34277851501e-14
+  phi max  = 0.63514252125
+  mass     = 0.31415925112
+
+Time = 0.14300000000000002  step = 143  deltaT = 0.001
+  Rphi min = -1.60702483293
+  Rphi max = 0.219339013734
+  phi min  = 1.45110398713e-14
+  phi max  = 0.633535496417
+  mass     = 0.314159250527
+
+Time = 0.14400000000000002  step = 144  deltaT = 0.001
+  Rphi min = -1.59892589826
+  Rphi max = 0.218225273204
+  phi min  = 1.56754077296e-14
+  phi max  = 0.631936570519
+  mass     = 0.314159249913
+
+Time = 0.14499999999999999  step = 145  deltaT = 0.001
+  Rphi min = -1.59088793873
+  Rphi max = 0.217114369096
+  phi min  = 1.69264796303e-14
+  phi max  = 0.63034568258
+  mass     = 0.314159249276
+
+Time = 0.14599999999999999  step = 146  deltaT = 0.001
+  Rphi min = -1.58291034473
+  Rphi max = 0.216006329454
+  phi min  = 1.82701974198e-14
+  phi max  = 0.628762772235
+  mass     = 0.314159248617
+
+Time = 0.14699999999999999  step = 147  deltaT = 0.001
+  Rphi min = -1.57499251424
+  Rphi max = 0.214914277266
+  phi min  = 1.97128736562e-14
+  phi max  = 0.627187779721
+  mass     = 0.314159247934
+
+Time = 0.14799999999999999  step = 148  deltaT = 0.001
+  Rphi min = -1.56713385272
+  Rphi max = 0.213853856901
+  phi min  = 2.12612123599e-14
+  phi max  = 0.625620645868
+  mass     = 0.314159247228
+
+Time = 0.14899999999999999  step = 149  deltaT = 0.001
+  Rphi min = -1.55933377298
+  Rphi max = 0.21279596639
+  phi min  = 2.29223307844e-14
+  phi max  = 0.624061312096
+  mass     = 0.314159246496
+
+Time = 0.14999999999999999  step = 150  deltaT = 0.001
+  Rphi min = -1.55159169511
+  Rphi max = 0.21174063377
+  phi min  = 2.47037822493e-14
+  phi max  = 0.6225097204
+  mass     = 0.314159245739
+
+Time = 0.151  step = 151  deltaT = 0.001
+  Rphi min = -1.54390704631
+  Rphi max = 0.210687886341
+  phi min  = 2.66135800815e-14
+  phi max  = 0.620965813354
+  mass     = 0.314159244956
+
+Time = 0.152  step = 152  deltaT = 0.001
+  Rphi min = -1.53627926085
+  Rphi max = 0.209637750677
+  phi min  = 2.8660222708e-14
+  phi max  = 0.619429534093
+  mass     = 0.314159244145
+
+Time = 0.153  step = 153  deltaT = 0.001
+  Rphi min = -1.52870777994
+  Rphi max = 0.208590252636
+  phi min  = 3.08527199486e-14
+  phi max  = 0.617900826313
+  mass     = 0.314159243307
+
+Time = 0.154  step = 154  deltaT = 0.001
+  Rphi min = -1.52119205162
+  Rphi max = 0.207545417375
+  phi min  = 3.32006205575e-14
+  phi max  = 0.616379634262
+  mass     = 0.31415924244
+
+Time = 0.155  step = 155  deltaT = 0.001
+  Rphi min = -1.51373153065
+  Rphi max = 0.20650326936
+  phi min  = 3.57140410615e-14
+  phi max  = 0.614865902731
+  mass     = 0.314159241544
+
+Time = 0.156  step = 156  deltaT = 0.001
+  Rphi min = -1.50632567846
+  Rphi max = 0.205463832377
+  phi min  = 3.84036959501e-14
+  phi max  = 0.613359577053
+  mass     = 0.314159240617
+
+Time = 0.157  step = 157  deltaT = 0.001
+  Rphi min = -1.498973963
+  Rphi max = 0.204427129545
+  phi min  = 4.12809292675e-14
+  phi max  = 0.61186060309
+  mass     = 0.314159239659
+
+Time = 0.158  step = 158  deltaT = 0.001
+  Rphi min = -1.49167585868
+  Rphi max = 0.203393183326
+  phi min  = 4.43577476631e-14
+  phi max  = 0.610368927231
+  mass     = 0.31415923867
+
+Time = 0.159  step = 159  deltaT = 0.001
+  Rphi min = -1.48443084625
+  Rphi max = 0.20240483144
+  phi min  = 4.76468549582e-14
+  phi max  = 0.608884496385
+  mass     = 0.314159237647
+
+Time = 0.16  step = 160  deltaT = 0.001
+  Rphi min = -1.47723841274
+  Rphi max = 0.201450880267
+  phi min  = 5.1161688284e-14
+  phi max  = 0.607407257972
+  mass     = 0.314159236591
+
+Time = 0.161  step = 161  deltaT = 0.001
+  Rphi min = -1.47009805133
+  Rphi max = 0.200499031121
+  phi min  = 5.49164558558e-14
+  phi max  = 0.605937159921
+  mass     = 0.314159235499
+
+Time = 0.16200000000000001  step = 162  deltaT = 0.001
+  Rphi min = -1.46300926131
+  Rphi max = 0.199549309099
+  phi min  = 5.89261764402e-14
+  phi max  = 0.604474150659
+  mass     = 0.314159234373
+
+Time = 0.16300000000000001  step = 163  deltaT = 0.001
+  Rphi min = -1.45597154793
+  Rphi max = 0.198601738675
+  phi min  = 6.32067205841e-14
+  phi max  = 0.603018179111
+  mass     = 0.314159233209
+
+Time = 0.16400000000000001  step = 164  deltaT = 0.001
+  Rphi min = -1.44898442238
+  Rphi max = 0.197656343717
+  phi min  = 6.77748536676e-14
+  phi max  = 0.601569194689
+  mass     = 0.314159232008
+
+Time = 0.16500000000000001  step = 165  deltaT = 0.001
+  Rphi min = -1.44204740167
+  Rphi max = 0.196713147491
+  phi min  = 7.26482808497e-14
+  phi max  = 0.600127147287
+  mass     = 0.314159230768
+
+Time = 0.16600000000000001  step = 166  deltaT = 0.001
+  Rphi min = -1.43516000854
+  Rphi max = 0.195772172676
+  phi min  = 7.78456939774e-14
+  phi max  = 0.598691987279
+  mass     = 0.314159229488
+
+Time = 0.16700000000000001  step = 167  deltaT = 0.001
+  Rphi min = -1.42832177141
+  Rphi max = 0.194833441368
+  phi min  = 8.33868205277e-14
+  phi max  = 0.597263665507
+  mass     = 0.314159228168
+
+Time = 0.16800000000000001  step = 168  deltaT = 0.001
+  Rphi min = -1.42153222425
+  Rphi max = 0.193896975091
+  phi min  = 8.92924746576e-14
+  phi max  = 0.595842133283
+  mass     = 0.314159226806
+
+Time = 0.16900000000000001  step = 169  deltaT = 0.001
+  Rphi min = -1.41479090657
+  Rphi max = 0.192962794808
+  phi min  = 9.55846104375e-14
+  phi max  = 0.594427342376
+  mass     = 0.314159225401
+
+Time = 0.17000000000000001  step = 170  deltaT = 0.001
+  Rphi min = -1.40809736328
+  Rphi max = 0.192030920929
+  phi min  = 1.02286377345e-13
+  phi max  = 0.593019245013
+  mass     = 0.314159223952
+
+Time = 0.17100000000000001  step = 171  deltaT = 0.001
+  Rphi min = -1.40145114463
+  Rphi max = 0.191101373319
+  phi min  = 1.09422178099e-13
+  phi max  = 0.591617793869
+  mass     = 0.314159222457
+
+Time = 0.17200000000000001  step = 172  deltaT = 0.001
+  Rphi min = -1.39485180617
+  Rphi max = 0.190174171305
+  phi min  = 1.17017728918e-13
+  phi max  = 0.590222942062
+  mass     = 0.314159220917
+
+Time = 0.17300000000000001  step = 173  deltaT = 0.001
+  Rphi min = -1.38829890863
+  Rphi max = 0.189255861538
+  phi min  = 1.25100122283e-13
+  phi max  = 0.588834643154
+  mass     = 0.314159219328
+
+Time = 0.17400000000000002  step = 174  deltaT = 0.001
+  Rphi min = -1.38179201786
+  Rphi max = 0.188400470706
+  phi min  = 1.33697892298e-13
+  phi max  = 0.587452851136
+  mass     = 0.314159217691
+
+Time = 0.17500000000000002  step = 175  deltaT = 0.001
+  Rphi min = -1.37533070478
+  Rphi max = 0.187546840076
+  phi min  = 1.42841082724e-13
+  phi max  = 0.586077520431
+  mass     = 0.314159216004
+
+Time = 0.17599999999999999  step = 176  deltaT = 0.001
+  Rphi min = -1.36891454529
+  Rphi max = 0.186694991575
+  phi min  = 1.52561317795e-13
+  phi max  = 0.584708605886
+  mass     = 0.314159214266
+
+Time = 0.17699999999999999  step = 177  deltaT = 0.001
+  Rphi min = -1.3625431202
+  Rphi max = 0.185844946619
+  phi min  = 1.62891875895e-13
+  phi max  = 0.583346062766
+  mass     = 0.314159212475
+
+Time = 0.17799999999999999  step = 178  deltaT = 0.001
+  Rphi min = -1.35621601517
+  Rphi max = 0.18499672612
+  phi min  = 1.738677662e-13
+  phi max  = 0.58198984675
+  mass     = 0.31415921063
+
+Time = 0.17899999999999999  step = 179  deltaT = 0.001
+  Rphi min = -1.34993282064
+  Rphi max = 0.184150350495
+  phi min  = 1.85525808374e-13
+  phi max  = 0.58063991393
+  mass     = 0.31415920873
+
+Time = 0.17999999999999999  step = 180  deltaT = 0.001
+  Rphi min = -1.34369313176
+  Rphi max = 0.18330583967
+  phi min  = 1.97904715431e-13
+  phi max  = 0.579296220798
+  mass     = 0.314159206774
+
+Time = 0.18099999999999999  step = 181  deltaT = 0.001
+  Rphi min = -1.33749654833
+  Rphi max = 0.182463213093
+  phi min  = 2.11045179859e-13
+  phi max  = 0.57795872425
+  mass     = 0.314159204759
+
+Time = 0.182  step = 182  deltaT = 0.001
+  Rphi min = -1.33134267474
+  Rphi max = 0.181622489736
+  phi min  = 2.24989963111e-13
+  phi max  = 0.576627381575
+  mass     = 0.314159202685
+
+Time = 0.183  step = 183  deltaT = 0.001
+  Rphi min = -1.3252311199
+  Rphi max = 0.180783688107
+  phi min  = 2.39783988575e-13
+  phi max  = 0.575302150455
+  mass     = 0.31415920055
+
+Time = 0.184  step = 184  deltaT = 0.001
+  Rphi min = -1.31916149717
+  Rphi max = 0.179946826253
+  phi min  = 2.55474438126e-13
+  phi max  = 0.573982988958
+  mass     = 0.314159198353
+
+Time = 0.185  step = 185  deltaT = 0.001
+  Rphi min = -1.31313342433
+  Rphi max = 0.179120672775
+  phi min  = 2.72110852387e-13
+  phi max  = 0.572669855534
+  mass     = 0.314159196093
+
+Time = 0.186  step = 186  deltaT = 0.001
+  Rphi min = -1.30714652348
+  Rphi max = 0.178302334187
+  phi min  = 2.89745234795e-13
+  phi max  = 0.57136270901
+  mass     = 0.314159193766
+
+Time = 0.187  step = 187  deltaT = 0.001
+  Rphi min = -1.30120042102
+  Rphi max = 0.177485854322
+  phi min  = 3.08432159615e-13
+  phi max  = 0.570061508589
+  mass     = 0.314159191373
+
+Time = 0.188  step = 188  deltaT = 0.001
+  Rphi min = -1.29529474755
+  Rphi max = 0.176671250355
+  phi min  = 3.28228883994e-13
+  phi max  = 0.568766213842
+  mass     = 0.314159188912
+
+Time = 0.189  step = 189  deltaT = 0.001
+  Rphi min = -1.28942913785
+  Rphi max = 0.175858539029
+  phi min  = 3.49195464205e-13
+  phi max  = 0.567476784704
+  mass     = 0.31415918638
+
+Time = 0.19  step = 190  deltaT = 0.001
+  Rphi min = -1.28360323081
+  Rphi max = 0.17504773667
+  phi min  = 3.71394876196e-13
+  phi max  = 0.566193181473
+  mass     = 0.314159183777
+
+Time = 0.191  step = 191  deltaT = 0.001
+  Rphi min = -1.27781666938
+  Rphi max = 0.174238859186
+  phi min  = 3.94893140569e-13
+  phi max  = 0.564915364804
+  mass     = 0.314159181101
+
+Time = 0.192  step = 192  deltaT = 0.001
+  Rphi min = -1.27206910049
+  Rphi max = 0.17343192208
+  phi min  = 4.1975945213e-13
+  phi max  = 0.563643295703
+  mass     = 0.314159178349
+
+Time = 0.193  step = 193  deltaT = 0.001
+  Rphi min = -1.26636017504
+  Rphi max = 0.172659926148
+  phi min  = 4.46066314139e-13
+  phi max  = 0.562376935528
+  mass     = 0.314159175521
+
+Time = 0.19400000000000001  step = 194  deltaT = 0.001
+  Rphi min = -1.26068954779
+  Rphi max = 0.171897655234
+  phi min  = 4.73889677404e-13
+  phi max  = 0.56111624598
+  mass     = 0.314159172614
+
+Time = 0.19500000000000001  step = 195  deltaT = 0.001
+  Rphi min = -1.25505687739
+  Rphi max = 0.17113700475
+  phi min  = 5.03309084349e-13
+  phi max  = 0.559861189103
+  mass     = 0.314159169626
+
+Time = 0.19600000000000001  step = 196  deltaT = 0.001
+  Rphi min = -1.24946182624
+  Rphi max = 0.170377991044
+  phi min  = 5.34407818215e-13
+  phi max  = 0.558611727277
+  mass     = 0.314159166557
+
+Time = 0.19700000000000001  step = 197  deltaT = 0.001
+  Rphi min = -1.24390406049
+  Rphi max = 0.169620630084
+  phi min  = 5.6727305752e-13
+  phi max  = 0.557367823216
+  mass     = 0.314159163404
+
+Time = 0.19800000000000001  step = 198  deltaT = 0.001
+  Rphi min = -1.23838324999
+  Rphi max = 0.168864937457
+  phi min  = 6.01996035953e-13
+  phi max  = 0.556129439966
+  mass     = 0.314159160164
+
+Time = 0.19900000000000001  step = 199  deltaT = 0.001
+  Rphi min = -1.23289906823
+  Rphi max = 0.168110928375
+  phi min  = 6.38672207829e-13
+  phi max  = 0.554896540898
+  mass     = 0.314159156837
+
+Time = 0.20000000000000001  step = 200  deltaT = 0.001
+  Rphi min = -1.22745119228
+  Rphi max = 0.167358617686
+  phi min  = 6.77401419277e-13
+  phi max  = 0.553669089706
+  mass     = 0.314159153421
+
+End
+

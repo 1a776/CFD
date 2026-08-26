@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+solverPath="$projectRoot/build/02_diffusion_equation/bin/explicitDiffusionFoamStudent"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "$projectRoot/scripts/configs/02_diffusion_equation/03_gaussian_quad.json" \
+    --N 40 \
+    --refresh-initial-only
+cp -R "$caseDir/0.orig" "$caseDir/0"
+runApplication -overwrite blockMesh
+runApplication -overwrite checkMesh
+runApplication -overwrite "$solverPath"

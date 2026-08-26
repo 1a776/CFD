@@ -1,0 +1,83 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      blockMeshDict;
+}
+
+// 计算区域入口。
+// 原题第二题第一个案例要求：
+//     Ω = [-5,5] × [-5,5]
+//
+// 求解器不直接读取 blockMeshDict。
+// blockMesh 先把这里的设置转成 constant/polyMesh，
+// 求解器里的 createMesh.H 再读取 constant/polyMesh。
+convertToMeters 1;
+
+vertices
+(
+    (-5 -5 0)
+    (5 -5 0)
+    (5 5 0)
+    (-5 5 0)
+    (-5 -5 0.1)
+    (5 -5 0.1)
+    (5 5 0.1)
+    (-5 5 0.1)
+);
+
+blocks
+(
+    // 四边形结构网格入口。
+    // 这里的 (20 20 1) 对应 N=20。
+    // 脚本会根据 --resolutions 自动改成 N10/N20/N40/N80。
+    hex (0 1 2 3 4 5 6 7) (80 80 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    xMin
+    {
+        type patch;
+        faces ((0 4 7 3));
+    }
+    xMax
+    {
+        type patch;
+        faces ((1 2 6 5));
+    }
+    yMin
+    {
+        type patch;
+        faces ((0 1 5 4));
+    }
+    yMax
+    {
+        type patch;
+        faces ((3 7 6 2));
+    }
+    zMin
+    {
+        type empty;
+        faces ((0 3 2 1));
+    }
+    zMax
+    {
+        type empty;
+        faces ((4 5 6 7));
+    }
+);
+
+

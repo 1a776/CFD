@@ -32,6 +32,12 @@ class CaseConfig:
     gmsh_python: str | None
     scheme_name: str
     div_scheme: str
+    laplacian_scheme: str
+    sn_grad_scheme: str
+    scalar_field: str
+    diffusivity: float
+    diffusion_co: float
+    max_delta_t: float | None
     solver: str
     template_resolution: int
     resolutions: tuple[int, ...]
@@ -143,7 +149,17 @@ def load_config(value: str | Path) -> CaseConfig:
             else None
         ),
         scheme_name=str(data.get("schemeName", "")),
-        div_scheme=str(data["divScheme"]),
+        div_scheme=str(data.get("divScheme", "")),
+        laplacian_scheme=str(data.get("laplacianScheme", "Gauss linear corrected")),
+        sn_grad_scheme=str(data.get("snGradScheme", "corrected")),
+        scalar_field=str(data.get("scalarField", "T")),
+        diffusivity=float(data.get("mu", 1.0)),
+        diffusion_co=float(data.get("diffusionCo", data.get("maxCo", 0.5))),
+        max_delta_t=(
+            float(data["maxDeltaT"])
+            if data.get("maxDeltaT") is not None
+            else None
+        ),
         solver=str(data.get("solver", "explicitAdvectionFoamStudent")),
         template_resolution=int(data.get("templateResolution", 20)),
         resolutions=resolutions,

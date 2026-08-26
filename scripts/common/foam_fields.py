@@ -61,8 +61,12 @@ def read_vector_field(path: Path) -> list[tuple[float, float, float]]:
 def _boundary_entry(patch: str, spec: str | dict[str, Any]) -> str:
     """Format one OpenFOAM boundaryField entry."""
     if isinstance(spec, dict):
-        lines = [f"        {key} {value};" for key, value in spec.items()]
-        body = "\n".join(lines)
+        raw_body = spec.get("__raw__")
+        if raw_body is not None:
+            body = str(raw_body).rstrip()
+        else:
+            lines = [f"        {key} {value};" for key, value in spec.items()]
+            body = "\n".join(lines)
     else:
         body = f"        type {spec};"
     return f"    {patch}\n    {{\n{body}\n    }}"

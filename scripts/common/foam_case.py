@@ -23,6 +23,12 @@ from advection_sine import (
     write_case_initial_field_from_centres,
 )
 from case_config import CaseConfig
+from diffusion_tools import (
+    write_discontinuous_initial_field,
+    write_discontinuous_initial_field_from_centres,
+    write_gaussian_initial_field,
+    write_gaussian_initial_field_from_centres,
+)
 from foam_fields import patch_uniform_vector_field, read_cell_geometry
 from mesh_tools import mesh_resolution, patch_block_mesh_resolution
 from paths import PROJECT_ROOT
@@ -92,6 +98,28 @@ def _replace_or_append_dictionary_entry(path: Path, name: str, value: str) -> No
 def _patch_fv_schemes(case: Path, config: CaseConfig) -> None:
     path = case / "system" / "fvSchemes"
     text = path.read_text(encoding="utf-8")
+    if config.problem.startswith("diffusion_"):
+        updated, count = re.subn(
+            r"^(\s*laplacian\(mu,phi\)\s+)([^;]+);",
+            rf"\g<1>{config.laplacian_scheme};",
+            text,
+            count=1,
+            flags=re.M,
+        )
+        if count != 1:
+            raise RuntimeError(f"Cannot find laplacian(mu,phi) in {path}")
+        updated, count = re.subn(
+            r"(snGradSchemes\s*\{\s*.*?^\s*default\s+)([^;]+);",
+            rf"\g<1>{config.sn_grad_scheme};",
+            updated,
+            count=1,
+            flags=re.M | re.S,
+        )
+        if count != 1:
+            raise RuntimeError(f"Cannot find snGradSchemes/default in {path}")
+        path.write_text(updated, encoding="utf-8")
+        return
+
     updated, count = re.subn(
         r"^(\s*div\(phi,T\)\s+)([^;]+);",
         rf"\g<1>{config.div_scheme};",
@@ -162,9 +190,66 @@ def _patch_control_dict(case: Path, config: CaseConfig) -> None:
         format(config.end_time, ".17g"),
     )
     _replace_or_append_dictionary_entry(path, "maxCo", f"{config.max_co:g}")
+    _replace_or_append_dictionary_entry(path, "scalarField", config.scalar_field)
+    if config.problem.startswith("diffusion_"):
+        _replace_or_append_dictionary_entry(path, "diffusionCo", f"{config.diffusion_co:g}")
+        if config.max_delta_t is not None:
+            _replace_or_append_dictionary_entry(path, "maxDeltaT", f"{config.max_delta_t:g}")
     # Keep the final time directory name consistent with the configured
     # terminal time, including values such as 2*pi.
     _replace_or_append_dictionary_entry(path, "timePrecision", "17")
+
+
+def _patch_block_mesh_domain(case: Path, config: CaseConfig) -> None:
+    """Patch a single-block 2-D box to the configured rectangular domain."""
+    path = case / "system" / "blockMeshDict"
+    text = path.read_text(encoding="utf-8")
+    xmin, xmax, ymin, ymax = config.domain
+    zmax = config.thickness
+    vertices = f"""vertices
+(
+    ({xmin:g} {ymin:g} 0)
+    ({xmax:g} {ymin:g} 0)
+    ({xmax:g} {ymax:g} 0)
+    ({xmin:g} {ymax:g} 0)
+    ({xmin:g} {ymin:g} {zmax:g})
+    ({xmax:g} {ymin:g} {zmax:g})
+    ({xmax:g} {ymax:g} {zmax:g})
+    ({xmin:g} {ymax:g} {zmax:g})
+);"""
+    updated, count = re.subn(r"vertices\s*\(.*?\)\s*;", vertices, text, count=1, flags=re.S)
+    if count != 1:
+        raise RuntimeError(f"Cannot patch vertices in {path}")
+    path.write_text(updated, encoding="utf-8")
+
+
+def _write_transport_properties(case: Path, config: CaseConfig) -> Path:
+    """Write constant/transportProperties for the diffusion solver."""
+    path = case / "constant" / "transportProperties"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O peration     |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}}
+
+// 对应求解器里的 dimensionedScalar mu。
+// 数学上是扩散系数 μ，量纲是 L2/T。
+mu              [0 2 -1 0 0 0 0] {config.diffusivity:.16g};
+""",
+        encoding="utf-8",
+    )
+    return path
 
 
 def _patch_block_mesh_outer_boundaries(case: Path) -> None:
@@ -179,6 +264,8 @@ def _patch_block_mesh_outer_boundaries(case: Path) -> None:
 
 def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     """Apply the configured constant velocity to the template field."""
+    if config.problem.startswith("diffusion_"):
+        return case / "0.orig" / config.scalar_field
     if config.problem == "solid_rotation_advection":
         if config.mesh_type == "tri":
             # The first preparation pass happens before Gmsh creates
@@ -209,37 +296,7 @@ def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
 def _write_create_patch_dict(case: Path, config: CaseConfig) -> Path:
     """Create the final Gmsh patches for periodic or outer-boundary cases."""
     path = case / "system" / "createPatchDict"
-    if config.boundary_condition == "zeroScalarAtOuterBoundary":
-        horizontal_patches = """
-    xMin
-    {
-        patchInfo { type patch; }
-        constructFrom patches;
-        patches (xMinSource);
-    }
-
-    xMax
-    {
-        patchInfo { type patch; }
-        constructFrom patches;
-        patches (xMaxSource);
-    }
-
-    yMin
-    {
-        patchInfo { type patch; }
-        constructFrom patches;
-        patches (yMinSource);
-    }
-
-    yMax
-    {
-        patchInfo { type patch; }
-        constructFrom patches;
-        patches (yMaxSource);
-    }
-"""
-    else:
+    if config.boundary_condition == "periodicXY":
         horizontal_patches = """
     xMin
     {
@@ -293,6 +350,36 @@ def _write_create_patch_dict(case: Path, config: CaseConfig) -> Path:
         patches (yMaxSource);
     }
 """
+    else:
+        horizontal_patches = """
+    xMin
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (xMinSource);
+    }
+
+    xMax
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (xMaxSource);
+    }
+
+    yMin
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMinSource);
+    }
+
+    yMax
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMaxSource);
+    }
+"""
     path.write_text(
         f"""/*--------------------------------*- C++ -*----------------------------------*\\
   =========                 |
@@ -334,6 +421,40 @@ patches
 
 
 def _write_initial_field(case: Path, config: CaseConfig) -> Path:
+    if config.problem == "diffusion_discontinuity":
+        if config.mesh_type == "tri":
+            centres, _ = read_cell_geometry(case)
+            return write_discontinuous_initial_field_from_centres(
+                case,
+                centres,
+                config.scalar_field,
+            )
+        nx, ny = mesh_resolution(case)
+        return write_discontinuous_initial_field(
+            case,
+            nx,
+            ny,
+            config.domain,
+            config.scalar_field,
+        )
+    if config.problem == "diffusion_gaussian":
+        if config.mesh_type == "tri":
+            centres, _ = read_cell_geometry(case)
+            return write_gaussian_initial_field_from_centres(
+                case,
+                centres,
+                config.scalar_field,
+                config.diffusivity,
+            )
+        nx, ny = mesh_resolution(case)
+        return write_gaussian_initial_field(
+            case,
+            nx,
+            ny,
+            config.domain,
+            config.scalar_field,
+            config.diffusivity,
+        )
     if config.problem == "sine_wave_advection":
         if config.mesh_type == "quad":
             nx, ny = mesh_resolution(case)
@@ -453,7 +574,11 @@ sh "$caseDir/Allclean"
 runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_tri_mesh.py" \\
     --case "$caseDir" \\
     --resolution {resolution} \\
-    --thickness {config.thickness:g}
+    --thickness {config.thickness:g} \\
+    --xmin {config.domain[0]:g} \\
+    --xmax {config.domain[1]:g} \\
+    --ymin {config.domain[2]:g} \\
+    --ymax {config.domain[3]:g}
 runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
 runApplication -overwrite createPatch
 runApplication -overwrite checkMesh
@@ -519,6 +644,7 @@ def prepare_case(
         _copy_constant_inputs(template, target)
 
     if config.mesh_type == "quad":
+        _patch_block_mesh_domain(target, config)
         patch_block_mesh_resolution(target, resolution)
         if config.boundary_condition != "periodicXY":
             _patch_block_mesh_outer_boundaries(target)
@@ -530,6 +656,8 @@ def prepare_case(
         (target / "mesh").mkdir(parents=True, exist_ok=True)
     _patch_fv_schemes(target, config)
     _patch_control_dict(target, config)
+    if config.problem.startswith("diffusion_"):
+        _write_transport_properties(target, config)
     _patch_velocity_field(target, config)
     initial_field: Path | None = None
     if config.mesh_type == "quad":
@@ -554,8 +682,14 @@ def prepare_case(
         "initialProfile": config.initial_profile,
         "boundaryCondition": config.boundary_condition,
         "postprocess": config.postprocess,
+        "scalarField": config.scalar_field,
+        "mu": config.diffusivity,
+        "diffusionCo": config.diffusion_co,
+        "laplacianScheme": config.laplacian_scheme,
+        "snGradScheme": config.sn_grad_scheme,
         "endTime": config.end_time,
         "maxCo": config.max_co,
+        "maxDeltaT": config.max_delta_t,
         "initialField": str(initial_field) if initial_field else "generated-after-mesh",
     }
     (target / "metadata.json").write_text(
@@ -587,11 +721,17 @@ def run_case(case: Path, bashrc: Path) -> None:
 
 def postprocess_configured_case(config: CaseConfig, resolution: int) -> None:
     """Post-process one configured case after it has run."""
-    if config.problem not in {"sine_wave_advection", "solid_rotation_advection"}:
+    if config.problem not in {
+        "sine_wave_advection",
+        "solid_rotation_advection",
+        "diffusion_discontinuity",
+        "diffusion_gaussian",
+    }:
         raise NotImplementedError(f"Unsupported postprocess problem: {config.problem}")
     from postprocess_case import postprocess_case
 
-    postprocess_case(config.case_dir(resolution), PROJECT_ROOT, config.max_co)
+    target_monitor = config.diffusion_co if config.problem.startswith("diffusion_") else config.max_co
+    postprocess_case(config.case_dir(resolution), PROJECT_ROOT, target_monitor)
 
 
 def run_study(
@@ -617,7 +757,7 @@ def run_study(
         run_case(case, bashrc)
         postprocess_configured_case(config, resolution)
 
-    if not prepare_only and config.problem == "sine_wave_advection":
+    if not prepare_only and config.problem in {"sine_wave_advection", "diffusion_discontinuity"}:
         from study_analysis import analyse, collect, plot
 
         collect(config.solver_family, config.case_name, resolutions)

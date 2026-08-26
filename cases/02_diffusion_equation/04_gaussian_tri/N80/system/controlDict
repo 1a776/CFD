@@ -1,0 +1,59 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+// 对应求解器入口：
+//     runTime.controlDict()
+//
+// 对应数学问题：
+//     ∂φ/∂t - ∇·(μ∇φ) = 0
+//     t(end) = 0.2
+application     explicitDiffusionFoamStudent;
+
+// 时间区间。
+// startTime 对应 t=0，endTime 对应题目要求输出误差的 t=0.2。
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         0.20000000000000001;
+
+// 初始 deltaT 只是 OpenFOAM 标准字段。
+// 求解器会用扩散稳定性公式重新计算：
+//     Δt = diffusionCo * min over cells [ V(c) / A(c) ]
+deltaT          1e-4;
+
+// 写出控制。
+// writeControl runTime 表示按物理时间写；
+// writeInterval 0.02 表示每隔 0.02 输出一次场。
+writeControl    runTime;
+writeInterval   0.02;
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  12;
+timePrecision   17;
+writeCompression off;
+runTimeModifiable no;
+
+// 求解器读取这个字段来决定未知量文件名。
+// scalarField phi 表示读取 0/phi，写出每个时间目录下的 phi。
+scalarField     phi;
+
+// 显式扩散稳定系数 σ。
+// 越小越稳定，时间步越小。
+diffusionCo     0.45;
+
+// 额外限制最大时间步，避免粗网格时输出前只有很少步。
+maxDeltaT       0.001;
+maxCo            0.2;

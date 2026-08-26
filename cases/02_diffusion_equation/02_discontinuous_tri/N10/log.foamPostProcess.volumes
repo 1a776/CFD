@@ -1,0 +1,44 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : foamPostProcess -constant -func writeCellVolumes
+Date   : Aug 26 2026
+Time   : 17:34:12
+Host   : "DELL"
+PID    : 1018
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/02_discontinuous_tri/N10
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = constant
+
+
+Constructing functionObjects from system/functions
+    Selecting writeCellVolumes with name writeCellVolumes
+Time = constant
+
+Reading fields:
+
+Executing functionObjects
+    Writing cell-volumes field Vc to constant
+
+Time = 0s
+
+Reading fields:
+
+Executing functionObjects
+    Writing cell-volumes field Vc to 0
+
+End
+

@@ -1,0 +1,31 @@
+{
+  "caseName": "03_gaussian_quad",
+  "solverFamily": "02_diffusion_equation",
+  "description": "Gaussian diffusion benchmark on a structured quadrilateral mesh.",
+  "equation": "diffusion",
+  "problem": "diffusion_gaussian",
+  "meshType": "quad",
+  "meshBackend": "blockMesh",
+  "templateCaseName": "01_discontinuous_quad",
+  "schemeName": "Gauss_linear_corrected",
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "solver": "explicitDiffusionFoamStudent",
+  "templateResolution": 20,
+  "resolutions": [10, 20, 40, 80],
+  "domain": [-5.0, 5.0, -5.0, 5.0],
+  "resolutionMeaning": "cellsPerEdge",
+  "scalarField": "phi",
+  "mu": 1.0,
+  "boundaryCondition": "gaussianDirichlet",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "gaussianDiffusion",
+    "reportTime": 0.2
+  },
+  "endTime": 0.2,
+  "diffusionCo": 0.45,
+  "maxDeltaT": 0.001,
+  "thickness": 0.1,
+  "implemented": true
+}

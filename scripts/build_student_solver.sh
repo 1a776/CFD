@@ -15,8 +15,8 @@ cd "$projectRoot"
 : "${WM_PROJECT_DIR:?请先执行 source /opt/openfoam14/etc/bashrc}"
 
 # FOAM_USER_APPBIN 是 OpenFOAM 用户自定义 solver 的输出目录。
-# 默认可能指向 HOME 下的 OpenFOAM 用户目录；这里显式改到本工程的
-# build/01_advection_equation/bin，
+# 默认可能指向 HOME 下的 OpenFOAM 用户目录；这里逐个求解器族显式改到
+# student_project/build/<solverFamily>/bin，
 # 避免污染系统和其它工程。
 export FOAM_USER_APPBIN="$projectRoot/build/01_advection_equation/bin"
 mkdir -p "$FOAM_USER_APPBIN"
@@ -28,3 +28,8 @@ mkdir -p "$FOAM_USER_APPBIN"
 # files 决定编译哪个 .C 文件，以及生成什么可执行文件；
 # options 决定使用哪些 OpenFOAM 头文件目录和链接库。
 wmake UDF/solver/01_advection_equation/explicitAdvectionFoamStudent
+
+# 第二题：显式扩散方程求解器。
+export FOAM_USER_APPBIN="$projectRoot/build/02_diffusion_equation/bin"
+mkdir -p "$FOAM_USER_APPBIN"
+wmake UDF/solver/02_diffusion_equation/explicitDiffusionFoamStudent

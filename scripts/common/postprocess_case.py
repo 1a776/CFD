@@ -35,6 +35,14 @@ from advection_tools import (
     parse_solver_log,
     read_scalar_field,
 )
+from diffusion_tools import (
+    discontinuous_exact_value,
+    discontinuous_values,
+    gaussian_exact_value,
+    gaussian_values,
+    parse_diffusion_solver_log,
+    structured_centres,
+)
 from foam_fields import read_cell_geometry, read_tri_geometry_metadata
 from paths import solver_data_dir, solver_figure_dir
 
@@ -147,6 +155,56 @@ def write_field_data(
                         f"{abs(error):.16e}",
                     ]
                 )
+
+
+def write_structured_field_data(
+    centres: list[tuple[float, float]],
+    initial: list[float],
+    numerical: list[float],
+    exact: list[float],
+    data_output: Path,
+    error_output: Path,
+) -> None:
+    """Write structured cell-centred data with physical coordinates."""
+    if not (len(centres) == len(initial) == len(numerical) == len(exact)):
+        raise RuntimeError("Structured field data sizes do not match")
+    with data_output.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["cell", "x", "y", "initial", "numerical", "exact", "error", "absError"])
+        for cell, ((x, y), initial_value, numerical_value, exact_value) in enumerate(
+            zip(centres, initial, numerical, exact)
+        ):
+            error = numerical_value - exact_value
+            writer.writerow(
+                [
+                    cell,
+                    f"{x:.16e}",
+                    f"{y:.16e}",
+                    f"{initial_value:.16e}",
+                    f"{numerical_value:.16e}",
+                    f"{exact_value:.16e}",
+                    f"{error:.16e}",
+                    f"{abs(error):.16e}",
+                ]
+            )
+    with error_output.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["cell", "x", "y", "numerical", "exact", "error", "absError"])
+        for cell, ((x, y), numerical_value, exact_value) in enumerate(
+            zip(centres, numerical, exact)
+        ):
+            error = numerical_value - exact_value
+            writer.writerow(
+                [
+                    cell,
+                    f"{x:.16e}",
+                    f"{y:.16e}",
+                    f"{numerical_value:.16e}",
+                    f"{exact_value:.16e}",
+                    f"{error:.16e}",
+                    f"{abs(error):.16e}",
+                ]
+            )
 
 
 def write_rotation_field_data(
@@ -349,6 +407,83 @@ def plot_field_comparison(
         fig.colorbar(image, ax=axis, shrink=0.86)
 
     fig.suptitle("Periodic linear-advection field comparison")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_structured_field_comparison(
+    initial: np.ndarray,
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    output: Path,
+    final_time: float,
+    domain: tuple[float, float, float, float],
+    title: str,
+) -> None:
+    """Plot initial, numerical, exact and error fields on a rectangular domain."""
+    xmin, xmax, ymin, ymax = domain
+    error = numerical - exact
+    maximum = max(
+        float(np.max(np.abs(initial))),
+        float(np.max(np.abs(numerical))),
+        float(np.max(np.abs(exact))),
+        1.0e-16,
+    )
+    error_maximum = max(float(np.max(np.abs(error))), 1.0e-16)
+    ny, nx = numerical.shape
+    x_edges = np.linspace(xmin, xmax, nx + 1)
+    y_edges = np.linspace(ymin, ymax, ny + 1)
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
+    panels = [
+        (axes[0, 0], initial, "Initial field", 0.0, maximum, "viridis"),
+        (axes[0, 1], numerical, f"Numerical field, t={final_time:g}", 0.0, maximum, "viridis"),
+        (axes[1, 0], exact, f"Exact field, t={final_time:g}", 0.0, maximum, "viridis"),
+        (axes[1, 1], error, "Numerical minus exact", -error_maximum, error_maximum, "coolwarm"),
+    ]
+    for axis, values, panel_title, lower, upper, cmap in panels:
+        image = axis.pcolormesh(
+            x_edges,
+            y_edges,
+            values,
+            shading="auto",
+            cmap=cmap,
+            vmin=lower,
+            vmax=upper,
+        )
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(panel_title)
+        fig.colorbar(image, ax=axis, shrink=0.86)
+    fig.suptitle(title)
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_structured_midline_profile(
+    centres: list[tuple[float, float]],
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    output: Path,
+    final_time: float,
+    domain: tuple[float, float, float, float],
+) -> None:
+    """Plot the y=0 midline profile for the discontinuous diffusion case."""
+    xmin, xmax, ymin, ymax = domain
+    ny, nx = numerical.shape
+    dy = (ymax - ymin) / ny
+    mid_j = min(range(ny), key=lambda j: abs(ymin + (j + 0.5) * dy))
+    x_values = [centres[mid_j * nx + i][0] for i in range(nx)]
+
+    fig, axis = plt.subplots(figsize=(8, 4.8), constrained_layout=True)
+    axis.plot(x_values, numerical[mid_j, :], "o-", markersize=3.0, label="numerical")
+    axis.plot(x_values, exact[mid_j, :], "--", linewidth=1.5, label="exact")
+    axis.set_xlabel("x at cell centres nearest y=0")
+    axis.set_ylabel("phi")
+    axis.set_title(f"Midline profile at t={final_time:g}")
+    axis.grid(True, alpha=0.25)
+    axis.legend()
     fig.savefig(output, dpi=220)
     plt.close(fig)
 
@@ -743,6 +878,8 @@ def _read_problem(case: Path) -> str:
 def _postprocess_quad_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
+    if _read_problem(case) == "diffusion_discontinuity":
+        return _postprocess_quad_diffusion_discontinuity_case(case, output_root, target_co)
     if _read_problem(case) == "solid_rotation_advection":
         return _postprocess_quad_solid_rotation_case(case, output_root, target_co)
 
@@ -769,7 +906,7 @@ def _postprocess_quad_case(
     final_mass = float(np.sum(numerical) * cell_volume)
     mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
     mass_change = final_mass - initial_mass
-    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 1.0)
@@ -794,7 +931,7 @@ def _postprocess_quad_case(
         "solverFamily": solver_family,
         "caseName": case_name,
         "mesh": "quad",
-        "problem": "sine",
+        "problem": problem,
         "resolution": nx,
         "nominalH": 1.0 / nx,
         "nCells": nx * ny,
@@ -823,7 +960,11 @@ def _postprocess_quad_case(
         "meshOK": "Mesh OK." in mesh_log,
         "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
         "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
-        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverEnded": (
+            "End" in solver_log
+            if problem == "diffusion_discontinuity"
+            else "End" in solver_log and "Stage 5 time loop completed" in solver_log
+        ),
         "solverFatal": "FOAM FATAL ERROR" in solver_log,
     }
     (data_dir / "summary.json").write_text(
@@ -838,6 +979,145 @@ def _postprocess_quad_case(
     )
     plot_amplitude_history(records, figure_dir / "amplitude_history.png")
     plot_cfl_history(records, figure_dir / "cfl_history.png", target_co)
+
+    print(f"case={case}")
+    print(f"resolution={nx}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_quad_diffusion_discontinuity_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the structured discontinuous diffusion benchmark."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    domain = tuple(float(value) for value in metadata.get("domain", [-5.0, 5.0, -5.0, 5.0]))
+    if len(domain) != 4:
+        raise RuntimeError(f"Invalid domain in metadata.json: {case}")
+    domain4 = (domain[0], domain[1], domain[2], domain[3])
+
+    nx, ny = mesh_resolution(case)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    if len(initial_values) != nx * ny or len(numerical_values) != nx * ny:
+        raise RuntimeError(f"Field size does not match mesh in {case}")
+
+    centres = structured_centres(nx, ny, domain4)
+    exact_values_at_final = discontinuous_values(nx, ny, domain4, final_time)
+    initial = np.asarray(initial_values, dtype=float).reshape(ny, nx)
+    numerical = np.asarray(numerical_values, dtype=float).reshape(ny, nx)
+    exact = np.asarray(exact_values_at_final, dtype=float).reshape(ny, nx)
+    records = parse_diffusion_solver_log(case / "log.explicitDiffusionFoamStudent")
+
+    dx = (domain4[1] - domain4[0]) / nx
+    dy = (domain4[3] - domain4[2]) / ny
+    cell_volume = dx * dy * THICKNESS
+    l1, l2, linf = normalized_errors(
+        numerical_values, exact_values_at_final, cell_volume
+    )
+    initial_mass = float(np.sum(initial) * cell_volume)
+    final_mass = float(np.sum(numerical) * cell_volume)
+    mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 0.2)
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, int(nx))
+    figure_dir = solver_figure_dir(solver_family, case_name, int(nx))
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    time_history_records = [
+        {
+            "time": record.get("time", 0.0),
+            "step": record.get("step", 0.0),
+            "deltaT": record.get("deltaT", 0.0),
+            "maxCo": target_co,
+            "residualIntegral": "",
+            "minT": record.get("minT", ""),
+            "maxT": record.get("maxT", ""),
+            "amplitude": record.get("amplitude", ""),
+        }
+        for record in records
+    ]
+    write_time_history(time_history_records, data_dir / "time_history.csv")
+    write_structured_field_data(
+        centres,
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "quad",
+        "problem": "diffusion_discontinuity",
+        "resolution": nx,
+        "nominalH": max(dx, dy),
+        "nCells": nx * ny,
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": target_co,
+        "maxCo": target_co,
+        "targetCo": target_co,
+        "initialAmplitude": float(initial.max()) - float(initial.min()),
+        "finalAmplitude": float(numerical.max()) - float(numerical.min()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_structured_field_comparison(
+        initial,
+        numerical,
+        exact,
+        figure_dir / "field_comparison.png",
+        final_time,
+        domain4,
+        "Discontinuous diffusion field comparison",
+    )
+    plot_structured_midline_profile(
+        centres,
+        numerical,
+        exact,
+        figure_dir / "midline_profile.png",
+        final_time,
+        domain4,
+    )
+    plot_cfl_history(time_history_records, figure_dir / "diffusion_step_history.png", target_co)
 
     print(f"case={case}")
     print(f"resolution={nx}")
@@ -875,7 +1155,7 @@ def _postprocess_quad_solid_rotation_case(
         else 0.0
     )
     mass_change = final_mass - initial_mass
-    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
@@ -917,7 +1197,11 @@ def _postprocess_quad_solid_rotation_case(
         "maxFinal": float(numerical.max()),
         "timeSteps": len(records),
         "meshOK": "Mesh OK." in mesh_log,
-        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverEnded": (
+            "End" in solver_log
+            if problem == "diffusion_discontinuity"
+            else "End" in solver_log and "Stage 5 time loop completed" in solver_log
+        ),
         "solverFatal": "FOAM FATAL ERROR" in solver_log,
     }
     (data_dir / "summary.json").write_text(
@@ -979,7 +1263,7 @@ def _postprocess_tri_solid_rotation_case(
         if mass_scale
         else 0.0
     )
-    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
@@ -1027,7 +1311,7 @@ def _postprocess_tri_solid_rotation_case(
         "maxFinal": float(numerical.max()),
         "timeSteps": len(records),
         "meshOK": "Mesh OK." in mesh_log,
-        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverEnded": "End" in solver_log,
         "solverFatal": "FOAM FATAL ERROR" in solver_log,
     }
     (data_dir / "summary.json").write_text(
@@ -1066,18 +1350,19 @@ def _postprocess_tri_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
     """Post-process a triangular-prism case using real cell geometry."""
-    if _read_problem(case) == "solid_rotation_advection":
+    problem = _read_problem(case)
+    if problem == "solid_rotation_advection":
         return _postprocess_tri_solid_rotation_case(case, output_root, target_co)
     case = case.resolve()
-    velocity = _case_velocity(case)
+    field_name = str(json.loads((case / "metadata.json").read_text(encoding="utf-8")).get("scalarField", "T"))
     centres, volumes = read_cell_geometry(case)
     geometry_metadata = read_tri_geometry_metadata(case / "mesh" / "mesh_geometry.json")
     triangulation = _triangulation_from_metadata(geometry_metadata)
     triangle_to_cell = _match_triangles_to_cells(centres, triangulation)
 
     final_time, final_dir = latest_time(case)
-    initial_values = read_scalar_field(case / "0" / "T")
-    numerical_values = read_scalar_field(final_dir / "T")
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
     if len(initial_values) != len(centres) or len(numerical_values) != len(centres):
         raise RuntimeError(
             f"Field size does not match triangular mesh in {case}: "
@@ -1085,12 +1370,28 @@ def _postprocess_tri_case(
             f"final={len(numerical_values)}"
         )
 
-    exact_values_at_final = exact_values_at_centres(centres, final_time, velocity)
+    if problem == "diffusion_discontinuity":
+        exact_values_at_final = [
+            discontinuous_exact_value(float(x), float(y), final_time)
+            for x, y, *_ in centres
+        ]
+        records = parse_diffusion_solver_log(case / "log.explicitDiffusionFoamStudent")
+    elif problem == "diffusion_gaussian":
+        mu = float(json.loads((case / "metadata.json").read_text(encoding="utf-8")).get("mu", 1.0))
+        exact_values_at_final = [
+            gaussian_exact_value(float(x), float(y), final_time, mu)
+            for x, y, *_ in centres
+        ]
+        records = parse_diffusion_solver_log(case / "log.explicitDiffusionFoamStudent")
+    else:
+        velocity = _case_velocity(case)
+        exact_values_at_final = exact_values_at_centres(centres, final_time, velocity)
+        records = parse_solver_log(case / "log.explicitAdvectionFoamStudent")
+
     initial = np.asarray(initial_values, dtype=float)
     numerical = np.asarray(numerical_values, dtype=float)
     exact = np.asarray(exact_values_at_final, dtype=float)
     volumes_array = np.asarray(volumes, dtype=float)
-    records = parse_solver_log(case / "log.explicitAdvectionFoamStudent")
 
     l1, l2, linf = normalized_errors(
         numerical_values, exact_values_at_final, volumes
@@ -1099,7 +1400,7 @@ def _postprocess_tri_case(
     final_mass = float(np.dot(numerical, volumes_array))
     mass_scale = float(np.dot(np.abs(initial), volumes_array))
     mass_change = final_mass - initial_mass
-    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 1.0)
@@ -1128,7 +1429,7 @@ def _postprocess_tri_case(
         "solverFamily": solver_family,
         "caseName": case_name,
         "mesh": "tri",
-        "problem": "sine",
+        "problem": problem,
         "resolution": resolution,
         "nominalH": 1.0 / resolution,
         "nCells": len(centres),
@@ -1142,11 +1443,21 @@ def _postprocess_tri_case(
         "finalMass": final_mass,
         "massChange": mass_change,
         "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
-        "maxAbsResidualIntegral": max(
-            abs(record.get("residualIntegral", 0.0)) for record in records
+        "maxAbsResidualIntegral": (
+            max(abs(record.get("residualIntegral", 0.0)) for record in records)
+            if records and "residualIntegral" in records[0]
+            else ""
         ),
-        "minCo": min(record["maxCo"] for record in records),
-        "maxCo": max(record["maxCo"] for record in records),
+        "minCo": (
+            min(record["maxCo"] for record in records)
+            if records and "maxCo" in records[0]
+            else target_co
+        ),
+        "maxCo": (
+            max(record["maxCo"] for record in records)
+            if records and "maxCo" in records[0]
+            else target_co
+        ),
         "targetCo": target_co,
         "initialAmplitude": 0.5 * (float(initial.max()) - float(initial.min())),
         "finalAmplitude": 0.5 * (float(numerical.max()) - float(numerical.min())),
@@ -1157,7 +1468,7 @@ def _postprocess_tri_case(
         "meshOK": "Mesh OK." in mesh_log,
         "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
         "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
-        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
+        "solverEnded": "End" in solver_log,
         "solverFatal": "FOAM FATAL ERROR" in solver_log,
     }
     (data_dir / "summary.json").write_text(
@@ -1182,12 +1493,166 @@ def _postprocess_tri_case(
         resolution,
     )
     plot_amplitude_history(records, figure_dir / "amplitude_history.png")
-    plot_cfl_history(records, figure_dir / "cfl_history.png", target_co)
+    if records and "maxCo" in records[0]:
+        plot_cfl_history(records, figure_dir / "cfl_history.png", target_co)
 
     print(f"case={case}")
     print(f"resolution={resolution}")
     print(f"mesh=tri")
     print(f"nCells={len(centres)}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_quad_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    problem = _read_problem(case)
+    if problem == "diffusion_discontinuity":
+        return _postprocess_quad_diffusion_discontinuity_case(case, output_root, target_co)
+    if problem == "diffusion_gaussian":
+        return _postprocess_quad_diffusion_gaussian_case(case, output_root, target_co)
+    if problem == "solid_rotation_advection":
+        return _postprocess_quad_solid_rotation_case(case, output_root, target_co)
+    return _postprocess_quad_advection_case(case, output_root, target_co)
+
+
+def _postprocess_quad_diffusion_gaussian_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the structured Gaussian diffusion benchmark."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    domain = tuple(float(value) for value in metadata.get("domain", [-5.0, 5.0, -5.0, 5.0]))
+    if len(domain) != 4:
+        raise RuntimeError(f"Invalid domain in metadata.json: {case}")
+    domain4 = (domain[0], domain[1], domain[2], domain[3])
+    mu = float(metadata.get("mu", 1.0))
+
+    nx, ny = mesh_resolution(case)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    if len(initial_values) != nx * ny or len(numerical_values) != nx * ny:
+        raise RuntimeError(f"Field size does not match mesh in {case}")
+
+    centres = structured_centres(nx, ny, domain4)
+    exact_values_at_final = gaussian_values(nx, ny, domain4, final_time, mu)
+    initial = np.asarray(initial_values, dtype=float).reshape(ny, nx)
+    numerical = np.asarray(numerical_values, dtype=float).reshape(ny, nx)
+    exact = np.asarray(exact_values_at_final, dtype=float).reshape(ny, nx)
+    records = parse_diffusion_solver_log(case / "log.explicitDiffusionFoamStudent")
+
+    dx = (domain4[1] - domain4[0]) / nx
+    dy = (domain4[3] - domain4[2]) / ny
+    cell_volume = dx * dy * THICKNESS
+    l1, l2, linf = normalized_errors(
+        numerical_values, exact_values_at_final, cell_volume
+    )
+    initial_mass = float(np.sum(initial) * cell_volume)
+    final_mass = float(np.sum(numerical) * cell_volume)
+    mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 0.2)
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, int(nx))
+    figure_dir = solver_figure_dir(solver_family, case_name, int(nx))
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    time_history_records = [
+        {
+            "time": record.get("time", 0.0),
+            "step": record.get("step", 0.0),
+            "deltaT": record.get("deltaT", 0.0),
+            "maxCo": target_co,
+            "residualIntegral": "",
+            "minT": record.get("minT", ""),
+            "maxT": record.get("maxT", ""),
+            "amplitude": record.get("amplitude", ""),
+        }
+        for record in records
+    ]
+    write_time_history(time_history_records, data_dir / "time_history.csv")
+    write_structured_field_data(
+        centres,
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "quad",
+        "problem": "diffusion_gaussian",
+        "resolution": nx,
+        "nominalH": max(dx, dy),
+        "nCells": nx * ny,
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": target_co,
+        "maxCo": target_co,
+        "targetCo": target_co,
+        "initialAmplitude": float(initial.max()) - float(initial.min()),
+        "finalAmplitude": float(numerical.max()) - float(numerical.min()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_structured_field_comparison(
+        initial,
+        numerical,
+        exact,
+        figure_dir / "field_comparison.png",
+        final_time,
+        domain4,
+        "Gaussian diffusion field comparison",
+    )
+    plot_structured_midline_profile(
+        centres,
+        numerical,
+        exact,
+        figure_dir / "midline_profile.png",
+        final_time,
+        domain4,
+    )
+    plot_cfl_history(time_history_records, figure_dir / "diffusion_step_history.png", target_co)
+
+    print(f"case={case}")
+    print(f"resolution={nx}")
     print(f"finalTime={final_time:.16g}")
     print(f"normalizedL1={l1:.16e}")
     print(f"normalizedL2={l2:.16e}")

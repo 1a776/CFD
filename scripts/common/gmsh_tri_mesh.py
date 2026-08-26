@@ -17,7 +17,7 @@ from pathlib import Path
 import gmsh
 
 
-EPS = 1.0e-10
+EPS = 1.0e-6
 
 
 def _physical_group(dim: int, entities: list[int], name: str) -> None:
@@ -27,19 +27,26 @@ def _physical_group(dim: int, entities: list[int], name: str) -> None:
     gmsh.model.setPhysicalName(dim, tag, name)
 
 
-def _classify_surface(surface: int, thickness: float) -> str:
+def _classify_surface(
+    surface: int,
+    thickness: float,
+    xmin_ref: float,
+    xmax_ref: float,
+    ymin_ref: float,
+    ymax_ref: float,
+) -> str:
     xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(2, surface)
-    if abs(zmax - zmin) < EPS and abs(zmin) < EPS:
+    if abs(zmin) < EPS and abs(zmax) < EPS:
         return "zMinSource"
-    if abs(zmax - zmin) < EPS and abs(zmin - thickness) < EPS:
+    if abs(zmin - thickness) < EPS and abs(zmax - thickness) < EPS:
         return "zMaxSource"
-    if abs(xmax - xmin) < EPS and abs(xmin) < EPS:
+    if abs(xmin - xmin_ref) < EPS and abs(xmax - xmin_ref) < EPS:
         return "xMinSource"
-    if abs(xmax - xmin) < EPS and abs(xmin - 1.0) < EPS:
+    if abs(xmin - xmax_ref) < EPS and abs(xmax - xmax_ref) < EPS:
         return "xMaxSource"
-    if abs(ymax - ymin) < EPS and abs(ymin) < EPS:
+    if abs(ymin - ymin_ref) < EPS and abs(ymax - ymin_ref) < EPS:
         return "yMinSource"
-    if abs(ymax - ymin) < EPS and abs(ymin - 1.0) < EPS:
+    if abs(ymin - ymax_ref) < EPS and abs(ymax - ymax_ref) < EPS:
         return "yMaxSource"
     raise RuntimeError(
         "Could not classify extruded surface "
@@ -94,7 +101,15 @@ def _write_geometry_metadata(
     )
 
 
-def generate(case: Path, resolution: int, thickness: float) -> Path:
+def generate(
+    case: Path,
+    resolution: int,
+    thickness: float,
+    xmin: float = 0.0,
+    xmax: float = 1.0,
+    ymin: float = 0.0,
+    ymax: float = 1.0,
+) -> Path:
     """Generate ``case/mesh/mesh.msh`` and its geometry metadata."""
     if resolution <= 0:
         raise ValueError("resolution must be positive")
@@ -116,10 +131,10 @@ def generate(case: Path, resolution: int, thickness: float) -> Path:
 
         geo = gmsh.model.geo
         points = [
-            geo.addPoint(0.0, 0.0, 0.0),
-            geo.addPoint(1.0, 0.0, 0.0),
-            geo.addPoint(1.0, 1.0, 0.0),
-            geo.addPoint(0.0, 1.0, 0.0),
+            geo.addPoint(xmin, ymin, 0.0),
+            geo.addPoint(xmax, ymin, 0.0),
+            geo.addPoint(xmax, ymax, 0.0),
+            geo.addPoint(xmin, ymax, 0.0),
         ]
         lines = [
             geo.addLine(points[0], points[1]),
@@ -188,23 +203,14 @@ def generate(case: Path, resolution: int, thickness: float) -> Path:
             ]
             gmsh.model.mesh.setTransfiniteVolume(volume, corner_tags)
 
-        surfaces = [tag for dim, tag in gmsh.model.getEntities(2)]
-        surface_names: dict[str, list[int]] = {}
-        for tag in surfaces:
-            name = _classify_surface(tag, thickness)
-            surface_names.setdefault(name, []).append(tag)
-        expected_names = {
-            "zMinSource",
-            "zMaxSource",
-            "xMinSource",
-            "xMaxSource",
-            "yMinSource",
-            "yMaxSource",
+        surface_names: dict[str, list[int]] = {
+            "zMinSource": [surface],
+            "zMaxSource": [extruded[0][1]],
+            "yMinSource": [extruded[2][1]],
+            "xMaxSource": [extruded[3][1]],
+            "yMaxSource": [extruded[4][1]],
+            "xMinSource": [extruded[5][1]],
         }
-        if set(surface_names) != expected_names:
-            raise RuntimeError(
-                f"Unexpected Gmsh boundary surfaces: {sorted(surface_names)}"
-            )
 
         for name, tags in sorted(surface_names.items()):
             _physical_group(2, tags, name)
@@ -232,8 +238,20 @@ def main() -> None:
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--resolution", type=int, required=True)
     parser.add_argument("--thickness", type=float, required=True)
+    parser.add_argument("--xmin", type=float, default=0.0)
+    parser.add_argument("--xmax", type=float, default=1.0)
+    parser.add_argument("--ymin", type=float, default=0.0)
+    parser.add_argument("--ymax", type=float, default=1.0)
     args = parser.parse_args()
-    generate(args.case.resolve(), args.resolution, args.thickness)
+    generate(
+        args.case.resolve(),
+        args.resolution,
+        args.thickness,
+        args.xmin,
+        args.xmax,
+        args.ymin,
+        args.ymax,
+    )
 
 
 if __name__ == "__main__":

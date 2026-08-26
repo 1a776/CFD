@@ -113,7 +113,7 @@
 
 \title{\bfseries 扩散方程的有限体积半离散\\与全显式数值求解器推导}
 \author{张云飞}
-\date{2026年8月23日}
+\date{2026年8月26日}
 
 \begin{document}
 
@@ -155,55 +155,109 @@
 
 \source{\Rone，第8.1节式(8.1)--(8.3)：扩散方程及扩散通量定义；\Task，第2.1节：本题控制方程和全显式求解器要求。}
 
+为使本题与第一题可以逐式对照，本文沿用第一题的单元索引 $c$、控制体
+$\Omega_c$、体积 $V_c$、面集合 $\mathcal F_c$、局部外法向面积向量
+$\Sf_{cf}$、全局owner--neighbour面积向量 $\Sf_f$ 和面通量 $H_f$。
+扩散方程所特有的中心连线、扩散传递系数和非正交修正另行定义。
+与 OpenFOAM 求解器直接对应的空间残差不再引入未归一化的中间量，而是直接
+定义为控制体上 $\nabla\cdot(\mu\nabla\phi)$ 的有限体积近似。
+
 全文使用如下符号。
 \begin{longtable}{>{\centering\arraybackslash}p{0.20\linewidth}p{0.69\linewidth}}
 \toprule
 符号 & 含义\\
 \midrule
-$\Omega_P$ & 以 $P$ 表示的控制体\\
-$V_P=|\Omega_P|$ & 控制体体积；在本题二维算例中等价于单元面积\\
-$\mathcal F(P)$ & 控制体 $P$ 的全部面组成的集合\\
-$\bm n_{P,f}$ & 面 $f$ 相对于控制体 $P$ 的单位外法向量\\
-$\Sf_{P,f}=A_f\bm n_{P,f}$ & 面 $f$ 相对于控制体 $P$ 的有向面积向量\\
-$P,N$ & 内部面两侧的owner单元和neighbour单元\\
-$\bm d_{PN}=\xf_N-\xf_P$ & 从单元中心 $P$ 指向单元中心 $N$ 的向量\\
-$d_{PN}=|\bm d_{PN}|$ & 相邻单元中心距离\\
-$\phi_P$ & $\phi$ 在控制体 $P$ 中的平均值\\
+$\Omega_c$ & 第 $c$ 个控制体\\
+$V_c=|\Omega_c|$ & 控制体体积；在本题二维算例中等价于单元面积\\
+$\mathcal F_c$ & 属于控制体 $c$ 的全部面组成的集合\\
+$\bm n_{cf}$ & 面 $f$ 相对于控制体 $c$ 的单位外法向量\\
+$\Sf_{cf}=|S_f|\bm n_{cf}$ & 面 $f$ 相对于控制体 $c$ 的局部有向面积向量\\
+$O_f,N_f$ & 内部面 $f$ 的owner单元与neighbour单元\\
+$\bm n_f$ & 从 $O_f$ 指向 $N_f$ 的全局单位法向量\\
+$\Sf_f=|S_f|\bm n_f$ & 从 $O_f$ 指向 $N_f$ 的全局有向面积向量\\
+$\sigma_{cf}$ & 面 $f$ 相对于控制体 $c$ 的关联符号：$c=O_f$ 时为 $+1$，$c=N_f$ 时为 $-1$\\
+$\bm d_f=\xf_{N_f}-\xf_{O_f}$ & 从owner中心指向neighbour中心的向量\\
+$d_f=|\bm d_f|$ & owner与neighbour单元中心之间的距离\\
+$\phi_c$ & $\phi$ 在控制体 $c$ 中的平均值\\
 $D_f$ & 面 $f$ 的离散扩散传递系数\\
-$H_{P,f}$ & 面 $f$ 对控制体 $P$ 的扩散贡献\\
-$R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
+$H_f$ & 按 $O_f\to N_f$ 定向的全局数值扩散通量\\
+$H_{cf}=\sigma_{cf}H_f$ & 内部面 $f$ 相对于控制体 $c$ 的局部向外物理扩散通量\\
+$H_{cb}$ & 边界面 $b$ 相对于所属控制体的向外物理扩散通量\\
+$R_c$ & 控制体 $c$ 上 $\nabla\cdot(\mu\nabla\phi)$ 的体积归一化离散残差\\
 \bottomrule
 \end{longtable}
 
+残差的完整定义为
+\begin{equation}
+  \boxed{
+  R_c(\bm\phi)
+  =
+  -\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}H_f
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}H_{cb}
+  \right].}
+  \label{eq:residual_symbol_definition}
+\end{equation}
+
 \source{\Rtwo，第1.3.1节及式(1.24)--(1.26)：面面积向量、owner-neighbour寻址和共享面通量装配；\Rone，第8章：扩散离散中的控制体、相邻单元和面系数。}
 
-\noindent\textbf{关于二维积分记号。}参考书为统一二维和三维推导，使用 $\int_{\Omega_P}(\cdot)\dd V$。对本题二维区域 $[-5,5]^2$，同一积分也可以写成 $\iint_{\Omega_P}(\cdot)\dd A$，此时 $V_P$ 表示单元面积。本文沿用参考书的统一记号 $\dd V$。
+对任意内部面 $f$，全局面积向量 $\Sf_f$ 的方向固定为从 $O_f$ 指向 $N_f$；
+相对于两个控制体的局部外法向面积向量满足
+\begin{equation}
+  \boxed{
+  \sigma_{cf}=
+  \begin{cases}
+    +1,&c=O_f,\\
+    -1,&c=N_f,
+  \end{cases}
+  \qquad
+  \Sf_{cf}=\sigma_{cf}\Sf_f=|S_f|\bm n_{cf}},
+  \label{eq:local_global_area_vectors}
+\end{equation}
+并且 $|S_f|=|\Sf_f|=|\Sf_{cf}|$ 表示面 $f$ 的面积（二维单位厚度下为边长）。
+按同一定向定义内部面的全局扩散通量 $H_f$，则
+\begin{equation}
+  \boxed{
+  H_{cf}=\sigma_{cf}H_f,
+  \qquad
+  R_{O_f}\mathrel{-}=\frac{H_f}{V_{O_f}},
+  \qquad
+  R_{N_f}\mathrel{+}=\frac{H_f}{V_{N_f}}.}
+  \label{eq:global_face_assembly}
+\end{equation}
+这里 $H_f$ 是物理扩散通量，而 $R_c$ 是
+$\nabla\cdot(\mu\nabla\phi)$ 的离散值，所以两者之间带有一个负号。
+因此共享面的两侧始终直接写成 $O_f$ 和 $N_f$，不再引入额外的相邻单元映射。
+
+\noindent\textbf{关于二维积分记号。}参考书为统一二维和三维推导，使用 $\int_{\Omega_c}(\cdot)\dd V$。对本题二维区域 $[-5,5]^2$，同一积分也可以写成 $\iint_{\Omega_c}(\cdot)\dd A$，此时 $V_c$ 表示单元面积。本文沿用参考书的统一记号 $\dd V$。
 
 \newpage
 \section{第一部分：有限体积法半离散形式}
 
 \subsection{在控制体上积分控制方程}
 
-对式\eqref{eq:governing}在任意固定控制体 $\Omega_P$ 上积分：
+对式\eqref{eq:governing}在任意固定控制体 $\Omega_c$ 上积分：
 \begin{equation}
-  \int_{\Omega_P}\frac{\partial\phi}{\partial t}\dd V
-  -\int_{\Omega_P}\nabla\cdot(\mu\nabla\phi)\dd V=0.
+  \int_{\Omega_c}\frac{\partial\phi}{\partial t}\dd V
+  -\int_{\Omega_c}\nabla\cdot(\mu\nabla\phi)\dd V=0.
   \label{eq:cell_integrated}
 \end{equation}
 定义控制体平均值
 \begin{equation}
-  \phi_P(t)
-  =\frac{1}{V_P}\int_{\Omega_P}\phi(\xf,t)\dd V.
+  \phi_c(t)
+  =\frac{1}{V_c}\int_{\Omega_c}\phi(\xf,t)\dd V.
   \label{eq:cell_average}
 \end{equation}
-由于网格固定，$\Omega_P$ 和 $V_P$ 不随时间变化，故
+由于网格固定，$\Omega_c$ 和 $V_c$ 不随时间变化，故
 \begin{align}
-  \int_{\Omega_P}\frac{\partial\phi}{\partial t}\dd V
+  \int_{\Omega_c}\frac{\partial\phi}{\partial t}\dd V
   &=\frac{\mathrm d}{\mathrm dt}
-    \int_{\Omega_P}\phi\dd V
+    \int_{\Omega_c}\phi\dd V
     \label{eq:time_interchange}\\
-  &=\frac{\mathrm d}{\mathrm dt}(V_P\phi_P)
-   =V_P\frac{\mathrm d\phi_P}{\mathrm dt}.
+  &=\frac{\mathrm d}{\mathrm dt}(V_c\phi_c)
+   =V_c\frac{\mathrm d\phi_c}{\mathrm dt}.
   \label{eq:time_term_cell}
 \end{align}
 
@@ -213,30 +267,30 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 对空间散度项应用高斯散度定理：
 \begin{equation}
-  \int_{\Omega_P}\nabla\cdot(\mu\nabla\phi)\dd V
-  =\oint_{\partial\Omega_P}\mu\nabla\phi\cdot\bm n\dd S.
+  \int_{\Omega_c}\nabla\cdot(\mu\nabla\phi)\dd V
+  =\oint_{\partial\Omega_c}\mu\nabla\phi\cdot\bm n\dd S.
   \label{eq:gauss_theorem}
 \end{equation}
 将控制体边界分解为各个面，得到
 \begin{equation}
-  \oint_{\partial\Omega_P}\mu\nabla\phi\cdot\bm n\dd S
-  =\sum_{f\in\mathcal F(P)}
-    \int_f\mu\nabla\phi\cdot\bm n_{P,f}\dd S.
+  \oint_{\partial\Omega_c}\mu\nabla\phi\cdot\bm n\dd S
+  =\sum_{f\in\mathcal F_c}
+    \int_{S_f}\mu\nabla\phi\cdot\bm n_{cf}\dd S.
   \label{eq:boundary_face_sum}
 \end{equation}
 采用参考书的一点面中心积分，将每个面的积分近似为面中心值乘以面面积：
 \begin{equation}
-  \int_f\mu\nabla\phi\cdot\bm n_{P,f}\dd S
+  \int_{S_f}\mu\nabla\phi\cdot\bm n_{cf}\dd S
   \approx
-  \mu_f(\nabla\phi)_f\cdot\Sf_{P,f}.
+  \mu_f(\nabla\phi)_f\cdot\Sf_{cf}.
   \label{eq:face_midpoint}
 \end{equation}
 因而
 \begin{equation}
-  \int_{\Omega_P}\nabla\cdot(\mu\nabla\phi)\dd V
+  \int_{\Omega_c}\nabla\cdot(\mu\nabla\phi)\dd V
   \approx
-  \sum_{f\in\mathcal F(P)}
-  \mu_f(\nabla\phi)_f\cdot\Sf_{P,f}.
+  \sum_{f\in\mathcal F_c}
+  \mu_f(\nabla\phi)_f\cdot\Sf_{cf}.
   \label{eq:diffusion_face_sum}
 \end{equation}
 
@@ -246,21 +300,64 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 将式\eqref{eq:time_term_cell}和式\eqref{eq:diffusion_face_sum}代入式\eqref{eq:cell_integrated}：
 \begin{equation}
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  -\sum_{f\in\mathcal F(P)}
-  \mu_f(\nabla\phi)_f\cdot\Sf_{P,f}=0.
+  V_c\frac{\mathrm d\phi_c}{\mathrm dt}
+  -\sum_{f\in\mathcal F_c}
+  \mu_f(\nabla\phi)_f\cdot\Sf_{cf}=0.
   \label{eq:semi_discrete_balance}
 \end{equation}
 等价地，
 \begin{equation}
   \boxed{
-  \frac{\mathrm d\phi_P}{\mathrm dt}
-  =\frac{1}{V_P}
-  \sum_{f\in\mathcal F(P)}
-  \mu_f(\nabla\phi)_f\cdot\Sf_{P,f}}
+  H_f:=\bm J_{\phi,D,f}\cdot\Sf_f
+  =-\mu_f(\nabla\phi)_f\cdot\Sf_f,
+  \qquad
+  H_{cf}=\sigma_{cf}H_f}.
+  \label{eq:diffusive_numerical_flux}
+\end{equation}
+边界面的局部向外通量记为 $H_{cb}$。根据物理扩散通量
+$\bm J_{\phi,D}=-\mu\nabla\phi$，直接定义控制体 $c$ 上的空间残差：
+\begin{equation}
+  \boxed{
+  R_c(\bm\phi)
+  :=
+  -\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}H_f
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}H_{cb}
+  \right]}.
+  \label{eq:diffusive_residual}
+\end{equation}
+因为
+\begin{equation}
+  H_f=-\mu_f(\nabla\phi)_f\cdot\Sf_f,
+\end{equation}
+所以式\eqref{eq:diffusive_residual}正好是
+\begin{equation}
+  \boxed{
+  R_c(\bm\phi)
+  =
+  \left[\nabla\cdot(\mu\nabla\phi)\right]_c.}
+  \label{eq:diffusive_residual_laplacian}
+\end{equation}
+于是式\eqref{eq:semi_discrete_balance}等价于
+\begin{equation}
+  \boxed{
+  V_c\frac{\mathrm d\phi_c}{\mathrm dt}
+  -V_cR_c(\bm\phi)=0,
+  \qquad
+  \frac{\mathrm d\phi_c}{\mathrm dt}
+  -R_c(\bm\phi)=0}.
   \label{eq:semi_discrete_final}
 \end{equation}
-这就是本题首先要求写出的有限体积半离散形式。所谓半离散，是指空间区域已经被有限个控制体取代，空间散度已经变成有限个面贡献之和，但时间 $t$ 仍然连续。此时每个控制体对应一个常微分方程；由于面梯度 $(\nabla\phi)_f$ 还没有用单元未知量表示，式\eqref{eq:semi_discrete_final}尚未闭合，也还不是可以直接运行的求解器。
+这就是本题首先要求写出的有限体积半离散形式。它与第一题的
+$V_c\mathrm d\phi_c/\mathrm dt-V_cR_c=0$ 以及
+$\mathrm d\phi_c/\mathrm dt-R_c=0$ 具有相同的守恒结构，区别仅在于
+第一题的 $H_f$ 是对流通量，而本题的 $H_f$ 是扩散通量。这里 $R_c$ 已经是
+最终的体积归一化空间残差，不需要再经过额外的中间变量转换。所谓半离散，是指
+空间区域已经被有限个控制体取代，空间散度已经变成有限个面贡献之和，但时间
+$t$ 仍然连续。由于面梯度 $(\nabla\phi)_f$ 还没有用单元未知量表示，
+式\eqref{eq:semi_discrete_final}尚未闭合，也还不是可以直接运行的求解器。
 
 \source{\Rone，第8.1节式(8.4)：扩散方程第一阶段离散；第13章式(13.3)--(13.4)：时间导数与空间离散算子的半离散结构。}
 
@@ -269,7 +366,7 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 \subsection{为什么扩散项采用线性法向梯度而不是迎风格式}
 
-第一题的对流项需要构造面值 $\phi_f$，流动方向决定信息来自哪个单元，因此可以采用迎风格式。第二题的空间算子是 $\nabla\cdot(\mu\nabla\phi)$，需要构造的是面法向梯度 $(\nabla\phi)_f\cdot\Sf_f$。参考书第8章假定相邻单元中心之间的 $\phi$ 线性变化，由中心间差商得到面法向梯度。故本题的具体空间选择是：
+第一题的对流项需要构造面值 $\phi_f$，流动方向决定信息来自哪个单元，因此可以采用迎风格式。第二题的空间算子是 $\nabla\cdot(\mu\nabla\phi)$，需要构造的是面法向梯度 $(\nabla\phi)_f\cdot\Sf_{cf}$。参考书第8章假定相邻单元中心之间的 $\phi$ 线性变化，由中心间差商得到面法向梯度。故本题的具体空间选择是：
 \begin{itemize}
   \item 正交扩散部分采用相邻单元中心之间的线性差商；
   \item 非正交网格加入交叉扩散修正；
@@ -280,42 +377,44 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 \subsection{正交网格上的面法向梯度}
 
-考虑一个内部面 $f$，其owner单元为 $P$，neighbour单元为 $N$。定义
+对每个内部面 $f$，直接使用owner--neighbour几何量
 \begin{equation}
-  \bm d_{PN}=\xf_N-\xf_P,
+  \bm d_f=\xf_{N_f}-\xf_{O_f},
   \qquad
-  d_{PN}=|\bm d_{PN}|,
+  d_f=|\bm d_f|,
   \qquad
-  \ef_{PN}=\frac{\bm d_{PN}}{d_{PN}}.
+  \ef_f=\frac{\bm d_f}{d_f}.
   \label{eq:center_vector}
 \end{equation}
 若网格在该面正交，则
 \begin{equation}
-  \Sf_{P,f}=A_f\ef_{PN}.
+  \Sf_f=|S_f|\ef_f.
   \label{eq:orthogonal_area_vector}
 \end{equation}
-假设 $\phi$ 在两个单元中心之间线性变化，沿 $\ef_{PN}$ 的方向导数为
+假设 $\phi$ 在两个单元中心之间线性变化，沿 $\ef_f$ 的方向导数为
 \begin{equation}
-  (\nabla\phi)_f\cdot\ef_{PN}
-  \approx\frac{\phi_N-\phi_P}{d_{PN}}.
+  (\nabla\phi)_f\cdot\ef_f
+  \approx\frac{\phi_{N_f}-\phi_{O_f}}{d_f}.
   \label{eq:normal_difference}
 \end{equation}
 所以
 \begin{align}
-  (\nabla\phi)_f\cdot\Sf_{P,f}
-  &=A_f(\nabla\phi)_f\cdot\ef_{PN}
+  (\nabla\phi)_f\cdot\Sf_f
+  &=|S_f|(\nabla\phi)_f\cdot\ef_f
     \label{eq:orth_grad_1}\\
-  &\approx\frac{A_f}{d_{PN}}(\phi_N-\phi_P).
+  &\approx\frac{|S_f|}{d_f}(\phi_{N_f}-\phi_{O_f}).
     \label{eq:orth_grad_2}
 \end{align}
 定义正的面扩散传递系数
 \begin{equation}
-  \boxed{D_f=\mu_f\frac{A_f}{d_{PN}}},
+  \boxed{D_f=\mu_f\frac{|S_f|}{d_f}},
   \label{eq:D_orth}
 \end{equation}
-则该面对于控制体 $P$ 的扩散贡献为
+根据式\eqref{eq:diffusive_numerical_flux}的全局通量约定，该面的数值扩散通量为
 \begin{equation}
-  \boxed{H_{P,f}=D_f(\phi_N-\phi_P)}.
+  \boxed{
+  H_f=-D_f(\phi_{N_f}-\phi_{O_f})
+  =D_f(\phi_{O_f}-\phi_{N_f})}.
   \label{eq:orth_face_contribution}
 \end{equation}
 
@@ -323,40 +422,38 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 \subsection{正交网格上的闭合半离散方程}
 
-将式\eqref{eq:orth_face_contribution}代入式\eqref{eq:semi_discrete_balance}：
-\begin{equation}
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  =\sum_{f\in\mathcal F_{\mathrm{int}}(P)}
-  D_f(\phi_N-\phi_P)+B_P,
-  \label{eq:orth_semidiscrete}
-\end{equation}
-其中 $B_P$ 汇总边界面的贡献。展开内部面项：
-\begin{equation}
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  =\sum_ND_{PN}\phi_N
-   -\left(\sum_ND_{PN}\right)\phi_P+B_P.
-  \label{eq:orth_expanded}
-\end{equation}
-定义
-\begin{equation}
-  a_{PN}=-D_{PN},
-  \qquad
-  a_P=\sum_ND_{PN},
-  \label{eq:coeff_definition}
-\end{equation}
-则
+将式\eqref{eq:orth_face_contribution}按式\eqref{eq:global_face_assembly}装配：
 \begin{equation}
   \boxed{
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  +a_P\phi_P+\sum_Na_{PN}\phi_N=B_P}
-  \label{eq:coefficient_semidiscrete}
+  R_c(\bm\phi)
+  =-\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}
+  \sigma_{cf}D_f(\phi_{O_f}-\phi_{N_f})
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}H_{cb}
+  \right].}
+  \label{eq:orth_residual}
 \end{equation}
-并且
+从而
 \begin{equation}
-  a_P=-\sum_Na_{PN}.
-  \label{eq:zero_sum}
+  \boxed{
+  \frac{\mathrm d\phi_c}{\mathrm dt}-R_c(\bm\phi)=0.}
+  \label{eq:orth_semidiscrete}
 \end{equation}
-式\eqref{eq:zero_sum}是参考书的系数和为零性质，它保证常数场的离散Laplacian为零。
+其中边界面通量直接进入 $R_c$，不再单独定义 $B_c$。对每一个内部面，
+物理扩散通量为 $H_f=D_f(\phi_{O_f}-\phi_{N_f})$，因此同一个面系数
+$D_f$ 只计算一次。以面为单位的两侧残差贡献为
+\begin{equation}
+  \begin{aligned}
+  R_{O_f}&\mathrel{-}=\frac{D_f(\phi_{O_f}-\phi_{N_f})}{V_{O_f}},\\
+  R_{N_f}&\mathrel{+}=\frac{D_f(\phi_{O_f}-\phi_{N_f})}{V_{N_f}}.
+  \end{aligned}
+  \label{eq:orth_expanded}
+\end{equation}
+乘以各自体积后，两侧对全局物理通量的贡献严格相反；常数场
+$\phi_{O_f}=\phi_{N_f}$ 时，该面通量为零。这正是参考书所述“离散系数和为零”
+的守恒性质。
 
 \source{\Rone，第8.1节式(8.18)--(8.21)和第8.2.1节式(8.25)--(8.27)：扩散离散代数式及零和规则。}
 
@@ -364,7 +461,7 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 对二维矩形控制体，设东西方向网格间距为 $\Delta x$，南北方向网格间距为 $\Delta y$。单位厚度下
 \begin{equation}
-  V_P=\Delta x\Delta y,
+  V_c=\Delta x\Delta y,
   \label{eq:rect_volume}
 \end{equation}
 且
@@ -396,11 +493,13 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 \subsection{非正交三角形和四边形网格}
 
-题目要求在三角形和四边形网格上验证。一般非结构网格中，$\Sf_f$ 与 $\bm d_{PN}$ 不平行，因此不能直接把整个面法向梯度写成 $(\phi_N-\phi_P)/d_{PN}$。参考书将面积向量分解为
+题目要求在三角形和四边形网格上验证。一般非结构网格中，$\Sf_f$ 与
+$\bm d_f$ 不平行，因此不能直接把整个面法向梯度写成
+$(\phi_{N_f}-\phi_{O_f})/d_f$。参考书将全局有向面积向量分解为
 \begin{equation}
   \boxed{\Sf_f=\Ef_f+\Tf_f},
   \qquad
-  \Ef_f\parallel\bm d_{PN},
+  \Ef_f\parallel\bm d_f,
   \label{eq:nonorth_decomposition}
 \end{equation}
 于是
@@ -410,7 +509,7 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
     +(\nabla\phi)_f\cdot\Tf_f
     \label{eq:split_grad_1}\\
   &\approx
-    \frac{|\Ef_f|}{d_{PN}}(\phi_N-\phi_P)
+    \frac{|\Ef_f|}{d_f}(\phi_{N_f}-\phi_{O_f})
     +(\nabla\phi)_f\cdot\Tf_f.
     \label{eq:split_grad_2}
 \end{align}
@@ -422,26 +521,27 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 参考书先对单元梯度应用高斯定理：
 \begin{equation}
-  \nabla\phi_P
-  =\frac{1}{V_P}
-   \oint_{\partial\Omega_P}\phi\bm n\dd S
+  \nabla\phi_c
+  =\frac{1}{V_c}
+   \oint_{\partial\Omega_c}\phi\bm n\dd S
   \approx
   \boxed{
-  \frac{1}{V_P}
-  \sum_{f\in\mathcal F(P)}\phi_f\Sf_{P,f}}.
+  \frac{1}{V_c}
+  \sum_{f\in\mathcal F_c}\phi_f\Sf_{cf}}.
   \label{eq:gauss_cell_gradient}
 \end{equation}
 内部面值采用线性插值：
 \begin{equation}
-  \phi_f=g_P\phi_P+g_N\phi_N,
-  \qquad g_P+g_N=1,
+  \phi_f=g_{O_f f}\phi_{O_f}+g_{N_f f}\phi_{N_f},
+  \qquad g_{O_f f}+g_{N_f f}=1,
   \label{eq:linear_face_value}
 \end{equation}
 其中几何权重由面中心相对于两个单元中心的位置确定。再将单元梯度插值到面上：
 \begin{equation}
   \boxed{
   (\nabla\phi)_f
-  =g_P\nabla\phi_P+g_N\nabla\phi_N}.
+  =g_{O_f f}\nabla\phi_{O_f}
+  +g_{N_f f}\nabla\phi_{N_f}}.
   \label{eq:face_gradient_interpolation}
 \end{equation}
 
@@ -451,7 +551,7 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 
 定义
 \begin{equation}
-  D_f=\mu_f\frac{|\Ef_f|}{d_{PN}},
+  D_f=\mu_f\frac{|\Ef_f|}{d_f},
   \label{eq:D_nonorth}
 \end{equation}
 以及
@@ -459,18 +559,27 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
   C_f=\mu_f(\nabla\phi)_f\cdot\Tf_f.
   \label{eq:cross_diffusion}
 \end{equation}
-则内部面对于owner单元 $P$ 的贡献为
+则按与第一题一致的全局面方向，内部面的数值扩散通量为
 \begin{equation}
   \boxed{
-  H_{P,f}=D_f(\phi_N-\phi_P)+C_f}.
+  H_f
+  =-D_f(\phi_{N_f}-\phi_{O_f})-C_f
+  =D_f(\phi_{O_f}-\phi_{N_f})-C_f}.
   \label{eq:full_nonorth_flux}
 \end{equation}
 非正交网格上的空间离散方程为
 \begin{equation}
   \boxed{
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  =\sum_{f\in\mathcal F_{\mathrm{int}}(P)}
-  \left[D_f(\phi_N-\phi_P)+C_f\right]+B_P}.
+  R_c(\bm\phi)
+  =-\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}
+  \left[D_f(\phi_{O_f}-\phi_{N_f})-C_f\right]
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}H_{cb}
+  \right],
+  \qquad
+  \frac{\mathrm d\phi_c}{\mathrm dt}-R_c=0}.
   \label{eq:nonorth_semidiscrete}
 \end{equation}
 为了满足题目的空间显式要求，在时间层 $n$ 必须计算
@@ -491,23 +600,25 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
 \end{equation}
 则法向梯度近似为
 \begin{equation}
-  (\nabla\phi)_b\cdot\bm n_b
-  \approx\frac{\phi_b-\phi_P}{d_{Pb}}.
+  (\nabla\phi)_b\cdot\bm n_{cb}
+  \approx\frac{\phi_b-\phi_c}{d_{cb}}.
   \label{eq:dirichlet_gradient}
 \end{equation}
 定义
 \begin{equation}
-  D_b=\mu_b\frac{A_b}{d_{Pb}},
+  D_b=\mu_b\frac{|S_b|}{d_{cb}},
   \label{eq:boundary_D}
 \end{equation}
-边界面扩散贡献为
+按“从控制体 $c$ 向外为正”的统一约定，边界面数值扩散通量为
 \begin{equation}
-  \boxed{H_{P,b}=D_b(\phi_b-\phi_P)}.
+  \boxed{
+  H_{cb}=-D_b(\phi_b-\phi_c)
+  =D_b(\phi_c-\phi_b)}.
   \label{eq:dirichlet_flux}
 \end{equation}
-因此 $D_b$ 加入中心系数，$D_b\phi_b$ 加入已知右端项。第二个连续函数算例要求Dirichlet边界，所以每个时间层应使用解析解更新边界值：
+因此 $D_b$ 加入中心系数，$D_b\phi_b$ 移到方程右端后成为已知项。第二个连续函数算例要求Dirichlet边界，所以每个时间层应使用解析解更新边界值：
 \begin{equation}
-  \phi_b^n=\phi_{\mathrm{exact}}(\xf_b,t_n).
+  \phi_b^n=\phi_{\mathrm{exact}}(\xf_b,t^n).
   \label{eq:time_dirichlet}
 \end{equation}
 
@@ -520,16 +631,19 @@ $R_P$ & 控制体 $P$ 的全部扩散面贡献之和\\
   \frac{\partial\phi}{\partial n}=g_b,
   \label{eq:neumann_gradient}
 \end{equation}
-则按照本文在式\eqref{eq:semi_discrete_balance}中使用的 $\mu\nabla\phi\cdot\Sf_b$ 记号，边界贡献为
+扩散通量定义为 $\bm J_{\phi,D}=-\mu\nabla\phi$，所以按本文与第一题统一的
+向外通量约定，边界贡献为
 \begin{equation}
-  \boxed{H_{P,b}=\mu_bg_bA_b}.
+  \boxed{H_{cb}=-\mu_bg_b|S_b|}.
   \label{eq:neumann_flux}
 \end{equation}
-齐次Neumann边界对应 $g_b=0$，因而 $H_{P,b}=0$。需要注意，\Rone 使用 $\bm J_{\phi,D}=-\mu\nabla\phi$，因此参考书中的 $\bm J_{\phi,D}\cdot\Sf_b$ 与本文的 $H_{P,b}$ 相差一个负号。
+齐次Neumann边界对应 $g_b=0$，因而 $H_{cb}=0$。此时
+$H_{cb}=\bm J_{\phi,D,b}\cdot\Sf_{cb}$，与第一题中“$H_{cf}$ 表示穿过面向外的
+标量通量”的意义相同。
 
 题面只写了Neumann boundary conditions，并未给出具体通量。正式实现时必须说明采用的是齐次Neumann条件，还是由解析解计算
 \begin{equation}
-  g_b(t)=\nabla\phi_{\mathrm{exact}}(\xf_b,t)\cdot\bm n_b.
+  g_b(t)=\nabla\phi_{\mathrm{exact}}(\xf_b,t)\cdot\bm n_{cb}.
   \label{eq:exact_neumann}
 \end{equation}
 
@@ -566,28 +680,28 @@ laplacianSchemes
 
 \subsection{从Taylor展开推导向前Euler格式}
 
-在 $t_n$ 处对 $\phi_P$ 作向前Taylor展开：
+在 $t^n$ 处对 $\phi_c$ 作向前Taylor展开：
 \begin{equation}
-  \phi_P(t_n+\Delta t)
-  =\phi_P(t_n)
-  +\Delta t\left.\frac{\mathrm d\phi_P}{\mathrm dt}\right|_{t_n}
+  \phi_c(t^n+\Delta t)
+  =\phi_c(t^n)
+  +\Delta t\left.\frac{\mathrm d\phi_c}{\mathrm dt}\right|_{t^n}
   +\frac{\Delta t^2}{2}
-   \left.\frac{\mathrm d^2\phi_P}{\mathrm dt^2}\right|_{t_n}
+   \left.\frac{\mathrm d^2\phi_c}{\mathrm dt^2}\right|_{t^n}
   +\cdots.
   \label{eq:taylor_time}
 \end{equation}
 移项并除以 $\Delta t$：
 \begin{equation}
-  \left.\frac{\mathrm d\phi_P}{\mathrm dt}\right|_{t_n}
-  =\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}
+  \left.\frac{\mathrm d\phi_c}{\mathrm dt}\right|_{t^n}
+  =\frac{\phi_c^{n+1}-\phi_c^n}{\Delta t}
   +O(\Delta t).
   \label{eq:forward_difference}
 \end{equation}
 忽略一阶截断误差后，
 \begin{equation}
   \boxed{
-  \left.\frac{\mathrm d\phi_P}{\mathrm dt}\right|_{t_n}
-  \approx\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}}.
+  \left.\frac{\mathrm d\phi_c}{\mathrm dt}\right|_{t^n}
+  \approx\frac{\phi_c^{n+1}-\phi_c^n}{\Delta t}}.
   \label{eq:forward_euler}
 \end{equation}
 该格式时间一阶精度。
@@ -598,24 +712,18 @@ laplacianSchemes
 
 将式\eqref{eq:forward_euler}代入非正交空间离散式\eqref{eq:nonorth_semidiscrete}，并把所有空间量取在旧时间层 $n$：
 \begin{equation}
-  V_P\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}
-  =\sum_f\left[
-  D_f^n(\phi_N^n-\phi_P^n)+C_f^n\right]+B_P^n.
+  \frac{\phi_c^{n+1}-\phi_c^n}{\Delta t}
+  -R_c(\bm\phi^n)=0,
   \label{eq:fully_discrete_before_solve}
 \end{equation}
 解出新时间层：
 \begin{equation}
   \boxed{
-  \phi_P^{n+1}
-  =\phi_P^n
-  +\frac{\Delta t}{V_P}
-  \left\{
-  \sum_f\left[
-  D_f^n(\phi_N^n-\phi_P^n)+C_f^n\right]+B_P^n
-  \right\}}
+  \phi_c^{n+1}
+  =\phi_c^n+\Delta t\,R_c(\bm\phi^n)}
   \label{eq:fully_explicit_general}
 \end{equation}
-右端全部由 $t_n$ 时刻数据确定，因此不需要求解线性方程组。
+右端全部由 $t^n$ 时刻数据确定，因此不需要求解线性方程组。
 
 \source{\Rone，第13.2.1节式(13.7)--(13.12)及第13.3.3节式(13.67)--(13.68)：空间算子在旧时间层计算的显式Euler关系。}
 
@@ -623,13 +731,20 @@ laplacianSchemes
 
 当 $C_f=0$ 时，式\eqref{eq:fully_explicit_general}变成
 \begin{equation}
-  \phi_P^{n+1}
-  =\left(1-\frac{\Delta t}{V_P}\sum_fD_f\right)\phi_P^n
-  +\frac{\Delta t}{V_P}\sum_fD_f\phi_N^n
-  +\frac{\Delta t}{V_P}B_P^n.
+  H_f^n=D_f(\phi_{O_f}^n-\phi_{N_f}^n),
+\end{equation}
+然后对该面的两侧分别产生更新量
+\begin{equation}
+  \boxed{
+  \Delta\phi_{O_f}
+  =-\frac{\Delta t}{V_{O_f}}H_f^n,
+  \qquad
+  \Delta\phi_{N_f}
+  =+\frac{\Delta t}{V_{N_f}}H_f^n.}
   \label{eq:explicit_coeff_form}
 \end{equation}
-它清楚地表明，新值是旧中心值、旧相邻值和旧边界贡献的显式组合。
+所有内部面和边界面贡献累加完毕后再同步更新。该写法只使用 $O_f,N_f$，并且
+清楚显示同一面向两个单元提供符号相反的守恒贡献。
 
 \subsection{二维均匀矩形网格上的完整更新式}
 
@@ -665,12 +780,12 @@ laplacianSchemes
 
 参考书把Forward Euler稳定性解释为离散系数的异号规则在时间方向上的延伸。对无源正交扩散式\eqref{eq:explicit_coeff_form}，要求中心权重非负：
 \begin{equation}
-  1-\frac{\Delta t}{V_P}\sum_fD_f\geq0.
+  1-\frac{\Delta t}{V_c}\sum_fD_f\geq0.
   \label{eq:positive_center_weight}
 \end{equation}
 所以局部时间步必须满足
 \begin{equation}
-  \Delta t\leq\frac{V_P}{\sum_fD_f}.
+  \Delta t\leq\frac{V_c}{\sum_fD_f}.
   \label{eq:local_dt_bound}
 \end{equation}
 为了使所有控制体稳定，全局时间步取
@@ -678,10 +793,10 @@ laplacianSchemes
   \boxed{
   \Delta t
   \leq
-  \min_P
-  \frac{V_P}{
-  \displaystyle\sum_{f\in\mathcal F(P)}
-  \mu_f|\Ef_f|/d_{PN}}}.
+  \min_c
+  \frac{V_c}{
+  \displaystyle\sum_{f\in\mathcal F_c^{\mathrm{int}}}D_f
+  +\displaystyle\sum_{b\in\mathcal F_c^{\mathrm{bnd}}}D_b}}.
   \label{eq:global_dt_bound}
 \end{equation}
 实际实现引入安全系数 $0<\sigma<1$：
@@ -689,8 +804,8 @@ laplacianSchemes
   \boxed{
   \Delta t
   =\sigma
-  \min_P
-  \frac{V_P}{\sum_fD_f}}.
+  \min_c
+  \frac{V_c}{\sum_fD_f}}.
   \label{eq:safe_dt}
 \end{equation}
 
@@ -700,7 +815,7 @@ laplacianSchemes
 
 二维矩形网格上
 \begin{equation}
-  \frac{1}{V_P}\sum_fD_f
+  \frac{1}{V_c}\sum_fD_f
   =2\mu\left(\frac{1}{\Delta x^2}+\frac{1}{\Delta y^2}\right).
   \label{eq:rect_sum_D}
 \end{equation}
@@ -743,8 +858,8 @@ laplacianSchemes
 
 求解器需要读取或构造：
 \begin{itemize}
-  \item 控制体体积或二维面积 $V_P$；
-  \item 单元中心 $\xf_P$ 和面中心 $\xf_f$；
+  \item 控制体体积或二维面积 $V_c$；
+  \item 单元中心 $\xf_c$ 和面中心 $\xf_f$；
   \item 面面积向量 $\Sf_f$；
   \item 每个内部面的owner和neighbour；
   \item 扩散系数 $\mu$；
@@ -752,41 +867,44 @@ laplacianSchemes
 \end{itemize}
 对于每个内部面，计算
 \begin{equation}
-  \bm d_{PN}=\xf_N-\xf_P,
+  \bm d_f=\xf_{N_f}-\xf_{O_f},
   \qquad
-  d_{PN}=|\bm d_{PN}|,
+  d_f=|\bm d_f|,
   \qquad
-  \ef_{PN}=\frac{\bm d_{PN}}{d_{PN}},
+  \ef_f=\frac{\bm d_f}{d_f},
   \label{eq:algorithm_geometry}
 \end{equation}
 然后构造 $\Sf_f=\Ef_f+\Tf_f$，并预计算
 \begin{equation}
-  D_f=\mu_f\frac{|\Ef_f|}{d_{PN}}.
+  D_f=\mu_f\frac{|\Ef_f|}{d_f}.
   \label{eq:precompute_D}
 \end{equation}
 
 \subsection{一个时间步的守恒面装配}
 
-在时间 $t_n$，先更新边界条件，再按式\eqref{eq:safe_dt}计算 $\Delta t$。根据式\eqref{eq:gauss_cell_gradient}和式\eqref{eq:face_gradient_interpolation}计算单元梯度及面梯度，并将所有单元残差初始化为零：
+在时间 $t^n$，先更新边界条件，再按式\eqref{eq:safe_dt}计算 $\Delta t$。根据式\eqref{eq:gauss_cell_gradient}和式\eqref{eq:face_gradient_interpolation}计算单元梯度及面梯度，并将所有单元残差初始化为零：
 \begin{equation}
-  R_P^n=0.
+  R_c^n=0.
   \label{eq:residual_zero}
 \end{equation}
-对每一个内部面，令 $P=\operatorname{owner}(f)$，$N=\operatorname{neighbour}(f)$，计算
+对每一个内部面，令 $O_f=\operatorname{owner}(f)$、
+$N_f=\operatorname{neighbour}(f)$。按全局面积向量 $\Sf_f$ 的方向计算从owner流向
+neighbour的扩散通量
 \begin{equation}
   H_f^n
-  =D_f(\phi_N^n-\phi_P^n)
-  +\mu_f(\nabla\phi)_f^n\cdot\Tf_f.
+  =D_f(\phi_{O_f}^n-\phi_{N_f}^n)
+  -\mu_f(\nabla\phi)_f^n\cdot\Tf_f.
   \label{eq:algorithm_face_flux}
 \end{equation}
-然后以相反符号装配到两个相邻控制体：
+然后直接按体积归一化形式装配到两个相邻控制体：
 \begin{equation}
-  R_P^n\mathrel{+}=H_f^n,
+  R_{O_f}^n\mathrel{-}=\frac{H_f^n}{V_{O_f}},
   \qquad
-  R_N^n\mathrel{-}=H_f^n.
+  R_{N_f}^n\mathrel{+}=\frac{H_f^n}{V_{N_f}}.
   \label{eq:owner_neighbour_assembly}
 \end{equation}
-同一个内部面在两个控制体中的贡献严格相反，因此内部通量在全局求和时抵消，保证离散守恒。
+乘以各自控制体体积后，同一个内部面在两个控制体中的物理通量贡献严格相反，
+因此内部通量在全局求和时抵消，保证离散守恒。
 
 \source{\Rtwo，第1章式(1.24)--(1.26)：owner-neighbour共享面相反符号装配；\Rone，第8.10.1--8.10.2节：内部面系数和通量装配。}
 
@@ -794,20 +912,27 @@ laplacianSchemes
 
 Dirichlet边界面使用
 \begin{equation}
-  H_b^n=D_b(\phi_b^n-\phi_P^n)
-  +H_{b,\mathrm{nonorth}}^n,
+  H_{cb}^n=D_b(\phi_c^n-\phi_b^n)
+  -C_{cb}^n,
   \label{eq:algorithm_dirichlet}
 \end{equation}
 Neumann边界面使用
 \begin{equation}
-  H_b^n=\mu_bg_b^nA_b.
+  H_{cb}^n=-\mu_bg_b^n|S_b|.
   \label{eq:algorithm_neumann}
 \end{equation}
-将边界贡献加入 $R_P^n$ 后，对全部控制体同步进行向前Euler更新：
+边界贡献直接加入所属控制体的残差：
+\begin{equation}
+  R_{\operatorname{owner}(b)}^n
+  \mathrel{-}=
+  \frac{H_{cb}^n}{V_{\operatorname{owner}(b)}}.
+  \label{eq:algorithm_boundary_residual}
+\end{equation}
+再对全部控制体同步进行向前Euler更新：
 \begin{equation}
   \boxed{
-  \phi_P^{n+1}
-  =\phi_P^n+\frac{\Delta t}{V_P}R_P^n}.
+  \phi_c^{n+1}
+  =\phi_c^n+\Delta t\,R_c^n}.
   \label{eq:algorithm_update}
 \end{equation}
 必须使用独立数组保存 $\phi^{n+1}$，不能在遍历单元时原位覆盖 $\phi^n$，否则后续单元会错误使用部分新时间层数据。
@@ -818,11 +943,11 @@ Neumann边界面使用
 read mesh, mu, initial condition and boundary conditions
 
 for each internal face f:
-    P = owner[f]
-    N = neighbour[f]
-    dPN = centre[N] - centre[P]
+    O[f] = owner[f]
+    N[f] = neighbour[f]
+    d[f] = centre[N[f]] - centre[O[f]]
     construct E[f] and T[f] from S[f] = E[f] + T[f]
-    D[f] = mu[f] * mag(E[f]) / mag(dPN)
+    D[f] = mu[f] * mag(E[f]) / mag(d[f])
 
 set phi from the prescribed initial condition
 t = 0
@@ -831,40 +956,41 @@ while t < endTime:
 
     update boundary data at time t
 
-    for each cell P:
-        aDiff[P] = sum of D[f] over faces of P
+    for each cell c:
+        aDiff[c] = sum of D[f] over faces of c
 
-    deltaT = sigma * min_P(V[P] / aDiff[P])
+    deltaT = sigma * min_c(V[c] / aDiff[c])
     deltaT = min(deltaT, endTime - t)
 
     linearly interpolate phi to all faces
 
-    for each cell P:
-        gradPhi[P] =
-            sum_f(phiFace[f] * S[P,f]) / V[P]
+    for each cell c:
+        gradPhi[c] =
+            sum_f(phiFace[f] * S[c,f]) / V[c]
 
     interpolate gradPhi from cells to internal faces
 
-    for each cell P:
-        residual[P] = 0
+    for each cell c:
+        R[c] = 0
 
     for each internal face f:
-        P = owner[f]
+        O = owner[f]
         N = neighbour[f]
 
-        orthPart = D[f] * (phi[N] - phi[P])
+        orthFlux = D[f] * (phi[O] - phi[N])
         correction = mu[f] * dot(gradPhiFace[f], T[f])
-        H = orthPart + correction
+        H = orthFlux - correction
 
-        residual[P] += H
-        residual[N] -= H
+        R[O] -= H / V[O]
+        R[N] += H / V[N]
 
     for each boundary face b:
         compute H from the Dirichlet or Neumann condition
-        residual[owner[b]] += H
+        c = owner[b]
+        R[c] -= H / V[c]
 
-    for each cell P:
-        phiNew[P] = phi[P] + deltaT * residual[P] / V[P]
+    for each cell c:
+        phiNew[c] = phi[c] + deltaT * R[c]
 
     phi = phiNew
     t = t + deltaT
@@ -878,17 +1004,28 @@ OpenFOAM中的数学核心可写成概念性形式：
 while (runTime.loop())
 {
     // deltaT must satisfy the explicit diffusion stability limit
-    const volScalarField Lphi
+    const volScalarField Rphi
     (
         fvc::laplacian(mu, phi)
     );
 
-    phi.ref() += runTime.deltaTValue()*Lphi.primitiveField();
+    phi.ref() += runTime.deltaTValue()*Rphi.primitiveField();
     phi.correctBoundaryConditions();
     runTime.write();
 }
 \end{lstlisting}
-这段代码只表达离散结构。具体API需要与所安装的OpenFOAM 14字段类型和编译环境核对。关键原则是使用\texttt{fvc::laplacian}显式计算空间算子，并由程序直接完成 $\phi^{n+1}=\phi^n+\Delta tL_h(\phi^n)$，而不是构造并求解\texttt{fvMatrix}。
+这段代码只表达离散结构。具体API需要与所安装的OpenFOAM 14字段类型和编译环境核对。
+这里的 $R_c$ 直接对应
+$\texttt{fvc::laplacian(mu,phi)}$ 返回的单元场：
+\begin{equation}
+  R_c
+  =
+  \left[\texttt{fvc::laplacian(mu,phi)}\right]_c
+  =
+  \left[\nabla\cdot(\mu\nabla\phi)\right]_c.
+\end{equation}
+因此更新式是 $\phi^{n+1}=\phi^n+\Delta tR_c^n$。关键原则仍是使用
+\texttt{fvc::laplacian}显式计算空间算子，而不是构造并求解\texttt{fvMatrix}。
 
 \source{\Rone，第8.10.2节：\texttt{fvc::laplacian}返回单元场，\texttt{fvm::laplacian}返回矩阵；第13.2.1节：显式Euler无需在每一时间层求解代数方程组。}
 
@@ -948,25 +1085,29 @@ while (runTime.loop())
 
 \subsection{误差范数和观测收敛阶}
 
-设终止时刻数值解和解析解分别为 $\phi_P^{\mathrm{num}}$ 和 $\phi_P^{\mathrm{exact}}$。体积加权误差定义为
+设终止时刻数值解和解析解分别为 $\phi_c^{\mathrm{num}}$ 和
+$\phi_c^{\mathrm{exact}}$。严格按照原题附录A，采用体积加权归一化误差：
 \begin{align}
-  E_1
-  &=\frac{\sum_PV_P
-  |\phi_P^{\mathrm{num}}-\phi_P^{\mathrm{exact}}|}
-  {\sum_PV_P},
+  E(L_1)
+  &=\frac{\sum_cV_c
+  |\phi_c^{\mathrm{num}}-\phi_c^{\mathrm{exact}}|}
+  {\sum_cV_c|\phi_c^{\mathrm{exact}}|},
   \label{eq:L1_error}\\
-  E_2
+  E(L_2)
   &=\left[
-  \frac{\sum_PV_P
-  (\phi_P^{\mathrm{num}}-\phi_P^{\mathrm{exact}})^2}
-  {\sum_PV_P}
+  \frac{\sum_cV_c
+  (\phi_c^{\mathrm{num}}-\phi_c^{\mathrm{exact}})^2}
+  {\sum_cV_c(\phi_c^{\mathrm{exact}})^2}
   \right]^{1/2},
   \label{eq:L2_error}\\
-  E_{\infty}
-  &=\max_P
-  |\phi_P^{\mathrm{num}}-\phi_P^{\mathrm{exact}}|.
+  E(L_\infty)
+  &=\frac{
+  \max_c|\phi_c^{\mathrm{num}}-\phi_c^{\mathrm{exact}}|}
+  {\max_c|\phi_c^{\mathrm{exact}}|}.
   \label{eq:Linf_error}
 \end{align}
+其中二维计算中的 $V_c$ 等价于单元面积 $|\Omega_c|$。这些定义与原题附录A的
+$\phi_{ni}$、$\phi_{ei}$、$|\Omega_i|$ 完全对应，只是将单元索引统一写成 $c$。
 若相邻两级网格的代表尺度分别为 $h_1,h_2$，则观测收敛阶为
 \begin{equation}
   \boxed{
@@ -987,30 +1128,41 @@ while (runTime.loop())
 \paragraph{半离散守恒式}
 \begin{equation}
   \boxed{
-  V_P\frac{\mathrm d\phi_P}{\mathrm dt}
-  =\sum_f\mu_f(\nabla\phi)_f\cdot\Sf_{P,f}}.
+  V_c\frac{\mathrm d\phi_c}{\mathrm dt}
+  -V_cR_c(\bm\phi)=0,
+  \qquad
+  \frac{\mathrm d\phi_c}{\mathrm dt}-R_c(\bm\phi)=0.}
   \label{eq:summary_semi}
 \end{equation}
 
 \paragraph{非正交网格显式空间算子}
 \begin{equation}
   \boxed{
-  R_P^n
-  =\sum_f\left[
-  D_f(\phi_N^n-\phi_P^n)
-  +\mu_f(\nabla\phi)_f^n\cdot\Tf_f
-  \right]+B_P^n}.
+  H_f^n
+  =D_f(\phi_{O_f}^n-\phi_{N_f}^n)
+  -\mu_f(\nabla\phi)_f^n\cdot\Tf_f,
+  \qquad
+  R_c^n
+  =-\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}H_f^n
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}H_{cb}^n
+  \right].}
   \label{eq:summary_space}
 \end{equation}
 
 \paragraph{向前Euler更新}
 \begin{equation}
   \boxed{
-  \phi_P^{n+1}
-  =\phi_P^n+\frac{\Delta t}{V_P}R_P^n,
+  \phi_c^{n+1}
+  =\phi_c^n+\Delta t\,R_c^n,
   \qquad
   \Delta t
-  =\sigma\min_P\frac{V_P}{\sum_fD_f}}.
+  =\sigma\min_c
+  \frac{V_c}{
+  \displaystyle\sum_{f\in\mathcal F_c^{\mathrm{int}}}D_f
+  +\displaystyle\sum_{b\in\mathcal F_c^{\mathrm{bnd}}}D_b}}.
   \label{eq:summary_update}
 \end{equation}
 

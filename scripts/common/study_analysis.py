@@ -167,10 +167,29 @@ def analyse(solver_family: str, case_name: str) -> Path:
         previous = row
 
     mesh_type = str(summary_rows[0].get("mesh", "quad"))
+    problem = rows[0].get("problem", "")
     mesh_label = {
         "quad": "均匀结构化四边形",
         "tri": "三角形棱柱",
     }.get(mesh_type, mesh_type)
+    if problem == "diffusion_discontinuity":
+        study_description = (
+            f"本研究使用第二题第一个具有间断初值的二维扩散算例，"
+            f"比较不同 {mesh_label} 网格分辨率。"
+        )
+        setup_description = (
+            "所有网格使用相同的区域 [-5,5]^2、扩散系数 μ=1、"
+            "齐次 Neumann 边界、显式扩散稳定时间步和终止时间 t=0.2。"
+        )
+        monitor_heading = "diffusionCo"
+        amplitude_heading = "final range"
+    else:
+        study_description = (
+            f"本研究使用周期正弦波线性对流算例，比较不同 {mesh_label} 网格分辨率。"
+        )
+        setup_description = "所有网格使用相同的初始函数、速度、周期边界、CFL 和终止时间。"
+        monitor_heading = "maxCo"
+        amplitude_heading = "final amplitude"
     summary_path = data_dir / "convergence_summary.csv"
     fields = list(summary_rows[0].keys())
     with summary_path.open("w", newline="", encoding="utf-8") as stream:
@@ -200,8 +219,8 @@ def analyse(solver_family: str, case_name: str) -> Path:
     report_lines = [
         f"# {case_name} 网格收敛性分析",
         "",
-        f"本研究使用周期正弦波线性对流算例，比较不同 {mesh_label} 网格分辨率。",
-        "所有网格使用相同的初始函数、速度、周期边界、CFL 和终止时间。",
+        study_description,
+        setup_description,
         "",
         "$$p = \\frac{\\log(E_N/E_{2N})}{\\log(2)}$$",
         "",
@@ -209,7 +228,7 @@ def analyse(solver_family: str, case_name: str) -> Path:
         "",
         "## 汇总表",
         "",
-        "| N | cells | L1 | L2 | Linf | L1 order | maxCo | final amplitude |",
+        f"| N | cells | L1 | L2 | Linf | L1 order | {monitor_heading} | {amplitude_heading} |",
         "|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in summary_rows:
@@ -228,7 +247,7 @@ def analyse(solver_family: str, case_name: str) -> Path:
             "",
             f"L1 误差从 `{first_error:.8e}` 变为 `{last_error:.8e}`。",
             order_conclusion,
-            f"每个 N 的详细场数据、时间历史、日志和单案例图保存在 `{solver_family}/cases/<case>/Nxx`、`data/{solver_family}/cases/<case>/Nxx` 和 `figures/{solver_family}/cases/<case>/Nxx` 目录。",
+            f"每个 N 的详细场数据、时间历史、日志和单案例图保存在 `cases/{solver_family}/<case>/Nxx`、`data/{solver_family}/cases/<case>/Nxx` 和 `figures/{solver_family}/cases/<case>/Nxx` 目录。",
             "",
         ]
     )
@@ -254,6 +273,17 @@ def plot(solver_family: str, case_name: str) -> None:
     rows.sort(key=lambda row: int(row["resolution"]))
     if not rows:
         raise RuntimeError(f"No rows found in {summary_path}")
+    problem = rows[0].get("problem", "")
+    if problem == "diffusion_discontinuity":
+        x_label = "N cells per direction"
+        y_label = "normalized error at t=0.2"
+        amplitude_label = "final range"
+        amplitude_reference = None
+    else:
+        x_label = "N base intervals per direction"
+        y_label = "normalized error at t=1"
+        amplitude_label = "final amplitude"
+        amplitude_reference = 1.0
 
     n_values = [int(row["resolution"]) for row in rows]
     l1 = [float(row["normalizedL1"]) for row in rows]
@@ -266,8 +296,8 @@ def plot(solver_family: str, case_name: str) -> None:
     axis.loglog(n_values, linf, "^-", label="normalized Linf")
     reference = l1[-1] * n_values[-1]
     axis.loglog(n_values, [reference / n for n in n_values], "k--", label="slope 1 reference")
-    axis.set_xlabel("N base intervals per direction")
-    axis.set_ylabel("normalized error at t=1")
+    axis.set_xlabel(x_label)
+    axis.set_ylabel(y_label)
     axis.set_title(f"{case_name}: error convergence")
     axis.grid(True, which="both", alpha=0.25)
     axis.legend()
@@ -289,7 +319,7 @@ def plot(solver_family: str, case_name: str) -> None:
         if x:
             axis.plot(x, y, marker=marker, linestyle="-", label=label)
     axis.axhline(1.0, linestyle="--", color="black", label="first order")
-    axis.set_xlabel("N base intervals per direction")
+    axis.set_xlabel(x_label)
     axis.set_ylabel("observed order")
     axis.set_title(f"{case_name}: observed convergence order")
     axis.grid(True, alpha=0.25)
@@ -299,15 +329,16 @@ def plot(solver_family: str, case_name: str) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.8), constrained_layout=True)
     axes[0].plot(n_values, l1, "o-", label="normalized L1")
-    axes[0].set_xlabel("N base intervals per direction")
+    axes[0].set_xlabel(x_label)
     axes[0].set_ylabel("normalized L1 error")
     axes[0].grid(True, alpha=0.25)
     axes[0].legend()
     amplitudes = [float(row["finalAmplitude"]) for row in rows]
-    axes[1].plot(n_values, amplitudes, "o-", label="final amplitude")
-    axes[1].axhline(1.0, linestyle="--", color="black", label="exact amplitude")
-    axes[1].set_xlabel("N base intervals per direction")
-    axes[1].set_ylabel("amplitude")
+    axes[1].plot(n_values, amplitudes, "o-", label=amplitude_label)
+    if amplitude_reference is not None:
+        axes[1].axhline(amplitude_reference, linestyle="--", color="black", label="exact amplitude")
+    axes[1].set_xlabel(x_label)
+    axes[1].set_ylabel(amplitude_label)
     axes[1].grid(True, alpha=0.25)
     axes[1].legend()
     fig.suptitle(f"{case_name}: all-N comparison")

@@ -1,0 +1,219 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     | M anipulation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      phi;
+}
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   nonuniform List<scalar>
+100
+(
+    2.5767571091549810e-18
+    7.6812046852020953e-15
+    3.0988191387218256e-12
+    1.6918979226151304e-10
+    1.2501528663867426e-09
+    1.2501528663867426e-09
+    1.6918979226151304e-10
+    3.0988191387218256e-12
+    7.6812046852020953e-15
+    2.5767571091549810e-18
+    7.6812046852020953e-15
+    2.2897348456455530e-11
+    9.2374496619705944e-09
+    5.0434766256788803e-07
+    3.7266531720786709e-06
+    3.7266531720786709e-06
+    5.0434766256788803e-07
+    9.2374496619705944e-09
+    2.2897348456455530e-11
+    7.6812046852020953e-15
+    3.0988191387218256e-12
+    9.2374496619705944e-09
+    3.7266531720786709e-06
+    2.0346836901064417e-04
+    1.5034391929775724e-03
+    1.5034391929775724e-03
+    2.0346836901064417e-04
+    3.7266531720786709e-06
+    9.2374496619705944e-09
+    3.0988191387218256e-12
+    1.6918979226151304e-10
+    5.0434766256788803e-07
+    2.0346836901064417e-04
+    1.1108996538242306e-02
+    8.2084998623898800e-02
+    8.2084998623898800e-02
+    1.1108996538242306e-02
+    2.0346836901064417e-04
+    5.0434766256788803e-07
+    1.6918979226151304e-10
+    1.2501528663867426e-09
+    3.7266531720786709e-06
+    1.5034391929775724e-03
+    8.2084998623898800e-02
+    6.0653065971263342e-01
+    6.0653065971263342e-01
+    8.2084998623898800e-02
+    1.5034391929775724e-03
+    3.7266531720786709e-06
+    1.2501528663867426e-09
+    1.2501528663867426e-09
+    3.7266531720786709e-06
+    1.5034391929775724e-03
+    8.2084998623898800e-02
+    6.0653065971263342e-01
+    6.0653065971263342e-01
+    8.2084998623898800e-02
+    1.5034391929775724e-03
+    3.7266531720786709e-06
+    1.2501528663867426e-09
+    1.6918979226151304e-10
+    5.0434766256788803e-07
+    2.0346836901064417e-04
+    1.1108996538242306e-02
+    8.2084998623898800e-02
+    8.2084998623898800e-02
+    1.1108996538242306e-02
+    2.0346836901064417e-04
+    5.0434766256788803e-07
+    1.6918979226151304e-10
+    3.0988191387218256e-12
+    9.2374496619705944e-09
+    3.7266531720786709e-06
+    2.0346836901064417e-04
+    1.5034391929775724e-03
+    1.5034391929775724e-03
+    2.0346836901064417e-04
+    3.7266531720786709e-06
+    9.2374496619705944e-09
+    3.0988191387218256e-12
+    7.6812046852020953e-15
+    2.2897348456455530e-11
+    9.2374496619705944e-09
+    5.0434766256788803e-07
+    3.7266531720786709e-06
+    3.7266531720786709e-06
+    5.0434766256788803e-07
+    9.2374496619705944e-09
+    2.2897348456455530e-11
+    7.6812046852020953e-15
+    2.5767571091549810e-18
+    7.6812046852020953e-15
+    3.0988191387218256e-12
+    1.6918979226151304e-10
+    1.2501528663867426e-09
+    1.2501528663867426e-09
+    1.6918979226151304e-10
+    3.0988191387218256e-12
+    7.6812046852020953e-15
+    2.5767571091549810e-18
+);
+
+boundaryField
+{
+    xMin
+    {
+        type codedFixedValue;
+        value uniform 0;
+        name xMinGaussianDirichlet;
+        code
+        #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    xMax
+    {
+        type codedFixedValue;
+        value uniform 0;
+        name xMaxGaussianDirichlet;
+        code
+        #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    yMin
+    {
+        type codedFixedValue;
+        value uniform 0;
+        name yMinGaussianDirichlet;
+        code
+        #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    yMax
+    {
+        type codedFixedValue;
+        value uniform 0;
+        name yMaxGaussianDirichlet;
+        code
+        #{ 
+            const scalar t = this->db().time().value();
+            const scalar denom = 1.0 + 4.0*t;
+            const scalar invDenom = 1.0/denom;
+            const scalar mu = 1;
+            const vectorField& Cf = patch().Cf();
+            scalarField values(patch().size(), 0.0);
+            forAll(Cf, i)
+            {
+                const scalar x = Cf[i].x();
+                const scalar y = Cf[i].y();
+                values[i] = invDenom*exp(-mu*(x*x + y*y)*invDenom);
+            }
+            operator==(values);
+        #};
+    }
+    zMin
+    {
+        type empty;
+    }
+    zMax
+    {
+        type empty;
+    }
+}

@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+solverPath="$projectRoot/build/02_diffusion_equation/bin/explicitDiffusionFoamStudent"
+gmshPython="${VIBEFLOW_PYTHON:-/home/a776/vibeflow/python-env/bin/python}"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_tri_mesh.py" \
+    --case "$caseDir" \
+    --resolution 20 \
+    --thickness 0.1 \
+    --xmin -5 \
+    --xmax 5 \
+    --ymin -5 \
+    --ymax 5
+runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
+runApplication -overwrite createPatch
+runApplication -overwrite checkMesh
+runApplication -suffix centres foamPostProcess -constant -func writeCellCentres
+runApplication -suffix volumes foamPostProcess -constant -func writeCellVolumes
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "$projectRoot/scripts/configs/02_diffusion_equation/04_gaussian_tri.json" \
+    --N 20 \
+    --refresh-initial-only
+rm -rf "$caseDir/0"
+cp -R "$caseDir/0.orig" "$caseDir/0"
+runApplication -overwrite "$solverPath"
