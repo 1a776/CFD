@@ -25,7 +25,18 @@
   "initialProfile": {},
   "boundaryCondition": "periodicXY",
   "postprocess": {},
+  "scalarField": "T",
+  "sourceField": "omega",
+  "linearSolver": "GAMG",
+  "linearTolerance": 1e-12,
+  "nNonOrthogonalCorrectors": 0,
+  "mu": 1.0,
+  "diffusionCo": 0.2,
+  "advectionDiffusionCo": 0.2,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
   "endTime": 1.0,
   "maxCo": 0.2,
+  "maxDeltaT": null,
   "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/01_advection_equation/01_sine_wave_quad/N40/0.orig/T"
 }

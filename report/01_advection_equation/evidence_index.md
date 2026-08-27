@@ -23,7 +23,7 @@
 | UDF 开发说明 | `../../UDF/README.md` | 公式到 OpenFOAM 代码的对应关系 |
 | 构建脚本 | `../../scripts/build_student_solver.sh` | 编译复现 |
 | 求解器可执行文件 | `../../build/01_advection_equation/bin/explicitAdvectionFoamStudent` | 编译结果 |
-| 四边形网格模板 | `../../cases/01_advection_equation/01_sine_wave_quad/N20/system/blockMeshDict` | `blockMesh` 网格定义 |
+| 四边形网格定义 | `../../cases/01_advection_equation/01_sine_wave_quad/N20/system/blockMeshDict` | 由 JSON 直接生成的 `blockMesh` 网格定义 |
 | 三角形网格生成器 | `../../scripts/common/gmsh_tri_mesh.py` | Gmsh 三角形棱柱网格生成 |
 | 统一案例脚本 | `../../scripts/common/foam_case.py` | 根据 JSON 准备 OpenFOAM case |
 

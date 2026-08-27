@@ -56,6 +56,9 @@ RAW_FIELDS = [
     "boundedAboveInitial",
     "solverEnded",
     "solverFatal",
+    "linearSolver",
+    "linearTolerance",
+    "nNonOrthogonalCorrectors",
 ]
 
 
@@ -162,6 +165,9 @@ def analyse(solver_family: str, case_name: str) -> Path:
                 "meshOK": row.get("meshOK", ""),
                 "solverEnded": row.get("solverEnded", ""),
                 "solverFatal": row.get("solverFatal", ""),
+                "linearSolver": row.get("linearSolver", ""),
+                "linearTolerance": row.get("linearTolerance", ""),
+                "nNonOrthogonalCorrectors": row.get("nNonOrthogonalCorrectors", ""),
             }
         )
         previous = row
@@ -204,6 +210,17 @@ def analyse(solver_family: str, case_name: str) -> Path:
             "外边界 fixedValue 0、全显式对流-扩散稳定时间步，并从 tau=0 旋转到 tau=2π。"
         )
         monitor_heading = "max AD stability"
+        amplitude_heading = "final range"
+    elif problem == "poisson_manufactured":
+        study_description = (
+            f"本研究使用第四题制造解 Poisson 算例，比较不同 {mesh_label} 网格分辨率。"
+        )
+        setup_description = (
+            "所有网格使用区域 [0,1]^2、解析解 phi=cos(pi*x)cos(pi*y)、"
+            "源项 omega=-2*pi^2*cos(pi*x)cos(pi*y)、四条边 Dirichlet 条件、"
+            "Gauss linear corrected Laplacian 和相同线性求解容差。"
+        )
+        monitor_heading = "CFL (N/A)"
         amplitude_heading = "final range"
     else:
         study_description = (
@@ -348,6 +365,11 @@ def plot(solver_family: str, case_name: str) -> None:
     elif problem == "rotating_peak_advection_diffusion":
         x_label = "N cells per direction"
         y_label = "normalized error at tau=2*pi"
+        amplitude_label = "final range"
+        amplitude_reference = None
+    elif problem == "poisson_manufactured":
+        x_label = "N cells per direction"
+        y_label = "normalized error at steady state"
         amplitude_label = "final range"
         amplitude_reference = None
     else:

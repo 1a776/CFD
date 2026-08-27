@@ -7,7 +7,6 @@
   "schemeName": "upwind",
   "divScheme": "Gauss upwind",
   "solver": "explicitAdvectionFoamStudent",
-  "templateResolution": 20,
   "resolutions": [10, 20, 40, 80],
   "velocity": [1.0, 1.0, 0.0],
   "endTime": 1.0,

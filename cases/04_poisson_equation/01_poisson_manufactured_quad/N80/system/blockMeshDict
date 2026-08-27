@@ -1,0 +1,75 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration   |
+    \  /    A nd           |
+     \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      blockMeshDict;
+}
+
+// 计算区域：Omega = [0,1] x [0,1]。
+// 本文件由 JSON 直接生成，不依赖其它案例模板。
+convertToMeters 1;
+
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 0.1)
+    (1 0 0.1)
+    (1 1 0.1)
+    (0 1 0.1)
+);
+
+blocks
+(
+    // N=80：每条边方向的单元数，二维单元数为 N*N。
+    hex (0 1 2 3 4 5 6 7) (80 80 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    xMin
+    {
+        type patch;
+        faces ((0 4 7 3));
+    }
+    xMax
+    {
+        type patch;
+        faces ((1 2 6 5));
+    }
+    yMin
+    {
+        type patch;
+        faces ((0 1 5 4));
+    }
+    yMax
+    {
+        type patch;
+        faces ((3 7 6 2));
+    }
+    zMin
+    {
+        type empty;
+        faces ((0 3 2 1));
+    }
+    zMax
+    {
+        type empty;
+        faces ((4 5 6 7));
+    }
+);
+

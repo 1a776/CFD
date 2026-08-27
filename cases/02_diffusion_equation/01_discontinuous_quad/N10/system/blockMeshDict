@@ -1,9 +1,9 @@
 /*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration   |
+    \  /    A nd           |
+     \/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -13,13 +13,8 @@ FoamFile
     object      blockMeshDict;
 }
 
-// 计算区域入口。
-// 原题第二题第一个案例要求：
-//     Ω = [-5,5] × [-5,5]
-//
-// 求解器不直接读取 blockMeshDict。
-// blockMesh 先把这里的设置转成 constant/polyMesh，
-// 求解器里的 createMesh.H 再读取 constant/polyMesh。
+// 计算区域：Omega = [-5,5] x [-5,5]。
+// 本文件由 JSON 直接生成，不依赖其它案例模板。
 convertToMeters 1;
 
 vertices
@@ -36,9 +31,7 @@ vertices
 
 blocks
 (
-    // 四边形结构网格入口。
-    // 这里的 (20 20 1) 对应 N=20。
-    // 脚本会根据 --resolutions 自动改成 N10/N20/N40/N80。
+    // N=10：每条边方向的单元数，二维单元数为 N*N。
     hex (0 1 2 3 4 5 6 7) (10 10 1) simpleGrading (1 1 1)
 );
 

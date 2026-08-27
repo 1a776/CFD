@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration   |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+// 第四题 Poisson 方程：
+//     laplacian(phi) = omega
+application     poissonFoamStudent;
+
+// 这是稳态求解。endTime=0 不是物理终止时间，
+// 而是保留 OpenFOAM 需要的时间目录管理接口。
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         0;
+deltaT          1;
+
+// 求解结束后写出 0/ 下的最终 phi。
+writeControl    timeStep;
+writeInterval   1;
+purgeWrite      0;
+writeFormat     ascii;
+writePrecision  16;
+timePrecision   12;
+writeCompression off;
+runTimeModifiable no;
+
+// 求解器读取的字段名：
+//     solutionField -> 0/phi，未知解；
+//     sourceField   -> 0/omega，已知源项。
+solutionField   phi;
+sourceField     omega;
+
+// corrected 非正交修正循环次数。
+// 该值由 JSON 进入 cases，不是物理方程本身给定的参数。
+nNonOrthogonalCorrectors 2;

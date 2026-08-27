@@ -51,6 +51,7 @@ from diffusion_tools import (
     parse_diffusion_solver_log,
     structured_centres,
 )
+from poisson_tools import poisson_exact_value
 from foam_fields import read_cell_geometry, read_tri_geometry_metadata
 from paths import solver_data_dir, solver_figure_dir
 
@@ -1169,11 +1170,197 @@ def _read_problem(case: Path) -> str:
     return str(metadata.get("problem", "sine_wave_advection"))
 
 
-def _postprocess_quad_case(
+def _postprocess_poisson_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
+    """Post-process the steady manufactured Poisson benchmark on either mesh."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    domain_raw = metadata.get("domain", [0.0, 1.0, 0.0, 1.0])
+    if not isinstance(domain_raw, list | tuple) or len(domain_raw) != 4:
+        raise RuntimeError(f"Invalid Poisson domain in metadata.json: {case}")
+    domain = tuple(float(value) for value in domain_raw)
+    mesh_type = str(metadata.get("meshType", "quad"))
+
+    # A steady OpenFOAM solve writes the converged field to time 0.
+    # Keep the source field from 0.orig so the initial guess remains traceable.
+    _, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0.orig" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+
+    if mesh_type == "quad":
+        nx, ny = mesh_resolution(case)
+        centres2d = structured_centres(nx, ny, domain)
+        centres = [(x, y, 0.0) for x, y in centres2d]
+        volumes = [
+            (domain[1] - domain[0]) / nx
+            * (domain[3] - domain[2]) / ny
+            * THICKNESS
+        ] * (nx * ny)
+    elif mesh_type == "tri":
+        centres, volumes = read_cell_geometry(case)
+        geometry_metadata = read_tri_geometry_metadata(case / "mesh" / "mesh_geometry.json")
+        triangulation = _triangulation_from_metadata(geometry_metadata)
+        triangle_to_cell = _match_triangles_to_cells(centres, triangulation)
+    else:
+        raise NotImplementedError(f"Unsupported Poisson mesh type: {mesh_type}")
+
+    if len(initial_values) != len(centres) or len(numerical_values) != len(centres):
+        raise RuntimeError(
+            f"Poisson field size does not match mesh in {case}: "
+            f"cells={len(centres)}, initial={len(initial_values)}, "
+            f"final={len(numerical_values)}"
+        )
+
+    exact_values = [
+        poisson_exact_value(float(x), float(y)) for x, y, *_ in centres
+    ]
+    l1, l2, linf = normalized_errors(numerical_values, exact_values, volumes)
+    initial = np.asarray(initial_values, dtype=float)
+    numerical = np.asarray(numerical_values, dtype=float)
+    exact = np.asarray(exact_values, dtype=float)
+    volumes_array = np.asarray(volumes, dtype=float)
+    initial_mass = float(np.dot(initial, volumes_array))
+    final_mass = float(np.dot(numerical, volumes_array))
+    mass_scale = float(np.dot(np.abs(exact), volumes_array))
+    solver_log_path = case / "log.poissonFoamStudent"
+    solver_log = solver_log_path.read_text(encoding="utf-8") if solver_log_path.exists() else ""
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    resolution = int(metadata.get("resolution", 0))
+    if resolution <= 0:
+        resolution = int(round(1.0 / max(float(metadata.get("nominalH", 1.0)), 1.0e-30)))
+    final_time = 0.0
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, resolution)
+    figure_dir = solver_figure_dir(solver_family, case_name, resolution)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    # Steady cases have no physical time history; retain a traceable one-row
+    # record so downstream tools can use the same file layout as other studies.
+    write_time_history(
+        [
+            {
+                "time": final_time,
+                "step": 0.0,
+                "deltaT": 0.0,
+                "maxCo": 0.0,
+                "residualIntegral": 0.0,
+                "minT": float(numerical.min()),
+                "maxT": float(numerical.max()),
+                "amplitude": 0.5 * float(numerical.max() - numerical.min()),
+            }
+        ],
+        data_dir / "time_history.csv",
+    )
+    if mesh_type == "quad":
+        initial_grid = initial.reshape(ny, nx)
+        numerical_grid = numerical.reshape(ny, nx)
+        exact_grid = exact.reshape(ny, nx)
+        write_structured_field_data(
+            [(x, y) for x, y in centres2d],
+            initial_values,
+            numerical_values,
+            exact_values,
+            data_dir / "field_data.csv",
+            data_dir / "error_field.csv",
+        )
+        plot_structured_field_comparison(
+            initial_grid,
+            numerical_grid,
+            exact_grid,
+            figure_dir / "field_comparison.png",
+            final_time,
+            domain,
+            "Poisson manufactured solution on quadrilateral cells",
+        )
+    else:
+        write_tri_field_data(
+            centres,
+            volumes,
+            initial_values,
+            numerical_values,
+            exact_values,
+            data_dir / "field_data.csv",
+            data_dir / "error_field.csv",
+        )
+        plot_tri_field_comparison(
+            triangulation,
+            initial,
+            numerical,
+            exact,
+            triangle_to_cell,
+            figure_dir / "field_comparison.png",
+            final_time,
+            field_name="phi",
+            figure_title="Poisson manufactured solution on triangular cells",
+        )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": mesh_type,
+        "problem": "poisson_manufactured",
+        "resolution": resolution,
+        "nominalH": 1.0 / resolution,
+        "nCells": len(centres),
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": 0.0,
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": final_mass - initial_mass,
+        "normalizedMassError": abs(final_mass - initial_mass) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": 0.0,
+        "minCo": 0.0,
+        "maxCo": 0.0,
+        "targetCo": 0.0,
+        "initialAmplitude": 0.5 * float(initial.max() - initial.min()),
+        "finalAmplitude": 0.5 * float(numerical.max() - numerical.min()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": 1,
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": "",
+        "boundedAboveInitial": "",
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+        "linearSolver": metadata.get("linearSolver", ""),
+        "linearTolerance": metadata.get("linearTolerance", ""),
+        "nNonOrthogonalCorrectors": metadata.get("nNonOrthogonalCorrectors", ""),
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    print(f"case={case}")
+    print(f"resolution={resolution}")
+    print(f"mesh={mesh_type}")
+    print(f"nCells={len(centres)}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_quad_advection_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    problem = _read_problem(case)
     if _read_problem(case) == "diffusion_discontinuity":
         return _postprocess_quad_diffusion_discontinuity_case(case, output_root, target_co)
+    if _read_problem(case) == "poisson_manufactured":
+        return _postprocess_poisson_case(case, output_root, target_co)
     if _read_problem(case) == "solid_rotation_advection":
         return _postprocess_quad_solid_rotation_case(case, output_root, target_co)
 
@@ -1200,7 +1387,7 @@ def _postprocess_quad_case(
     final_mass = float(np.sum(numerical) * cell_volume)
     mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
     mass_change = final_mass - initial_mass
-    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 1.0)
@@ -1956,6 +2143,8 @@ def _postprocess_tri_case(
 ) -> dict[str, object]:
     """Post-process a triangular-prism case using real cell geometry."""
     problem = _read_problem(case)
+    if problem == "poisson_manufactured":
+        return _postprocess_poisson_case(case, output_root, target_co)
     if problem == "solid_rotation_advection":
         return _postprocess_tri_solid_rotation_case(case, output_root, target_co)
     if problem == "sine_wave_advection_diffusion":
@@ -2124,6 +2313,8 @@ def _postprocess_quad_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
     problem = _read_problem(case)
+    if problem == "poisson_manufactured":
+        return _postprocess_poisson_case(case, output_root, target_co)
     if problem == "diffusion_discontinuity":
         return _postprocess_quad_diffusion_discontinuity_case(case, output_root, target_co)
     if problem == "diffusion_gaussian":

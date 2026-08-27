@@ -1,0 +1,42 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 三角形 Poisson 案例的预处理入口：
+# Gmsh 生成二维三角形并拉伸为 OpenFOAM 薄棱柱；
+# gmshToFoam 导入网格，createPatch 恢复四条物理边界；
+# C/Vc 写出真实单元中心和体积，随后按这些中心生成 omega。
+gmshPython="${VIBEFLOW_PYTHON:-/home/a776/vibeflow/python-env/bin/python}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_tri_mesh.py" \
+    --case "$caseDir" \
+    --resolution 80 \
+    --thickness 0.1 \
+    --xmin -1 \
+    --xmax 1 \
+    --ymin -1 \
+    --ymax 1
+runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
+runApplication -overwrite createPatch
+runApplication -overwrite checkMesh
+runApplication -suffix centres foamPostProcess -constant -func writeCellCentres
+runApplication -suffix volumes foamPostProcess -constant -func writeCellVolumes
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "$projectRoot/scripts/configs/03_advection_diffusion_equation/04_rotating_peak_tri_upwind.json" \
+    --N 80 \
+    --refresh-initial-only
+rm -rf "$caseDir/0"
+cp -R "$caseDir/0.orig" "$caseDir/0"

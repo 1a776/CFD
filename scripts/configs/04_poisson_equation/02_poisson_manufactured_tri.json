@@ -1,0 +1,30 @@
+{
+  "caseName": "02_poisson_manufactured_tri",
+  "solverFamily": "04_poisson_equation",
+  "description": "Fourth-problem manufactured Poisson solution on an unstructured triangular mesh.",
+  "equation": "poisson",
+  "problem": "poisson_manufactured",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "schemeName": "Gauss_linear_corrected",
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "solver": "poissonFoamStudent",
+  "resolutions": [10, 20, 40, 80],
+  "domain": [0.0, 1.0, 0.0, 1.0],
+  "resolutionMeaning": "cellsPerEdge",
+  "scalarField": "phi",
+  "sourceField": "omega",
+  "linearSolver": "GAMG",
+  "linearTolerance": 1e-12,
+  "nNonOrthogonalCorrectors": 2,
+  "boundaryCondition": "manufacturedDirichlet",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "poissonCosine",
+    "reportTime": 0.0
+  },
+  "endTime": 0.0,
+  "thickness": 0.1,
+  "implemented": true
+}

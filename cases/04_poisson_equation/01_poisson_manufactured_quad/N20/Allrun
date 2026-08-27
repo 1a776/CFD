@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 第四题 Poisson 案例的执行顺序：
+# 1. 清理上一次运行产生的网格、时间目录和日志；
+# 2. 按 JSON 中的 N 生成四边形 blockMesh 或三角形 Gmsh 网格；
+# 3. 生成与网格单元中心一致的 phi 初值和 omega 源项；
+# 4. 运行 poissonFoamStudent，求解 fvm::laplacian(phi) == omega；
+# 5. run_study.py 随后读取最终 phi，计算解析解误差并生成图表。
+
+solverPath="$projectRoot/build/04_poisson_equation/bin/poissonFoamStudent"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "$projectRoot/scripts/configs/04_poisson_equation/01_poisson_manufactured_quad.json" \
+    --N 20 \
+    --refresh-initial-only
+cp -R "$caseDir/0.orig" "$caseDir/0"
+runApplication -overwrite blockMesh
+runApplication -overwrite checkMesh
+runApplication -overwrite "$solverPath"

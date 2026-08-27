@@ -1,20 +1,11 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSolution;
 }
-
 solvers
 {
-    // 当前扩散求解器使用完全显式更新。
-    // 不组装线性方程组，因此不需要给 phi 配置线性求解器。
+    // 显式求解器不组装线性方程组，此处无需配置线性求解器。
 }

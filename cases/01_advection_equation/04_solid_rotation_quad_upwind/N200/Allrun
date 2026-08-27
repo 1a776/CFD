@@ -3,11 +3,12 @@
 set -eu
 
 caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." projectRoot=$(CDPATH= cd -- "$caseDir/../../.." && pwd)projectRoot=$(CDPATH= cd -- "$caseDir/../../.." && pwd) pwd)
+    projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
 cd "$caseDir"
 
 : "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
 
 solverPath="$projectRoot/build/01_advection_equation/bin/explicitAdvectionFoamStudent"
 if [ ! -x "$solverPath" ]; then

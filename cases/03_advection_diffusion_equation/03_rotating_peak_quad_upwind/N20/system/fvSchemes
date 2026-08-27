@@ -13,6 +13,13 @@ FoamFile
     object      fvSchemes;
 }
 
+// 当前文件对应：第三题第二个旋转尖峰案例。
+// 这里写“空间离散格式怎么选”，不写具体物理参数。
+// 具体入口关系：
+//     div(faceFlux,phi)  -> 对流项 div(U phi)，格式来自 JSON divScheme；
+//     laplacian(mu,phi) -> 扩散项 div(mu grad(phi))，格式来自 JSON laplacianScheme；
+//     snGradSchemes     -> 边界面和非正交面法向梯度修正，来自 JSON snGradScheme。
+
 ddtSchemes
 {
     // 显式 Euler 更新写在求解器源码中：

@@ -36,8 +36,9 @@ from diffusion_tools import (
     write_gaussian_initial_field,
     write_gaussian_initial_field_from_centres,
 )
+from poisson_tools import write_poisson_fields
 from foam_fields import patch_uniform_vector_field, read_cell_geometry
-from mesh_tools import mesh_resolution, patch_block_mesh_resolution
+from mesh_tools import mesh_resolution
 from paths import PROJECT_ROOT
 
 
@@ -81,6 +82,10 @@ ADVECTION_DIFFUSION_PROBLEMS = {
     "rotating_peak_advection_diffusion",
 }
 
+POISSON_PROBLEMS = {
+    "poisson_manufactured",
+}
+
 
 def _structured_centres(
     nx: int,
@@ -98,20 +103,210 @@ def _structured_centres(
     ]
 
 
-def _copy_constant_inputs(template: Path, target: Path) -> None:
-    source = template / "constant"
-    destination = target / "constant"
-    destination.mkdir(parents=True, exist_ok=True)
-    if not source.exists():
-        return
-    for child in source.iterdir():
-        if child.name == "polyMesh":
-            continue
-        target_child = destination / child.name
-        if child.is_dir():
-            shutil.copytree(child, target_child)
+def _write_base_block_mesh(case: Path, config: CaseConfig, resolution: int) -> None:
+    """Create the structured 2-D blockMesh dictionary without a template."""
+    xmin, xmax, ymin, ymax = config.domain
+    zmax = config.thickness
+    boundary_type = "cyclic" if config.boundary_condition == "periodicXY" else "patch"
+    neighbour = {
+        "xMin": "neighbourPatch xMax;\n            transform translational;\n            separation (-1 0 0);",
+        "xMax": "neighbourPatch xMin;\n            transform translational;\n            separation (1 0 0);",
+        "yMin": "neighbourPatch yMax;\n            transform translational;\n            separation (0 -1 0);",
+        "yMax": "neighbourPatch yMin;\n            transform translational;\n            separation (0 1 0);",
+    }
+    def patch(name: str, faces: str) -> str:
+        if boundary_type == "cyclic":
+            info = f"type cyclic;\n            {neighbour[name]}"
         else:
-            shutil.copy2(child, target_child)
+            info = "type patch;"
+        return f"""    {name}
+    {{
+        {info}
+        faces ({faces});
+    }}"""
+
+    path = case / "system" / "blockMeshDict"
+    path.write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration   |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      blockMeshDict;
+}}
+
+// 计算区域：Omega = [{xmin:g},{xmax:g}] x [{ymin:g},{ymax:g}]。
+// 本文件由 JSON 直接生成，不依赖其它案例模板。
+convertToMeters 1;
+
+vertices
+(
+    ({xmin:g} {ymin:g} 0)
+    ({xmax:g} {ymin:g} 0)
+    ({xmax:g} {ymax:g} 0)
+    ({xmin:g} {ymax:g} 0)
+    ({xmin:g} {ymin:g} {zmax:g})
+    ({xmax:g} {ymin:g} {zmax:g})
+    ({xmax:g} {ymax:g} {zmax:g})
+    ({xmin:g} {ymax:g} {zmax:g})
+);
+
+blocks
+(
+    // N={resolution}：每条边方向的单元数，二维单元数为 N*N。
+    hex (0 1 2 3 4 5 6 7) ({resolution} {resolution} 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+{patch("xMin", "(0 4 7 3)")}
+{patch("xMax", "(1 2 6 5)")}
+{patch("yMin", "(0 1 5 4)")}
+{patch("yMax", "(3 7 6 2)")}
+    zMin
+    {{
+        type empty;
+        faces ((0 3 2 1));
+    }}
+    zMax
+    {{
+        type empty;
+        faces ((4 5 6 7));
+    }}
+);
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_base_system_files(case: Path, config: CaseConfig) -> None:
+    """Create template-independent minimal system dictionaries."""
+    system = case / "system"
+    system.mkdir(parents=True, exist_ok=True)
+    if config.problem in POISSON_PROBLEMS:
+        return
+    (system / "fvSchemes").write_text(
+        """FoamFile
+{
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSchemes;
+}
+ddtSchemes { default Euler; }
+gradSchemes
+{
+    default Gauss linear;
+}
+divSchemes
+{
+    default none;
+    div(phi,T) Gauss upwind;
+    div(faceFlux,phi) Gauss upwind;
+}
+laplacianSchemes
+{
+    default none;
+    laplacian(mu,phi) Gauss linear corrected;
+}
+interpolationSchemes
+{
+    default linear;
+}
+snGradSchemes
+{
+    default corrected;
+}
+""",
+        encoding="utf-8",
+    )
+    (system / "controlDict").write_text(
+        f"""FoamFile
+{{
+    format ascii;
+    class dictionary;
+    location "system";
+    object controlDict;
+}}
+application {config.solver};
+startFrom startTime;
+startTime 0;
+stopAt endTime;
+endTime {format(config.end_time, ".17g")};
+deltaT 1e-4;
+writeControl runTime;
+writeInterval 0.1;
+purgeWrite 0;
+writeFormat ascii;
+writePrecision 12;
+timePrecision 17;
+writeCompression off;
+runTimeModifiable no;
+maxCo {config.max_co:g};
+scalarField {config.scalar_field};
+velocityField U;
+""",
+        encoding="utf-8",
+    )
+    (system / "fvSolution").write_text(
+        """FoamFile
+{
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSolution;
+}
+solvers
+{
+    // 显式求解器不组装线性方程组，此处无需配置线性求解器。
+}
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_base_velocity_field(case: Path, config: CaseConfig) -> None:
+    """Create the basic advection velocity before patching its values."""
+    if config.problem not in {"sine_wave_advection", "solid_rotation_advection"}:
+        return
+    boundary = {
+        name: ("cyclic" if config.boundary_condition == "periodicXY" else "zeroGradient")
+        for name in ("xMin", "xMax", "yMin", "yMax")
+    }
+    boundary.update({"zMin": "empty", "zMax": "empty"})
+    boundary_body = "\n".join(
+        f"    {name}\n    {{\n        type {kind};\n    }}"
+        for name, kind in boundary.items()
+    )
+    (case / "0.orig" / "U").write_text(
+        f"""FoamFile
+{{
+    format ascii;
+    class volVectorField;
+    location "0";
+    object U;
+}}
+
+dimensions [0 1 -1 0 0 0 0];
+internalField uniform (0 0 0);
+boundaryField
+{{
+{boundary_body}
+}}
+""",
+        encoding="utf-8",
+    )
 
 
 def _replace_or_append_dictionary_entry(path: Path, name: str, value: str) -> None:
@@ -125,6 +320,70 @@ def _replace_or_append_dictionary_entry(path: Path, name: str, value: str) -> No
 
 def _patch_fv_schemes(case: Path, config: CaseConfig) -> None:
     path = case / "system" / "fvSchemes"
+    if config.problem in POISSON_PROBLEMS:
+        path.write_text(
+            f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}}
+
+// 第四题 Poisson 方程是稳态问题，没有时间离散。
+ddtSchemes
+{{
+    default         steadyState;
+}}
+
+gradSchemes
+{{
+    // corrected Laplacian 需要单元中心梯度。
+    //     grad(phi)_c ≈ (1/V_c) sum_f phi_f S_cf
+    default         Gauss linear;
+}}
+
+divSchemes
+{{
+    // 本题没有对流散度项。
+    default         none;
+}}
+
+laplacianSchemes
+{{
+    // 对应求解器源码：
+    //     fvm::laplacian(phi) == omega
+    //
+    // 对应有限体积形式：
+    //     sum_f [ grad(phi)_f dot S_cf ] = V_c omega_c
+    //
+    // Gauss     -> 面通量求和；
+    // linear    -> 面插值；
+    // corrected -> 非正交修正。
+    laplacian(phi)  {config.laplacian_scheme};
+}}
+
+interpolationSchemes
+{{
+    default         linear;
+}}
+
+snGradSchemes
+{{
+    // 控制边界面和非正交内部面的法向梯度。
+    default         {config.sn_grad_scheme};
+}}
+""",
+            encoding="utf-8",
+        )
+        return
     if config.problem in ADVECTION_DIFFUSION_PROBLEMS:
         case_label = (
             "第三题第一个周期正弦波案例"
@@ -314,6 +573,58 @@ snGradSchemes
 
 def _patch_control_dict(case: Path, config: CaseConfig) -> None:
     path = case / "system" / "controlDict"
+    if config.problem in POISSON_PROBLEMS:
+        path.write_text(
+            f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}}
+
+// 第四题 Poisson 方程：
+//     laplacian(phi) = omega
+application     {config.solver};
+
+// 这是稳态求解。endTime=0 不是物理终止时间，
+// 而是保留 OpenFOAM 需要的时间目录管理接口。
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         0;
+deltaT          1;
+
+// 求解结束后写出 0/ 下的最终 phi。
+writeControl    timeStep;
+writeInterval   1;
+purgeWrite      0;
+writeFormat     ascii;
+writePrecision  16;
+timePrecision   12;
+writeCompression off;
+runTimeModifiable no;
+
+// 求解器读取的字段名：
+//     solutionField -> 0/phi，未知解；
+//     sourceField   -> 0/omega，已知源项。
+solutionField   {config.scalar_field};
+sourceField     {config.source_field};
+
+// corrected 非正交修正循环次数。
+// 该值由 JSON 进入 cases，不是物理方程本身给定的参数。
+nNonOrthogonalCorrectors {config.n_non_orthogonal_correctors};
+""",
+            encoding="utf-8",
+        )
+        return
     if config.problem in ADVECTION_DIFFUSION_PROBLEMS:
         case_time_description = (
             "第三题第一个案例在 t=1 比较数值解与解析解"
@@ -401,29 +712,6 @@ maxDeltaT       {config.max_delta_t:.16g};
     _replace_or_append_dictionary_entry(path, "timePrecision", "17")
 
 
-def _patch_block_mesh_domain(case: Path, config: CaseConfig) -> None:
-    """Patch a single-block 2-D box to the configured rectangular domain."""
-    path = case / "system" / "blockMeshDict"
-    text = path.read_text(encoding="utf-8")
-    xmin, xmax, ymin, ymax = config.domain
-    zmax = config.thickness
-    vertices = f"""vertices
-(
-    ({xmin:g} {ymin:g} 0)
-    ({xmax:g} {ymin:g} 0)
-    ({xmax:g} {ymax:g} 0)
-    ({xmin:g} {ymax:g} 0)
-    ({xmin:g} {ymin:g} {zmax:g})
-    ({xmax:g} {ymin:g} {zmax:g})
-    ({xmax:g} {ymax:g} {zmax:g})
-    ({xmin:g} {ymax:g} {zmax:g})
-);"""
-    updated, count = re.subn(r"vertices\s*\(.*?\)\s*;", vertices, text, count=1, flags=re.S)
-    if count != 1:
-        raise RuntimeError(f"Cannot patch vertices in {path}")
-    path.write_text(updated, encoding="utf-8")
-
-
 def _write_transport_properties(case: Path, config: CaseConfig) -> Path:
     """Write constant/transportProperties for the diffusion solver."""
     path = case / "constant" / "transportProperties"
@@ -464,7 +752,11 @@ def _patch_block_mesh_outer_boundaries(case: Path) -> None:
 
 
 def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
-    """Apply the configured constant velocity to the template field."""
+    """Apply the configured velocity to the generated case field."""
+    if config.problem in POISSON_PROBLEMS:
+        # Poisson 方程没有速度场 U；这里只是让统一的 case
+        # preparation 流程跳过前三题的速度字段处理。
+        return case / "0.orig" / config.scalar_field
     if config.problem.startswith("diffusion_"):
         return case / "0.orig" / config.scalar_field
     if config.problem == "sine_wave_advection_diffusion":
@@ -633,6 +925,24 @@ patches
 
 
 def _write_initial_field(case: Path, config: CaseConfig) -> Path:
+    if config.problem in POISSON_PROBLEMS:
+        if config.mesh_type == "tri":
+            centres, _ = read_cell_geometry(case)
+        else:
+            nx, ny = mesh_resolution(case)
+            centres = _structured_centres(
+                nx,
+                ny,
+                config.domain,
+                0.5 * config.thickness,
+            )
+        _, source_path = write_poisson_fields(
+            case,
+            centres,
+            config.scalar_field,
+            config.source_field,
+        )
+        return source_path
     if config.problem == "sine_wave_advection_diffusion":
         if config.mesh_type == "tri":
             centres, _ = read_cell_geometry(case)
@@ -772,6 +1082,46 @@ solvers
     )
 
 
+def _write_poisson_fv_solution(case: Path, config: CaseConfig) -> None:
+    """Write linear-solver controls for the steady Poisson matrix."""
+    (case / "system" / "fvSolution").write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}}
+
+solvers
+{{
+    // 对应数学方程组：
+    //     A phi = b
+    //
+    // poissonFoamStudent 中的：
+    //     phiEqn.solve()
+    //
+    // 会读取这里的线性求解器和容差。
+    {config.scalar_field}
+    {{
+        solver          {config.linear_solver};
+        tolerance       {config.linear_tolerance:.16g};
+        relTol          0;
+        smoother        GaussSeidel;
+    }}
+}}
+""",
+        encoding="utf-8",
+    )
+
+
 def _config_reference(config: CaseConfig) -> str:
     try:
         relative = config.path.relative_to(PROJECT_ROOT)
@@ -785,6 +1135,15 @@ def _write_case_scripts(case: Path, config: CaseConfig, resolution: int) -> None
     solver_path = (
         f"$projectRoot/build/{config.solver_family}/bin/{config.solver}"
     )
+    poisson_run_comments = ""
+    if config.problem in POISSON_PROBLEMS:
+        poisson_run_comments = """# 第四题 Poisson 案例的执行顺序：
+# 1. 清理上一次运行产生的网格、时间目录和日志；
+# 2. 按 JSON 中的 N 生成四边形 blockMesh 或三角形 Gmsh 网格；
+# 3. 生成与网格单元中心一致的 phi 初值和 omega 源项；
+# 4. 运行 poissonFoamStudent，求解 fvm::laplacian(phi) == omega；
+# 5. run_study.py 随后读取最终 phi，计算解析解误差并生成图表。
+"""
     allclean = """#!/bin/sh
 
 set -eu
@@ -815,6 +1174,7 @@ cd "$caseDir"
 : "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
 
+{poisson_run_comments}
 solverPath="{solver_path}"
 if [ ! -x "$solverPath" ]; then
     echo "Missing solver: $solverPath" >&2
@@ -845,6 +1205,10 @@ cd "$caseDir"
 : "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
 
+# 三角形 Poisson 案例的预处理入口：
+# Gmsh 生成二维三角形并拉伸为 OpenFOAM 薄棱柱；
+# gmshToFoam 导入网格，createPatch 恢复四条物理边界；
+# C/Vc 写出真实单元中心和体积，随后按这些中心生成 omega。
 gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
 if [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
@@ -884,6 +1248,7 @@ cd "$caseDir"
 : "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
 
+{poisson_run_comments}
 solverPath="{solver_path}"
 if [ ! -x "$solverPath" ]; then
     echo "Missing solver: $solverPath" >&2
@@ -918,7 +1283,6 @@ def prepare_case(
         raise NotImplementedError(f"Unsupported mesh type: {config.mesh_type}")
 
     target = config.case_dir(resolution)
-    template = config.template_case
     if refresh_initial_only:
         if not target.exists():
             raise RuntimeError(f"Case directory does not exist: {target}")
@@ -930,27 +1294,20 @@ def prepare_case(
         print(f"initialField={output}")
         return target
 
-    if not template.exists():
-        raise RuntimeError(f"Template case is missing: {template}")
-
-    if target == template:
-        if overwrite and (target / "Allclean").exists():
-            subprocess.run(["sh", str(target / "Allclean")], check=True)
-    else:
-        if target.exists() and any(target.iterdir()):
-            if not overwrite:
-                raise RuntimeError(
-                    f"Case already exists: {target}. Use --overwrite to rebuild it."
-                )
-            shutil.rmtree(target)
-        target.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(template / "0.orig", target / "0.orig")
-        shutil.copytree(template / "system", target / "system")
-        _copy_constant_inputs(template, target)
+    if target.exists() and any(target.iterdir()):
+        if not overwrite:
+            raise RuntimeError(
+                f"Case already exists: {target}. Use --overwrite to rebuild it."
+            )
+        shutil.rmtree(target)
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "0.orig").mkdir()
+    (target / "constant").mkdir()
+    (target / "system").mkdir()
+    _write_base_system_files(target, config)
 
     if config.mesh_type == "quad":
-        _patch_block_mesh_domain(target, config)
-        patch_block_mesh_resolution(target, resolution)
+        _write_base_block_mesh(target, config, resolution)
         if config.problem == "sine_wave_advection_diffusion":
             block_mesh_path = target / "system" / "blockMeshDict"
             block_mesh_text = block_mesh_path.read_text(encoding="utf-8")
@@ -974,21 +1331,25 @@ def prepare_case(
         if config.boundary_condition != "periodicXY":
             _patch_block_mesh_outer_boundaries(target)
     else:
-        block_mesh_dict = target / "system" / "blockMeshDict"
-        if block_mesh_dict.exists():
-            block_mesh_dict.unlink()
         _write_create_patch_dict(target, config)
         (target / "mesh").mkdir(parents=True, exist_ok=True)
+    if config.problem in POISSON_PROBLEMS:
+        transport_path = target / "constant" / "transportProperties"
+        if transport_path.exists():
+            transport_path.unlink()
     _patch_fv_schemes(target, config)
     _patch_control_dict(target, config)
     if config.problem.startswith("diffusion_") or config.problem in ADVECTION_DIFFUSION_PROBLEMS:
         _write_transport_properties(target, config)
+    _write_base_velocity_field(target, config)
     _patch_velocity_field(target, config)
     if config.problem in ADVECTION_DIFFUSION_PROBLEMS:
         stale_scalar = target / "0.orig" / "T"
         if stale_scalar.exists():
             stale_scalar.unlink()
         _write_explicit_advection_diffusion_fv_solution(target)
+    if config.problem in POISSON_PROBLEMS:
+        _write_poisson_fv_solution(target, config)
     initial_field: Path | None = None
     if config.mesh_type == "quad":
         initial_field = _write_initial_field(target, config)
@@ -996,8 +1357,6 @@ def prepare_case(
 
     metadata = {
         "solverFamily": config.solver_family,
-        "templateSolverFamily": config.template_solver_family,
-        "templateCaseName": config.template_case_name,
         "caseName": config.case_name,
         "config": str(config.path),
         "equation": config.equation,
@@ -1015,6 +1374,10 @@ def prepare_case(
         "boundaryCondition": config.boundary_condition,
         "postprocess": config.postprocess,
         "scalarField": config.scalar_field,
+        "sourceField": config.source_field,
+        "linearSolver": config.linear_solver,
+        "linearTolerance": config.linear_tolerance,
+        "nNonOrthogonalCorrectors": config.n_non_orthogonal_correctors,
         "mu": config.diffusivity,
         "diffusionCo": config.diffusion_co,
         "advectionDiffusionCo": config.advection_diffusion_co,
@@ -1031,7 +1394,7 @@ def prepare_case(
     print(f"prepared={target}")
     print(f"caseName={config.case_name}")
     print(f"resolution={resolution}")
-    print(f"scheme={config.div_scheme}")
+    print(f"scheme={config.div_scheme or config.laplacian_scheme}")
     return target
 
 
@@ -1061,6 +1424,7 @@ def postprocess_configured_case(config: CaseConfig, resolution: int) -> None:
         "diffusion_gaussian",
         "sine_wave_advection_diffusion",
         "rotating_peak_advection_diffusion",
+        "poisson_manufactured",
     }:
         raise NotImplementedError(f"Unsupported postprocess problem: {config.problem}")
     from postprocess_case import postprocess_case
@@ -1087,7 +1451,7 @@ def run_study(
     print(f"caseName={config.case_name}")
     print(f"problem={config.problem}")
     print(f"meshType={config.mesh_type}")
-    print(f"scheme={config.div_scheme}")
+    print(f"scheme={config.div_scheme or config.laplacian_scheme}")
     print(f"resolutions={','.join(str(value) for value in resolutions)}")
 
     for resolution in resolutions:
@@ -1103,6 +1467,7 @@ def run_study(
         "diffusion_discontinuity",
         "sine_wave_advection_diffusion",
         "rotating_peak_advection_diffusion",
+        "poisson_manufactured",
     }:
         from study_analysis import analyse, collect, plot
 

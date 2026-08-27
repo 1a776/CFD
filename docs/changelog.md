@@ -1,3 +1,102 @@
+# 记录：待提交｜2026-08-27｜前三题与第四题改为无模板案例生成
+
+## 实现功能
+
+本轮完成案例生成流程的无模板化重构。现在四个求解器族的案例都由
+`scripts/configs/*/*.json` 直接驱动生成，不再依赖某个已有案例作为模板。
+
+- 第 1 题对流方程、第 2 题扩散方程、第 3 题对流扩散方程和第 4 题
+  Poisson 方程均使用统一的直接生成流程；
+- 四边形案例直接生成 `system/blockMeshDict`；
+- 三角形案例直接生成 `system/createPatchDict`、网格入口和初始场生成步骤；
+- `0.orig/`、`system/`、`constant/` 中与配置有关的文件由生成器按问题类型写出；
+- 保留各题原有案例名称、网格类型、插值格式、物理参数和结果目录；
+- 删除不再使用的旧目录
+  `cases/04_poisson_equation/00_poisson_template_quad/`；
+- 已重新准备四个求解器族的全部配置，共 18 个配置通过 `--prepare-only`；
+- 已对第 1、2、3 题各完成至少一个真实运行验证，第 4 题的四边形和三角形
+  收敛案例也已验证；
+- 重构不改变离散算法、边界条件、误差定义或收敛阶计算，只改变案例创建方式。
+
+## 改动代码
+
+- `scripts/common/foam_case.py`
+  - 增加并使用 `_write_base_block_mesh()`，按 JSON 的区域、厚度、网格分辨率
+    和周期边界直接写出四边形 `blockMeshDict`；
+  - 增加并使用 `_write_base_system_files()`，直接创建 `fvSchemes`、
+    `controlDict` 和 `fvSolution`；
+  - 增加并使用 `_write_base_velocity_field()`，为第 1 题相关案例直接创建
+    `0.orig/U`；
+  - 删除 `_copy_constant_inputs()`、`_patch_block_mesh_domain()` 和
+    `_patch_poisson_block_mesh_comments()`，避免代码继续保留模板复制和模板修补路径；
+  - 移除不再使用的 `patch_block_mesh_resolution` 导入。
+
+- `scripts/common/mesh_tools.py`
+  - 删除只用于事后修改模板 `blockMeshDict` 的正则替换逻辑；
+  - 保留实际使用的 `mesh_resolution()` 辅助函数。
+
+- `scripts/common/case_config.py`
+  - 移除 `templateSolverFamily`、`templateCaseName` 和 `templateResolution`
+    的配置依赖；
+  - 保留 `solverFamily` 作为案例、数据、图片和构建目录的命名空间入口。
+
+- `scripts/configs/01_advection_equation/*.json`
+- `scripts/configs/02_diffusion_equation/*.json`
+- `scripts/configs/03_advection_diffusion_equation/*.json`
+- `scripts/configs/04_poisson_equation/*.json`
+  - 删除模板字段；
+  - 保留每个问题自己的物理参数、网格参数、格式参数和后处理参数。
+
+- `docs/compare/命令.md`
+  - 将案例准备步骤改为“读取 JSON 后直接生成目录和字典”；
+  - 删除“查找模板”的操作说明。
+
+- `docs/compare/README.md`
+  - 更新 `foam_case.py` 的功能说明，明确其负责直接生成字典、初值和运行脚本。
+
+- `report/01_advection_equation/evidence_index.md`
+  - 将“四边形网格模板”改为“四边形网格定义”，说明其由 JSON 直接生成。
+
+- `cases/04_poisson_equation/00_poisson_template_quad/`
+  - 删除旧的 Poisson 模板案例目录。当前生成器不会读取该目录。
+
+## 遇到 Bug
+
+### Bug 1：基础速度场字段格式不兼容
+
+- **现象：** 无模板生成的 `U` 使用了非均匀内部场，但原有速度场修补函数要求
+  `internalField uniform`。
+- **原因：** 生成器和旧字段修补逻辑采用了两种不同的字段格式。
+- **修复：** `_write_base_velocity_field()` 统一生成
+  `internalField uniform (0 0 0);`，再由问题专用逻辑写入速度。
+- **验证：** 第 1 题正弦波 `N10` 成功运行，最终时间为
+  `0.9999999999999984`，归一化 `L1` 为 `9.6617950526684637e-01`。
+
+### Bug 2：`linearUpwind` 无法解析梯度格式
+
+- **现象：** 自动插入 `grad(T)` 时无法解析单行 `gradSchemes`。
+- **原因：** 原先生成的字典把整个子字典写在一行，和插入逻辑的多行结构假设不一致。
+- **修复：** 将 `gradSchemes` 写成标准多行 OpenFOAM 字典。
+- **验证：** 第 1 题线性迎风案例可以成功准备并生成对应格式。
+
+### Bug 3：后处理函数名覆盖
+
+- **现象：** 第 1 题基础对流后处理出现
+  `NameError: _postprocess_quad_advection_case`。
+- **原因：** `postprocess_case.py` 中两个函数使用相同名称，后定义的函数覆盖了前者。
+- **修复：** 将基础对流后处理函数改名为
+  `_postprocess_quad_advection_case()`，并补充问题读取与正确日志名。
+- **验证：** 第 1 题运行后可以生成数据、图片和分析结果。
+
+### Bug 4：codedFixedValue 并行编译竞争
+
+- **现象：** Poisson 三角形案例并行运行时，某个 `codedFixedValue` 动态编译被中断，
+  后处理错误读取了未求解的零场。
+- **原因：** 多个案例同时触发 OpenFOAM 动态代码编译，产生编译资源竞争。
+- **修复：** 对包含 `codedFixedValue` 的案例改为顺序运行和顺序验证。
+- **验证：** 顺序重跑后，Poisson 三角形 `N40` 的 `L1` 恢复为
+  `1.1307366882695069e-03`。
+
 # 记录：236d384｜2026-08-25｜建立求解器族命名空间并完成第一题重构验证
 
 ## 实现功能

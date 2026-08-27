@@ -1,59 +1,31 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSchemes;
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSchemes;
 }
-
-ddtSchemes
-{
-    // 当前求解器还没有调用 ddt 离散；
-    // 完成时间推进后，这里仍保留 Euler 作为时间格式记录。
-    default         Euler;
-}
-
+ddtSchemes { default Euler; }
 gradSchemes
 {
-    // 本题当前不计算梯度，保留标准配置。
-    default         Gauss linear;
+    default Gauss linear;
 }
-
 divSchemes
 {
-    // 未声明的散度项默认禁止使用，避免拼写错误悄悄采用错误格式。
-    default         none;
-
-    // 这一行对应：
-    //
-    //     R_c = (1/V_c) sum_f F_cf*T_f
-    //
-    // Gauss 表示用高斯散度定理从面通量构造散度；
-    // upwind 表示面值 T_f 取上游单元值。
-    div(phi,T)      Gauss upwind;
+    default none;
+    div(phi,T) Gauss upwind;
+    div(faceFlux,phi) Gauss upwind;
 }
-
 laplacianSchemes
 {
-    // 第 1 题没有扩散项。
-    default         none;
+    default none;
+    laplacian(mu,phi) Gauss linear corrected;
 }
-
 interpolationSchemes
 {
-    // 其它需要面插值的默认设置。
-    default         linear;
+    default linear;
 }
-
 snGradSchemes
 {
-    // 第 1 题没有法向梯度，保留标准配置。
-    default         orthogonal;
+    default corrected;
 }

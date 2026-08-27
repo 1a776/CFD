@@ -1,7 +1,5 @@
 {
   "solverFamily": "03_advection_diffusion_equation",
-  "templateSolverFamily": "01_advection_equation",
-  "templateCaseName": "01_sine_wave_quad",
   "caseName": "01_sine_wave_quad_upwind",
   "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/03_advection_diffusion_equation/01_sine_wave_quad_upwind.json",
   "equation": "advection_diffusion",
@@ -32,6 +30,10 @@
     "reportTime": 1.0
   },
   "scalarField": "phi",
+  "sourceField": "omega",
+  "linearSolver": "GAMG",
+  "linearTolerance": 1e-12,
+  "nNonOrthogonalCorrectors": 0,
   "mu": 1.0,
   "diffusionCo": 0.5,
   "advectionDiffusionCo": 0.45,

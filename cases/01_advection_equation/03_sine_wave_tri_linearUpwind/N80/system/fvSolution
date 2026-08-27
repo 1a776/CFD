@@ -1,20 +1,11 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSolution;
 }
-
 solvers
 {
-    // 本题的 Stage 1--Stage 5 是完全显式更新，
-    // 不组装线性方程组，因此这里暂时没有线性求解器条目。
+    // 显式求解器不组装线性方程组，此处无需配置线性求解器。
 }

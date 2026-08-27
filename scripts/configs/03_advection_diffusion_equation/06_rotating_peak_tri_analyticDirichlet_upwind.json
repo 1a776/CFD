@@ -1,8 +1,6 @@
 {
   "caseName": "06_rotating_peak_tri_analyticDirichlet_upwind",
   "solverFamily": "03_advection_diffusion_equation",
-  "templateSolverFamily": "03_advection_diffusion_equation",
-  "templateCaseName": "02_sine_wave_tri_upwind",
   "description": "Third problem, second example: rotating sharp peak advection-diffusion on a triangular prism mesh with analytic Dirichlet boundary values.",
   "equation": "advection_diffusion",
   "problem": "rotating_peak_advection_diffusion",
@@ -14,7 +12,6 @@
   "laplacianScheme": "Gauss linear corrected",
   "snGradScheme": "corrected",
   "solver": "explicitAdvectionDiffusionFoamStudent",
-  "templateResolution": 20,
   "resolutions": [20, 40, 80],
   "domain": [-1.0, 1.0, -1.0, 1.0],
   "resolutionMeaning": "baseIntervalsPerEdge",

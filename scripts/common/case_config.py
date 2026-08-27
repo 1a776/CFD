@@ -23,8 +23,6 @@ class CaseConfig:
     path: Path
     solver_family: str
     case_name: str
-    template_solver_family: str
-    template_case_name: str
     description: str
     equation: str
     problem: str
@@ -36,12 +34,15 @@ class CaseConfig:
     laplacian_scheme: str
     sn_grad_scheme: str
     scalar_field: str
+    source_field: str
+    n_non_orthogonal_correctors: int
+    linear_solver: str
+    linear_tolerance: float
     diffusivity: float
     diffusion_co: float
     advection_diffusion_co: float
     max_delta_t: float | None
     solver: str
-    template_resolution: int
     resolutions: tuple[int, ...]
     end_time: float
     max_co: float
@@ -58,14 +59,6 @@ class CaseConfig:
     @property
     def case_root(self) -> Path:
         return solver_cases_dir(self.solver_family) / self.case_name
-
-    @property
-    def template_case(self) -> Path:
-        return solver_case_dir(
-            self.template_solver_family,
-            self.template_case_name,
-            self.template_resolution,
-        )
 
     def case_dir(self, resolution: int) -> Path:
         return solver_case_dir(self.solver_family, self.case_name, resolution)
@@ -137,10 +130,6 @@ def load_config(value: str | Path) -> CaseConfig:
         path=path,
         solver_family=str(data.get("solverFamily", "01_advection_equation")),
         case_name=str(data["caseName"]),
-        template_solver_family=str(
-            data.get("templateSolverFamily", data.get("solverFamily", "01_advection_equation"))
-        ),
-        template_case_name=str(data.get("templateCaseName", data["caseName"])),
         description=str(data.get("description", "")),
         equation=str(data.get("equation", str(data.get("problem", "sine_wave_advection")).split("_")[-1])),
         problem=str(data.get("problem", "sine_wave_advection")),
@@ -158,6 +147,12 @@ def load_config(value: str | Path) -> CaseConfig:
         laplacian_scheme=str(data.get("laplacianScheme", "Gauss linear corrected")),
         sn_grad_scheme=str(data.get("snGradScheme", "corrected")),
         scalar_field=str(data.get("scalarField", "T")),
+        source_field=str(data.get("sourceField", "omega")),
+        n_non_orthogonal_correctors=int(
+            data.get("nNonOrthogonalCorrectors", 0)
+        ),
+        linear_solver=str(data.get("linearSolver", "GAMG")),
+        linear_tolerance=float(data.get("linearTolerance", 1e-12)),
         diffusivity=float(data.get("mu", 1.0)),
         diffusion_co=float(data.get("diffusionCo", data.get("maxCo", 0.5))),
         advection_diffusion_co=float(
@@ -169,7 +164,6 @@ def load_config(value: str | Path) -> CaseConfig:
             else None
         ),
         solver=str(data.get("solver", "explicitAdvectionFoamStudent")),
-        template_resolution=int(data.get("templateResolution", 20)),
         resolutions=resolutions,
         end_time=float(data.get("endTime", 1.0)),
         max_co=float(data.get("maxCo", 0.2)),

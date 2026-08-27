@@ -1,55 +1,32 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSchemes;
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSchemes;
 }
-
-ddtSchemes
-{
-    // 当前求解器还没有调用 ddt 离散；
-    // 完成时间推进后，这里仍保留 Euler 作为时间格式记录。
-    default         Euler;
-}
-
+ddtSchemes { default Euler; }
 gradSchemes
 {
-    // 本题当前不计算梯度，保留标准配置。
-    default         Gauss linear;
+    default Gauss linear;
     grad(T)         Gauss linear;
 }
-
 divSchemes
 {
-    // 未声明的散度项默认禁止使用，避免拼写错误悄悄采用错误格式。
-    default         none;
-
-    // 二阶迎风
-    div(phi,T)      Gauss linearUpwind grad(T);
+    default none;
+    div(phi,T) Gauss linearUpwind grad(T);
+    div(faceFlux,phi) Gauss upwind;
 }
-
 laplacianSchemes
 {
-    // 第 1 题没有扩散项。
-    default         none;
+    default none;
+    laplacian(mu,phi) Gauss linear corrected;
 }
-
 interpolationSchemes
 {
-    // 其它需要面插值的默认设置。
-    default         linear;
+    default linear;
 }
-
 snGradSchemes
 {
-    // 第 1 题没有法向梯度，保留标准配置。
-    default         orthogonal;
+    default corrected;
 }

@@ -52,7 +52,18 @@
     "type": "finalContour",
     "compareWithInitialAfterCycle": true
   },
+  "scalarField": "T",
+  "sourceField": "omega",
+  "linearSolver": "GAMG",
+  "linearTolerance": 1e-12,
+  "nNonOrthogonalCorrectors": 0,
+  "mu": 1.0,
+  "diffusionCo": 0.2,
+  "advectionDiffusionCo": 0.2,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
   "endTime": 6.283185307179586,
   "maxCo": 0.2,
+  "maxDeltaT": null,
   "initialField": "generated-after-mesh"
 }

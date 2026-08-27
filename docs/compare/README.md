@@ -117,8 +117,6 @@ JSON 配置文件区分。脚本入口不直接写死案例名称，而是先读
 | `problem` | 必需 | 选择物理问题分支 | 初值和后处理分派；当前支持 `sine_wave_advection` |
 | `meshType` | 必需 | 选择网格流程 | `quad` 走 `blockMesh`，`tri` 走 Gmsh |
 | `meshBackend` | 可选 | 记录网格后端 | quad 默认 `blockMesh`；tri 当前使用 `gmsh` |
-| `templateCaseName` | tri 推荐填写 | 指定基础案例族 | 与 `templateResolution` 共同定位模板 |
-| `templateResolution` | 可选 | 指定基础模板的 N | 默认 `20`，例如 `cases/01_advection_equation/01_sine_wave_quad/N20/` |
 | `gmshPython` | tri 可选 | 指定 Gmsh Python 解释器 | 未填写时使用 `/home/a776/vibeflow/python-env/bin/python` |
 | `schemeName` | 可选 | 给人看的格式名称 | 写入 `metadata.json`，便于识别 |
 | `divScheme` | 必需 | 对流散度离散格式 | 写入 `system/fvSchemes` 的 `div(phi,T)` |
@@ -175,7 +173,6 @@ CaseConfig
     |
     +-- caseName --------------------> cases/<caseName>/
     |
-    +-- templateCaseName + N --------> 基础模板
     |
     +-- resolutions -----------------> N10/N20/N40/N80
     |
@@ -196,29 +193,20 @@ CaseConfig
 
 ```text
 meshType = quad
-    -> 从模板复制
-    -> 修改 blockMeshDict 的 (N N 1)
+    -> 脚本直接创建 0.orig、system、constant
+    -> 直接生成带 N*N 单元的 blockMeshDict
     -> blockMesh
 
 meshType = tri
-    -> 从四边形基础模板复制 0.orig/system/constant 输入
-    -> 删除 blockMeshDict
+    -> 脚本直接创建 0.orig、system、constant
     -> 写入 createPatchDict
     -> Gmsh 生成三角形棱柱网格
     -> gmshToFoam 导入
 ```
 
-所以三角形案例没有一个必须长期维护的静态 `tri_template/` 目录。
-当前三角形配置的基础模板是：
-
-```text
-templateCaseName = 01_sine_wave_quad
-templateResolution = 20
-实际模板 = cases/01_advection_equation/01_sine_wave_quad/N20/
-```
-
-这个模板只提供通用的 `0.orig/`、`system/` 和 `constant/` 输入。
-三角形网格本身由 `scripts/common/gmsh_tri_mesh.py` 在运行时生成。
+当前案例生成不依赖任何静态模板目录。四边形的
+`blockMeshDict`、三角形的 `createPatchDict`、数值格式字典和控制字典
+均由 JSON 和 `scripts/common/foam_case.py` 直接生成。
 
 旋转三角形案例使用同一个 Gmsh 网格生成器，但采用不同的边界和场生成
 分支：
@@ -808,7 +796,7 @@ scripts/common/case_config.py
     -> JSON -> CaseConfig
 
 scripts/common/foam_case.py
-    -> 模板复制、字典修改、Allrun/Allclean 生成、运行调度
+    -> 直接生成字典、初值、Allrun/Allclean，完成运行调度
 
 scripts/common/gmsh_tri_mesh.py
     -> 生成二维三角形底面并挤出为三角形棱柱网格

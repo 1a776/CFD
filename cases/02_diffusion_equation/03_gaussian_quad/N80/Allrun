@@ -9,6 +9,7 @@ cd "$caseDir"
 : "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
 
+
 solverPath="$projectRoot/build/02_diffusion_equation/bin/explicitDiffusionFoamStudent"
 if [ ! -x "$solverPath" ]; then
     echo "Missing solver: $solverPath" >&2

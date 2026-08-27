@@ -1,65 +1,31 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSchemes;
+    format ascii;
+    class dictionary;
+    location "system";
+    object fvSchemes;
 }
-
-ddtSchemes
-{
-    // 本求解器的显式 Euler 更新写在 C++ 源码中：
-    //     phi = phi + deltaT*Rphi
-    // 因此这里保留 Euler 作为记录，不直接驱动时间离散。
-    default         Euler;
-}
-
+ddtSchemes { default Euler; }
 gradSchemes
 {
-    // 非正交修正需要梯度时使用这个默认梯度格式。
-    default         Gauss linear;
+    default Gauss linear;
 }
-
 divSchemes
 {
-    // 第二题纯扩散方程没有对流散度项。
-    default         none;
+    default none;
+    div(phi,T) Gauss upwind;
+    div(faceFlux,phi) Gauss upwind;
 }
-
 laplacianSchemes
 {
-    // 对应求解器：
-    //     fvc::laplacian(mu, phi)
-    //
-    // 对应数学公式：
-    //     R(c) = 1/V(c) * sum over faces f [ μ(f) grad(phi)(f) dot S(f) ]
-    //
-    // Gauss: 有限体积面通量求和；
-    // linear: 面值线性插值；
-    // corrected: 对非正交网格启用修正。
+    default none;
     laplacian(mu,phi) Gauss linear corrected;
 }
-
 interpolationSchemes
 {
-    // laplacian 中的 linear 插值由上面的 laplacianSchemes 指定。
-    // 这里给其它可能的面插值操作提供默认值。
-    default         linear;
+    default linear;
 }
-
 snGradSchemes
 {
-    // 对应边界面和非正交网格上的法向梯度。
-    // 可改成：
-    //     default orthogonal;
-    //     default uncorrected;
-    //     default corrected;
-    default         corrected;
+    default corrected;
 }

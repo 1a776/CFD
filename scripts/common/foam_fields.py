@@ -78,6 +78,8 @@ def write_scalar_field(
     boundary_types: dict[str, str | dict[str, Any]],
     object_name: str = "T",
     location: str = "0",
+    dimensions: str = "[0 0 0 0 0 0 0]",
+    header_comment: str = "",
 ) -> Path:
     """Write a nonuniform OpenFOAM volScalarField."""
     body = "\n".join(f"    {value:.16e}" for value in values)
@@ -100,7 +102,7 @@ FoamFile
     object      {object_name};
 }}
 
-dimensions      [0 0 0 0 0 0 0];
+{header_comment}dimensions      {dimensions};
 
 internalField   nonuniform List<scalar>
 {len(values)}

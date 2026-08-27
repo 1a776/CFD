@@ -9,6 +9,10 @@ cd "$caseDir"
 : "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
 . "$WM_PROJECT_DIR/bin/tools/RunFunctions"
 
+# 三角形 Poisson 案例的预处理入口：
+# Gmsh 生成二维三角形并拉伸为 OpenFOAM 薄棱柱；
+# gmshToFoam 导入网格，createPatch 恢复四条物理边界；
+# C/Vc 写出真实单元中心和体积，随后按这些中心生成 omega。
 gmshPython="${VIBEFLOW_PYTHON:-/home/a776/vibeflow/python-env/bin/python}"
 if [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2

@@ -1,0 +1,58 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration   |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+
+// 第四题 Poisson 方程是稳态问题，没有时间离散。
+ddtSchemes
+{
+    default         steadyState;
+}
+
+gradSchemes
+{
+    // corrected Laplacian 需要单元中心梯度。
+    //     grad(phi)_c ≈ (1/V_c) sum_f phi_f S_cf
+    default         Gauss linear;
+}
+
+divSchemes
+{
+    // 本题没有对流散度项。
+    default         none;
+}
+
+laplacianSchemes
+{
+    // 对应求解器源码：
+    //     fvm::laplacian(phi) == omega
+    //
+    // 对应有限体积形式：
+    //     sum_f [ grad(phi)_f dot S_cf ] = V_c omega_c
+    //
+    // Gauss     -> 面通量求和；
+    // linear    -> 面插值；
+    // corrected -> 非正交修正。
+    laplacian(phi)  Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    // 控制边界面和非正交内部面的法向梯度。
+    default         corrected;
+}

@@ -10,7 +10,6 @@
   "laplacianScheme": "Gauss linear corrected",
   "snGradScheme": "corrected",
   "solver": "explicitDiffusionFoamStudent",
-  "templateResolution": 20,
   "resolutions": [10, 20, 40, 80],
   "domain": [-5.0, 5.0, -5.0, 5.0],
   "resolutionMeaning": "cellsPerEdge",

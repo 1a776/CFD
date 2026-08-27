@@ -1,9 +1,9 @@
 /*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /    O peration     |
-    \\  /    A nd           |
-     \\/     M anipulation  |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration   |
+    \  /    A nd           |
+     \/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -13,11 +13,10 @@ FoamFile
     object      blockMeshDict;
 }
 
-// 顶点坐标以米为单位，不需要额外缩放。
+// 计算区域：Omega = [-1,1] x [-1,1]。
+// 本文件由 JSON 直接生成，不依赖其它案例模板。
 convertToMeters 1;
 
-// 二维方形区域 [0,1] x [0,1]。
-// z 方向厚度是 0.1，但只有一层单元，并用 empty 边界表示二维问题。
 vertices
 (
     (-1 -1 0)
@@ -32,12 +31,7 @@ vertices
 
 blocks
 (
-    // 六面体控制体：
-    //   x 方向 20 个；
-    //   y 方向 20 个；
-    //   z 方向 1 个。
-    //
-    // 总单元数是 20*20*1 = 400。
+    // N=20：每条边方向的单元数，二维单元数为 N*N。
     hex (0 1 2 3 4 5 6 7) (20 20 1) simpleGrading (1 1 1)
 );
 

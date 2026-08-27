@@ -1,3 +1,0 @@
-codedFixedValueFvPatchFieldTemplate.C
-
-LIB = $(PWD)/../platforms/$(WM_OPTIONS)/lib/librotatingPeak_yMin_081206e55da32c49b81a6b735e0d1ecbf7f4525b
