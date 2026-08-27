@@ -3,7 +3,7 @@
   "solverFamily": "01_advection_equation",
   "caseName": "01_sine_wave_quad",
   "mesh": "quad",
-  "problem": "sine",
+  "problem": "sine_wave_advection",
   "resolution": 80,
   "nominalH": 0.0125,
   "nCells": 6400,

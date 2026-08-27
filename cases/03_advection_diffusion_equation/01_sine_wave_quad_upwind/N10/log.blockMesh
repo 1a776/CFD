@@ -8,9 +8,9 @@
 Build  : 14-7b05503f98a8
 Exec   : blockMesh
 Date   : Aug 27 2026
-Time   : 13:01:27
+Time   : 13:35:45
 Host   : "DELL"
-PID    : 994
+PID    : 5043
 I/O    : uncollated
 Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/03_advection_diffusion_equation/01_sine_wave_quad_upwind/N10
 nProcs : 1

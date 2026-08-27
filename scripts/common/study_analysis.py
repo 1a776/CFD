@@ -37,6 +37,16 @@ RAW_FIELDS = [
     "normalizedL1",
     "normalizedL2",
     "normalizedLinf",
+    "absoluteL1",
+    "absoluteL2",
+    "absoluteLinf",
+    "initialNormalizedL1",
+    "initialNormalizedL2",
+    "initialNormalizedLinf",
+    "exactNormL1",
+    "exactNormL2",
+    "exactNormLinf",
+    "relativeErrorValid",
     "initialMass",
     "finalMass",
     "massChange",
@@ -118,6 +128,11 @@ def _float(row: dict[str, str], name: str) -> float:
     return float(row[name])
 
 
+def _optional_float(row: dict[str, str], name: str) -> float | str:
+    value = row.get(name, "")
+    return float(value) if value != "" else ""
+
+
 def observed_order(previous_error: float, current_error: float, ratio: float) -> float:
     if previous_error <= 0.0 or current_error <= 0.0 or ratio <= 1.0:
         return float("nan")
@@ -132,6 +147,12 @@ def analyse(solver_family: str, case_name: str) -> Path:
     rows.sort(key=lambda row: int(row["resolution"]))
     if not rows:
         raise RuntimeError(f"No rows found in {raw_path}")
+    problem = rows[0].get("problem", "")
+    error_fields = (
+        ("initialNormalizedL1", "initialNormalizedL2", "initialNormalizedLinf")
+        if problem == "sine_wave_advection_diffusion"
+        else ("normalizedL1", "normalizedL2", "normalizedLinf")
+    )
 
     summary_rows: list[dict[str, object]] = []
     previous: dict[str, str] | None = None
@@ -142,9 +163,9 @@ def analyse(solver_family: str, case_name: str) -> Path:
         order_linf = float("nan")
         if previous is not None:
             ratio = resolution / int(previous["resolution"])
-            order_l1 = observed_order(_float(previous, "normalizedL1"), _float(row, "normalizedL1"), ratio)
-            order_l2 = observed_order(_float(previous, "normalizedL2"), _float(row, "normalizedL2"), ratio)
-            order_linf = observed_order(_float(previous, "normalizedLinf"), _float(row, "normalizedLinf"), ratio)
+            order_l1 = observed_order(_float(previous, error_fields[0]), _float(row, error_fields[0]), ratio)
+            order_l2 = observed_order(_float(previous, error_fields[1]), _float(row, error_fields[1]), ratio)
+            order_linf = observed_order(_float(previous, error_fields[2]), _float(row, error_fields[2]), ratio)
         summary_rows.append(
             {
             "case": row.get("case", ""),
@@ -156,6 +177,13 @@ def analyse(solver_family: str, case_name: str) -> Path:
                 "normalizedL1": _float(row, "normalizedL1"),
                 "normalizedL2": _float(row, "normalizedL2"),
                 "normalizedLinf": _float(row, "normalizedLinf"),
+                "absoluteL1": _optional_float(row, "absoluteL1"),
+                "absoluteL2": _optional_float(row, "absoluteL2"),
+                "absoluteLinf": _optional_float(row, "absoluteLinf"),
+                "initialNormalizedL1": _optional_float(row, "initialNormalizedL1"),
+                "initialNormalizedL2": _optional_float(row, "initialNormalizedL2"),
+                "initialNormalizedLinf": _optional_float(row, "initialNormalizedLinf"),
+                "relativeErrorValid": row.get("relativeErrorValid", ""),
                 "observedOrderL1": order_l1,
                 "observedOrderL2": order_l2,
                 "observedOrderLinf": order_linf,
@@ -247,11 +275,12 @@ def analyse(solver_family: str, case_name: str) -> Path:
         if isinstance(row["observedOrderL1"], float)
         and not math.isnan(row["observedOrderL1"])
     ]
-    first_error = float(summary_rows[0]["normalizedL1"])
-    last_error = float(summary_rows[-1]["normalizedL1"])
+    primary_l1, primary_l2, primary_linf = error_fields
+    first_error = float(summary_rows[0][primary_l1])
+    last_error = float(summary_rows[-1][primary_l1])
     if valid_orders:
         order_text = ", ".join(f"{float(value):.6f}" for value in valid_orders)
-        order_conclusion = f"L1 观察收敛阶依次为 `{order_text}`。"
+        order_conclusion = f"主 L1 误差指标 `{primary_l1}` 的观察收敛阶依次为 `{order_text}`。"
     else:
         order_conclusion = "当前只有一个有效网格，暂时无法计算观察收敛阶。"
 
@@ -267,16 +296,21 @@ def analyse(solver_family: str, case_name: str) -> Path:
         "",
         "## 汇总表",
         "",
-        f"| N | cells | L1 | L2 | Linf | L1 order | {monitor_heading} | {amplitude_heading} |",
-        "|---:|---:|---:|---:|---:|---:|---:|---:|",
+        f"| N | cells | primary L1 | primary L2 | primary Linf | legacy exact-relative L1 | absolute L1 | L1 order | {monitor_heading} | {amplitude_heading} |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in summary_rows:
         order = row["observedOrderL1"]
         order_text = "-" if isinstance(order, float) and math.isnan(order) else f"{float(order):.6f}"
+        absolute_l1 = row["absoluteL1"]
+        absolute_l1_text = (
+            "-" if absolute_l1 == "" else f"{float(absolute_l1):.8e}"
+        )
         report_lines.append(
             f"| {row['resolution']} | {row['nCells']} | "
-            f"{float(row['normalizedL1']):.8e} | {float(row['normalizedL2']):.8e} | "
-            f"{float(row['normalizedLinf']):.8e} | {order_text} | "
+            f"{float(row[primary_l1]):.8e} | {float(row[primary_l2]):.8e} | "
+            f"{float(row[primary_linf]):.8e} | {float(row['normalizedL1']):.8e} | "
+            f"{absolute_l1_text} | {order_text} | "
             f"{float(row['maxCo']):.6f} | {float(row['finalAmplitude']):.8e} |"
         )
     report_lines.extend(
@@ -308,8 +342,14 @@ def analyse(solver_family: str, case_name: str) -> Path:
             ),
             (
                 "本研究仍保留原题定义的归一化误差以保证可追溯性；"
-                "各 N 的 summary.json 同时记录 absoluteL1、absoluteL2、"
-                "absoluteLinf 和 exactAmplitudeAtFinal，适合判断绝对残余量。"
+                "本次修正将相对于初始场的归一化误差作为主收敛指标，"
+                "并在 summary.json 中同时记录 absoluteL1、absoluteL2、"
+                "absoluteLinf、exactNormL1 和 relativeErrorValid。"
+            ),
+            (
+                "因此表格中的 primary L1/L2/Linf 对应初始场归一化误差；"
+                "legacy exact-relative L1 仅用于保留历史定义和诊断，"
+                "不参与本案例的收敛阶判断。"
             ),
             "",
         ]
@@ -378,19 +418,25 @@ def plot(solver_family: str, case_name: str) -> None:
         amplitude_label = "final amplitude"
         amplitude_reference = 1.0
 
+    if problem == "sine_wave_advection_diffusion":
+        error_fields = ("initialNormalizedL1", "initialNormalizedL2", "initialNormalizedLinf")
+        error_label = "initial-normalized"
+    else:
+        error_fields = ("normalizedL1", "normalizedL2", "normalizedLinf")
+        error_label = "exact-relative normalized"
     n_values = [int(row["resolution"]) for row in rows]
-    l1 = [float(row["normalizedL1"]) for row in rows]
-    l2 = [float(row["normalizedL2"]) for row in rows]
-    linf = [float(row["normalizedLinf"]) for row in rows]
+    l1 = [float(row[error_fields[0]]) for row in rows]
+    l2 = [float(row[error_fields[1]]) for row in rows]
+    linf = [float(row[error_fields[2]]) for row in rows]
 
     fig, axis = plt.subplots(figsize=(7.6, 5.2), constrained_layout=True)
-    axis.loglog(n_values, l1, "o-", label="normalized L1")
-    axis.loglog(n_values, l2, "s-", label="normalized L2")
-    axis.loglog(n_values, linf, "^-", label="normalized Linf")
+    axis.loglog(n_values, l1, "o-", label=f"{error_label} L1")
+    axis.loglog(n_values, l2, "s-", label=f"{error_label} L2")
+    axis.loglog(n_values, linf, "^-", label=f"{error_label} Linf")
     reference = l1[-1] * n_values[-1]
     axis.loglog(n_values, [reference / n for n in n_values], "k--", label="slope 1 reference")
     axis.set_xlabel(x_label)
-    axis.set_ylabel(y_label)
+    axis.set_ylabel(f"{error_label} error")
     axis.set_title(f"{case_name}: error convergence")
     axis.grid(True, which="both", alpha=0.25)
     axis.legend()
@@ -421,9 +467,9 @@ def plot(solver_family: str, case_name: str) -> None:
     plt.close(fig)
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.8), constrained_layout=True)
-    axes[0].plot(n_values, l1, "o-", label="normalized L1")
+    axes[0].plot(n_values, l1, "o-", label=f"{error_label} L1")
     axes[0].set_xlabel(x_label)
-    axes[0].set_ylabel("normalized L1 error")
+    axes[0].set_ylabel(f"{error_label} L1 error")
     axes[0].grid(True, alpha=0.25)
     axes[0].legend()
     amplitudes = [float(row["finalAmplitude"]) for row in rows]

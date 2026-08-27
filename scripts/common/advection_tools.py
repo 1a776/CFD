@@ -227,3 +227,61 @@ def normalized_errors(
     )
     linf = max(abs(value) for value in error) / denominator_linf
     return l1, l2, linf
+
+
+def error_metrics(
+    numerical: list[float],
+    exact: list[float],
+    initial: list[float],
+    cell_volume: float | list[float],
+) -> dict[str, float | bool]:
+    """Return legacy, absolute, and initial-scaled field-error metrics.
+
+    The exact-solution-relative metrics are retained for traceability, but
+    they are not well-conditioned when the exact solution has decayed to
+    round-off level.  The initial-field norm provides a stable reference for
+    that situation.
+    """
+    if len(numerical) != len(exact) or len(numerical) != len(initial):
+        raise RuntimeError("Numerical, exact, and initial fields have different sizes")
+    if isinstance(cell_volume, (int, float)):
+        weights = [float(cell_volume)] * len(numerical)
+    else:
+        weights = [float(value) for value in cell_volume]
+        if len(weights) != len(numerical):
+            raise RuntimeError("Field and cell-volume lists have different sizes")
+
+    error = [value - reference for value, reference in zip(numerical, exact)]
+    total_volume = sum(weights)
+    if total_volume <= 0.0:
+        raise RuntimeError("Cell-volume sum must be positive")
+
+    def norms(values: list[float]) -> tuple[float, float, float]:
+        l1 = sum(abs(value) * weight for value, weight in zip(values, weights))
+        l2 = math.sqrt(
+            sum(value * value * weight for value, weight in zip(values, weights))
+        )
+        linf = max((abs(value) for value in values), default=0.0)
+        return l1, l2, linf
+
+    error_l1, error_l2, error_linf = norms(error)
+    exact_l1, exact_l2, exact_linf = norms(exact)
+    initial_l1, initial_l2, initial_linf = norms(initial)
+    scale = max(initial_l1, 1.0e-300)
+
+    return {
+        "absoluteL1": error_l1 / total_volume,
+        "absoluteL2": error_l2 / math.sqrt(total_volume),
+        "absoluteLinf": error_linf,
+        "initialNormalizedL1": error_l1 / scale,
+        "initialNormalizedL2": error_l2 / max(initial_l2, 1.0e-300),
+        "initialNormalizedLinf": error_linf / max(initial_linf, 1.0e-300),
+        "exactNormL1": exact_l1 / total_volume,
+        "exactNormL2": exact_l2 / math.sqrt(total_volume),
+        "exactNormLinf": exact_linf,
+        "relativeErrorValid": bool(
+            exact_l1 > max(initial_l1 * 1.0e-12, 1.0e-300)
+            and exact_l2 > max(initial_l2 * 1.0e-12, 1.0e-300)
+            and exact_linf > max(initial_linf * 1.0e-12, 1.0e-300)
+        ),
+    }

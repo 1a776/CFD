@@ -8,9 +8,9 @@
 Build  : 14-7b05503f98a8
 Exec   : /home/a776/workdocuments/上交船舶/slover/student_project/build/02_diffusion_equation/bin/explicitDiffusionFoamStudent
 Date   : Aug 27 2026
-Time   : 13:01:09
+Time   : 13:35:23
 Host   : "DELL"
-PID    : 996
+PID    : 3021
 I/O    : uncollated
 Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/02_diffusion_equation/01_discontinuous_quad/N10
 nProcs : 1

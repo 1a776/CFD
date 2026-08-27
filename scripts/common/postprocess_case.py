@@ -36,6 +36,7 @@ from advection_diffusion_tools import (
 )
 from advection_tools import (
     control_value,
+    error_metrics,
     exact_values,
     latest_time,
     mesh_resolution,
@@ -1865,12 +1866,9 @@ def _postprocess_tri_advection_diffusion_case(
     volumes_array = np.asarray(volumes, dtype=float)
 
     l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, volumes)
-    total_volume = float(np.sum(volumes_array))
-    absolute_l1 = float(np.dot(np.abs(numerical - exact), volumes_array) / total_volume)
-    absolute_l2 = float(
-        math.sqrt(np.dot((numerical - exact) ** 2, volumes_array) / total_volume)
+    metrics = error_metrics(
+        numerical_values, exact_values_at_final, initial_values, volumes
     )
-    absolute_linf = float(np.max(np.abs(numerical - exact)))
     exact_amplitude = math.exp(-8.0 * math.pi * math.pi * mu * final_time)
     initial_mass = float(np.dot(initial, volumes_array))
     final_mass = float(np.dot(numerical, volumes_array))
@@ -1915,9 +1913,7 @@ def _postprocess_tri_advection_diffusion_case(
         "normalizedL1": l1,
         "normalizedL2": l2,
         "normalizedLinf": linf,
-        "absoluteL1": absolute_l1,
-        "absoluteL2": absolute_l2,
-        "absoluteLinf": absolute_linf,
+        **metrics,
         "exactAmplitudeAtFinal": exact_amplitude,
         "initialMass": initial_mass,
         "finalMass": final_mass,
@@ -2366,9 +2362,9 @@ def _postprocess_quad_advection_diffusion_case(
     dy = (domain4[3] - domain4[2]) / ny
     cell_volume = dx * dy * THICKNESS
     l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, cell_volume)
-    absolute_l1 = float(np.sum(np.abs(numerical - exact)) * cell_volume / (dx * dy * nx * ny * THICKNESS))
-    absolute_l2 = float(np.sqrt(np.sum((numerical - exact) ** 2) * cell_volume / (dx * dy * nx * ny * THICKNESS)))
-    absolute_linf = float(np.max(np.abs(numerical - exact)))
+    metrics = error_metrics(
+        numerical_values, exact_values_at_final, initial_values, cell_volume
+    )
     exact_amplitude = math.exp(-8.0 * math.pi * math.pi * mu * final_time)
     initial_mass = float(np.sum(initial) * cell_volume)
     final_mass = float(np.sum(numerical) * cell_volume)
@@ -2419,9 +2415,7 @@ def _postprocess_quad_advection_diffusion_case(
         "normalizedL1": l1,
         "normalizedL2": l2,
         "normalizedLinf": linf,
-        "absoluteL1": absolute_l1,
-        "absoluteL2": absolute_l2,
-        "absoluteLinf": absolute_linf,
+        **metrics,
         "exactAmplitudeAtFinal": exact_amplitude,
         "initialMass": initial_mass,
         "finalMass": final_mass,
