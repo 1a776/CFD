@@ -1,0 +1,829 @@
+\documentclass[UTF8,12pt,a4paper]{ctexart}
+\usepackage[a4paper,margin=2.30cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,array,longtable}
+\usepackage{xcolor,enumitem,fancyhdr,hyperref,listings}
+
+\definecolor{sourcegray}{RGB}{75,84,97}
+\definecolor{sourcebg}{RGB}{244,247,250}
+\definecolor{linkblue}{RGB}{31,78,121}
+\definecolor{keyblue}{RGB}{17,83,142}
+\definecolor{keybg}{RGB}{239,247,255}
+\hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue,
+  pdftitle={第五题：PISO的有限体积离散与OpenFOAM求解器},pdfauthor={张云飞}}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{第五题：不可压Navier--Stokes方程}
+\rhead{PISO方法}
+\cfoot{\thepage}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\setlength{\emergencystretch}{2em}
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=2.4em,itemsep=0.35em,topsep=0.35em}
+\numberwithin{equation}{section}
+
+\newcommand{\dd}{\,\mathrm d}
+\newcommand{\dt}{\Delta t}
+\newcommand{\Task}{\textnormal{[题目]}}
+\newcommand{\Issa}{\textnormal{[10]}}
+\newcommand{\Jasak}{\textnormal{[11]}}
+\newcommand{\Rone}{\textnormal{[R1]}}
+\newcommand{\Rtwo}{\textnormal{[R2]}}
+\newcommand{\Rthree}{\textnormal{[R3]}}
+\newcommand{\OFfourteen}{\textnormal{[OF14]}}
+\newcommand{\source}[1]{\par\smallskip\noindent\colorbox{sourcebg}{%
+  \parbox{0.955\linewidth}{\footnotesize\color{sourcegray}\textbf{参考来源：}#1}}\par\smallskip}
+\newcommand{\keytitle}[1]{\par\smallskip\noindent\colorbox{keybg}{%
+  \parbox{0.965\linewidth}{\color{keyblue}\textbf{重要公式：}#1}}\par\smallskip}
+\lstdefinestyle{foam}{
+  basicstyle=\ttfamily\small,frame=single,framerule=0.4pt,
+  rulecolor=\color{sourcegray},backgroundcolor=\color{sourcebg},
+  numbers=left,numberstyle=\tiny\color{sourcegray},numbersep=8pt,
+  columns=fullflexible,keepspaces=true,showstringspaces=false,
+  breaklines=true,xleftmargin=1.4em,framexleftmargin=1.0em}
+
+\title{\bfseries 第五题：不可压Navier--Stokes方程\\PISO方法、有限体积离散与OpenFOAM求解器详细推导}
+\author{张云飞}
+\date{2026年8月27日}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+本文严格依据Issa提出的Pressure-Implicit with Splitting of Operators方法\Issa、Jasak的一般非结构有限体积框架\Jasak 以及Moukalled、Mangani、Darwish第15章的共点网格PISO推导\Rone，对题目第5.1节常密度不可压Navier--Stokes方程给出从控制体积分、离散动量矩阵、Rhie--Chow面通量、第一压力校正到第二及后续PISO校正的完整推导。在实现层，本文进一步严格对照OpenFOAM~14的\texttt{foamRun}、\texttt{incompressibleFluid/momentumPredictor.C}和\texttt{correctPressure.C}\OFfourteen，按实际字段、缓存矩阵、控制器和边界约束的生命周期组织求解器开发逻辑。全文沿用前四题统一的$O_f,N_f,\bm S_f=|S_f|\bm n_f,\sigma_{cf},Q_c,R_c$记号，不使用$d(f)$表示相邻单元，不使用$A_f$表示面面积。本文只处理PISO；投影法另见独立文档。
+\end{abstract}
+\tableofcontents
+\newpage
+
+\section*{题目范围、压力变量与统一记号}
+\addcontentsline{toc}{section}{题目范围、压力变量与统一记号}
+\subsection*{题目方程}
+\begin{align}
+  \nabla\cdot\bm u&=0,\label{eq:continuity}\\
+  \frac{\partial\bm u}{\partial t}+\nabla\cdot(\bm u\otimes\bm u)
+  &=-\frac1\rho\nabla p+\frac1\rho\nabla\cdot(\mu\nabla\bm u).
+  \label{eq:momentum}
+\end{align}
+题目要求依据\Issa、\Jasak 写出PISO求解过程，并采用有限体积法及OpenFOAM离散格式开发数值求解器。
+\source{\Task，第5.1节。}
+
+\subsection*{运动学形式}
+常密度下定义
+\begin{equation}
+  \boxed{\nu=\frac{\mu}{\rho},\qquad \pi=\frac{p}{\rho},}
+  \label{eq:kinematic}
+\end{equation}
+则
+\begin{equation}
+  \frac{\partial\bm u}{\partial t}
+  +\nabla\cdot(\bm u\otimes\bm u)
+  -\nabla\cdot(\nu\nabla\bm u)=-\nabla\pi.
+  \label{eq:momentum_pi}
+\end{equation}
+数学公式用$\pi$表示运动学压力；OpenFOAM代码字段仍命名为\texttt{p}。
+
+\subsection*{统一方向与守恒量}
+\begin{longtable}{>{\centering\arraybackslash}p{0.22\linewidth}p{0.67\linewidth}}
+\toprule
+记号 & 含义\\
+\midrule
+$c,\Omega_c,V_c$ & 当前控制体、区域和体积\\
+$\mathcal F_c$ & 单元$c$的全部面集合\\
+$O_f,N_f$ & 内部面$f$的owner与neighbour\\
+$\bm d_f=\bm x_{N_f}-\bm x_{O_f}$，$d_f=\lVert\bm d_f\rVert$ & 中心连线及距离\\
+$\bm n_f$ & 从$O_f$到$N_f$的全局单位法向量\\
+$\bm S_f=|S_f|\bm n_f$ & 全局有向面积向量\\
+$\sigma_{cf}$ & $c=O_f$为$+1$，$c=N_f$为$-1$\\
+$\bm S_{cf}=\sigma_{cf}\bm S_f$ & 相对于$c$的外向面积向量\\
+$F_f=\bm u_f\cdot\bm S_f$ & 全局定向体积通量\\
+$Q_c^m=\sum_f\sigma_{cf}F_f+Q_c^{m,\mathrm{bnd}}$ & 未除体积的通量不平衡\\
+$R_c^m=Q_c^m/V_c$ & 体积归一化连续性残差\\
+$a_c^u,a_{cf}^u$ & 离散动量方程的对角、非对角系数\\
+$\mathcal H_c[\bm u]$ & 动量方程中除对角速度和压力梯度外的部分\\
+$\alpha_c=V_c/a_c^u$ & 压力梯度到速度修正的离散响应系数\\
+\bottomrule
+\end{longtable}
+\begin{equation}
+  \boxed{\sigma_{cf}=\begin{cases}+1,&c=O_f,\\-1,&c=N_f,\end{cases}
+  \quad\bm S_{cf}=\sigma_{cf}\bm S_f,\quad\bm S_f=|S_f|\bm n_f.}
+  \label{eq:orientation}
+\end{equation}
+\source{\Jasak：任意多面体控制体与非正交有限体积离散；\Rtwo，第1.3节owner--neighbour与面积向量。}
+
+\subsection*{推导预备：PISO为何从离散动量方程出发}
+\subsubsection*{方法本质}
+PISO不是把Chorin投影简单重复两次。Issa的核心是：把隐式离散方程的求解算子分裂为一个预测步骤和若干校正步骤；第一次压力校正中为得到可解的压力方程而忽略的邻点速度校正影响，在后续校正中被部分恢复。Moukalled等把这一结构概括为一个SIMPLE型步骤加一个或多个PRIME型步骤。
+\source{\Issa：operator splitting与非迭代时间步内校正；\Rone，第15.7.3节开头及式(15.181)--(15.183)。}
+
+\subsubsection*{PISO与外迭代的区别}
+在单个时间步$t^n\to t^{n+1}$内，PISO通过多次压力--速度校正提高动量与连续性的一致性；它不是把时间步回退后重新开始，也不是稳态SIMPLE所需的全场欠松弛外迭代。若为了求稳态而时间推进，仍需经过多个物理或伪时间步。
+
+\section{第一部分：控制方程的有限体积积分与半离散形式}
+\subsection{连续性方程的控制体积分}
+对任意控制体$\Omega_c$积分并使用Gauss定理：
+\begin{equation}
+  \int_{\Omega_c}\nabla\cdot\bm u\,\mathrm dV
+  =\int_{\partial\Omega_c}\bm u\cdot\bm n\,\mathrm dS
+  \approx\sum_{f\in\mathcal F_c}\bm u_f\cdot\bm S_{cf}=0.
+\end{equation}
+定义全局面通量$F_f:=\bm u_f\cdot\bm S_f$，则
+\begin{equation}
+  \boxed{Q_c^m(\bm u):=
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}F_f
+  +Q_c^{m,\mathrm{bnd}}=0,
+  \qquad
+  R_c^m:=\frac{Q_c^m}{V_c}=0.}
+  \label{eq:piso_semidiscrete_continuity}
+\end{equation}
+$Q_c^m$是尚未除体积的守恒通量和，$R_c^m$才是离散散度；两者在后文不混用。
+
+\subsection{动量方程的控制体积分}
+对式\eqref{eq:momentum_pi}在$\Omega_c$上积分。时间项保留连续时间，三个散度项分别使用Gauss定理：
+\begin{align}
+  \int_{\Omega_c}\frac{\partial\bm u}{\partial t}\,\mathrm dV
+  &\approx V_c\frac{\mathrm d\bm u_c}{\mathrm dt},\\
+  \int_{\Omega_c}\nabla\cdot(\bm u\otimes\bm u)\,\mathrm dV
+  &\approx\sum_f(\bm u_f\cdot\bm S_{cf})\bm u_f,\\
+  \int_{\Omega_c}\nabla\cdot(\nu\nabla\bm u)\,\mathrm dV
+  &\approx\sum_f\nu_f(\nabla\bm u)_f\cdot\bm S_{cf},\\
+  \int_{\Omega_c}\nabla\pi\,\mathrm dV
+  &\approx V_c(\nabla\pi)_c.
+\end{align}
+转换为全局面方向后得到
+\begin{equation}
+  \boxed{V_c\frac{\mathrm d\bm u_c}{\mathrm dt}
+  +\sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}\bm H_f^{\mathrm{adv}}
+  -\sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}\bm H_f^{\mathrm{diff}}
+  +V_c(\nabla\pi)_c+\bm Q_c^{u,\mathrm{bnd}}=\bm0,}
+  \label{eq:piso_momentum_semidiscrete}
+\end{equation}
+其中$\bm H_f^{\mathrm{adv}}:=F_f\bm u_f^{\mathrm{adv}}$，$\bm H_f^{\mathrm{diff}}:=\nu_f(\nabla\bm u)_f\cdot\bm S_f$。此处只完成守恒积分，所有面值仍待第二部分闭合。
+
+\subsection{半离散方程是带约束的系统}
+令$\bm R_c^u$表示式\eqref{eq:piso_momentum_semidiscrete}中除时间项外的离散空间算子，则
+\begin{equation}
+  \boxed{V_c\frac{\mathrm d\bm u_c}{\mathrm dt}
+  +\bm R_c^u(\bm u,\pi)=\bm0,
+  \qquad Q_c^m(\bm u)=0.}
+  \label{eq:piso_dae}
+\end{equation}
+速度由动量方程演化，压力通过代数约束使$Q_c^m=0$；这就是后续必须构造压力方程的原因。
+\keytitle{第一部分的最终结果是式\eqref{eq:piso_semidiscrete_continuity}、\eqref{eq:piso_momentum_semidiscrete}和\eqref{eq:piso_dae}。PISO尚未开始，因而这里不能提前写压力校正近似。}
+\source{\Rone，第5章守恒有限体积框架、第8章扩散、第11章对流、第13章非稳态项、第15.1节压力--速度耦合；\Jasak，任意多面体网格上的共点有限体积离散。}
+
+\section{第二部分：空间离散、面插值与单元装配}
+\subsection{对流面值：通量方向与被输运速度}
+对流通量为
+\begin{equation}
+  \bm H_f^{\mathrm{adv}}=F_f\bm u_f^{\mathrm{adv}},
+\end{equation}
+一阶迎风可写成
+\begin{equation}
+  \bm H_f^{\mathrm{adv}}
+  =F_f^+\bm u_{O_f}+F_f^-\bm u_{N_f}.
+\end{equation}
+若采用\texttt{linearUpwind}，令$U_f$为由$F_f$确定的迎风单元，则
+\begin{equation}
+  \bm u_f^{\mathrm{LU}}
+  =\bm u_{U_f}+(\nabla\bm u)_{U_f}\cdot
+  (\bm x_f-\bm x_{U_f}),
+\end{equation}
+梯度由指定的\texttt{gradSchemes}重构并可限制。必须注意：$F_f$是守恒面通量场，$\bm u_f^{\mathrm{adv}}$是被输运速度面值；压力校正后应直接修正$F_f$，不能只修正$\bm u_c$后重新以简单线性插值覆盖通量。
+
+\subsection{扩散面通量：正交隐式项与非正交显式项}
+扩散面通量采用
+\begin{align}
+  \bm S_f&=\bm E_f+\bm T_f,\qquad \bm E_f\parallel\bm d_f,\\
+  \nu_f(\nabla\bm u)_f\cdot\bm S_f
+  &\approx \nu_f\frac{|\bm E_f|}{d_f}(\bm u_{N_f}-\bm u_{O_f})
+  +\nu_f(\nabla\bm u)_f\cdot\bm T_f.
+\end{align}
+\source{\Rone，第8、11--13章；\Jasak，非正交扩散修正及高分辨率对流离散。}
+
+\subsection{压力梯度的单元形式与面法向形式}
+动量方程中的单元压力梯度采用
+\begin{equation}
+  \boxed{(\nabla\pi)_c\approx\frac{1}{V_c}
+  \sum_{f\in\mathcal F_c}\pi_f\bm S_{cf},
+  \qquad
+  \pi_f\approx\lambda_f\pi_{O_f}+(1-\lambda_f)\pi_{N_f}.}
+  \label{eq:piso_cell_grad}
+\end{equation}
+压力校正方程中的面法向压力梯度采用
+\begin{equation}
+  \boxed{(\nabla\pi)_f\cdot\bm S_f
+  \approx\frac{|\bm E_f|}{d_f}(\pi_{N_f}-\pi_{O_f})
+  +(\nabla\pi)_f\cdot\bm T_f.}
+  \label{eq:piso_face_grad}
+\end{equation}
+二者分别对应\texttt{fvc::grad(p)}与\texttt{fvm::laplacian(coeff,p)}。压力矩阵的\texttt{flux()}必须用于守恒面通量更新，才能保证修正前后使用同一个离散面法向梯度。
+\source{\Rone，第9章梯度重构、第15.4--15.5节；\Jasak，非正交面法向梯度及Laplacian离散。}
+
+\subsection{空间算子的owner--neighbour装配}
+每个内部面只计算一次。其通量对$O_f$方程取正号、对$N_f$方程取负号。遍历全部面并线性化后，每个速度分量的半离散代数结构为
+\begin{equation}
+  \boxed{V_c\frac{\mathrm d\bm u_c}{\mathrm dt}
+  +a_c^{\mathrm{sp}}\bm u_c+
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}a_{cf}^{\mathrm{sp}}
+  \bm u_{\mathrm{other}(c,f)}
+  =\bm b_c^{\mathrm{sp}}-V_c(\nabla\pi)_c.}
+  \label{eq:momentum_algebra}
+\end{equation}
+实际装配直接使用$O_f,N_f$，不引入$d(f)$。$a_c^{\mathrm{sp}}$和$a_{cf}^{\mathrm{sp}}$含隐式对流与正交扩散，$\bm b_c^{\mathrm{sp}}$含非正交修正、边界和显式源项。
+\keytitle{第二部分的关键闭合式是迎风/linearUpwind面值、非正交扩散分解、式\eqref{eq:piso_cell_grad}和式\eqref{eq:piso_face_grad}；它们决定最终矩阵，而PISO只负责如何耦合这些已离散的动量与连续性方程。}
+\source{\Rone，第5.4节面通量线性化、第8.7节扩散系数装配、第11章对流系数装配；\Jasak，任意非结构网格owner--neighbour矩阵寻址。}
+
+\section{第三部分：时间离散与PISO压力--速度耦合}
+\subsection{Euler时间离散、动量矩阵与H算子}
+在$t^n\to t^{n+1}$采用Euler格式，并以当前最新通量$F_f^{\ell}$线性化对流项。式\eqref{eq:piso_momentum_semidiscrete}变为
+\begin{multline}
+  \frac{V_c}{\dt}(\bm u_c^{n+1}-\bm u_c^n)
+  +\sum_{f\in\mathcal F_c}F_{cf}^{\,\ell}\bm u_f^{n+1}\\
+  -\sum_{f\in\mathcal F_c}\nu_f(\nabla\bm u^{n+1})_f\cdot\bm S_{cf}
+  =-V_c(\nabla\pi^{\,\ell})_c.
+  \label{eq:momentum_fvm}
+\end{multline}
+把时间历史项$(V_c/\dt)\bm u_c^n$移到右端，连同第二部分的空间系数得到
+\begin{equation}
+  \boxed{a_c^u\bm u_c+
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}a_{cf}^u
+  \bm u_{\mathrm{other}(c,f)}
+  =\bm b_c^u-V_c(\nabla\pi)_c,}
+  \label{eq:piso_time_matrix}
+\end{equation}
+其中$a_c^u=V_c/\dt+a_c^{\mathrm{sp}}$，$\bm b_c^u$含$(V_c/\dt)\bm u_c^n$以及所有已知项。定义
+\begin{align}
+  \mathcal H_c[\bm u]
+  &:=\bm b_c^u-\sum_fa_{cf}^u\bm u_{\mathrm{other}(c,f)},\\
+  \bm h_c&:=\frac{\mathcal H_c[\bm u]}{a_c^u},\qquad
+  \alpha_c:=\frac{V_c}{a_c^u}.
+  \label{eq:H_alpha}
+\end{align}
+则离散动量关系为
+\begin{equation}
+  \boxed{\bm u_c=\bm h_c-\alpha_c(\nabla\pi)_c.}
+  \label{eq:velocity_H}
+\end{equation}
+OpenFOAM中$\bm h_c$对应\texttt{HbyA}，$\alpha_c$对应\texttt{rAU}的场表达。
+\source{\Rone，第15.5.1节式(15.70)、(15.76)--(15.80)：离散动量方程、$H$、$B$、$D$算子。}
+
+\subsection{为什么不能只线性插值速度}
+在共点网格上，速度和压力都存于单元中心。若简单把$\bm u_c$线性插值到面，压力梯度的紧邻耦合可能被两次平均抵消，产生棋盘状压力。Rhie--Chow思想是在面上构造一个模仿交错网格动量方程的伪速度关系，使面通量直接感受到相邻单元压力差。
+\source{\Rone，第15.4.2、15.5.2及15.9节；\Jasak，共点变量布置与压力--速度解耦处理。}
+
+\subsection{Rhie--Chow型面速度}
+用上划线表示由相邻单元线性插值得到的量。首先把单元动量关系\eqref{eq:velocity_H}线性插值到面：
+\begin{equation}
+  \overline{\bm u}_f
+  =\overline{\bm h}_f
+  -\overline{\alpha\nabla\pi^{(0)}}_f.
+  \label{eq:linear_interpolated_momentum}
+\end{equation}
+若直接使用式\eqref{eq:linear_interpolated_momentum}，面速度只感受到已经在单元梯度中平均过的压力，可能出现棋盘压力。Rhie--Chow在面上重建伪动量关系，把面压力梯度改为由$O_f,N_f$直接形成的小模板梯度：
+\begin{equation}
+  \bm u_f^*=\overline{\bm h}_f
+  -\alpha_f(\nabla\pi^{(0)})_f.
+  \label{eq:face_pseudo_momentum}
+\end{equation}
+将式\eqref{eq:linear_interpolated_momentum}代入式\eqref{eq:face_pseudo_momentum}，得到
+\begin{equation}
+  \boxed{\bm u_f^*
+  =\overline{\bm u}_f
+  +\overline{\alpha\nabla\pi^{(0)}}_f
+  -\alpha_f(\nabla\pi^{(0)})_f.}
+  \label{eq:rhie_chow}
+\end{equation}
+当$\alpha$在面附近变化平缓时，近似写为更常见的形式
+\[
+  \bm u_f^*=\overline{\bm u}_f
+  -\alpha_f\left[(\nabla\pi^{(0)})_f
+  -\overline{\nabla\pi^{(0)}}_f\right].
+\]
+于是预测体积通量为
+\begin{equation}
+  \boxed{F_f^*=\bm u_f^*\cdot\bm S_f.}
+  \label{eq:predicted_flux}
+\end{equation}
+对于非稳态问题，还需把时间项对面通量的影响一致地加入。OpenFOAM通常通过
+\texttt{ddtCorr}类修正完成。以官方数据流表示，压力校正前的预测通量为
+\begin{equation}
+  \boxed{F_f^*=
+  \bigl[\texttt{fvc::flux(HbyA)}\bigr]_f
+  +
+  \bigl[\texttt{interpolate(rAU)*fvc::ddtCorr(U,phi,Uf)}\bigr]_f.}
+  \label{eq:transient_rhie_chow_flux}
+\end{equation}
+这一项保证单元动量时间项与面通量时间项采用一致响应；省略它可能使瞬态结果产生非物理的时间步依赖。
+\source{\Rone，第15.5.2节式(15.84)、(15.100)，第15.9.2节式(15.197)--(15.201)：预测面通量和非稳态修正。}
+
+\subsection{第一次压力--速度校正}
+\subsubsection{预测场和最终场}
+以时间层$n$的压力$\pi^{(0)}$组装并隐式求解动量方程，得到动量满足的预测速度$\bm u^*$及面通量$F_f^*$。最终场写为
+\begin{equation}
+  \bm u^{**}=\bm u^*+\bm u',\qquad
+  \pi^*=\pi^{(0)}+\pi',\qquad
+  F_f^{**}=F_f^*+F_f'.
+  \label{eq:first_corrections}
+\end{equation}
+\source{\Rone，第15.5.2节式(15.81)--(15.83)。}
+
+\subsubsection{精确速度校正方程}
+将最终动量关系减去预测动量关系：
+\begin{equation}
+  \boxed{\bm u_c'+\mathcal H_c'[\bm u']
+  =-\alpha_c(\nabla\pi')_c.}
+  \label{eq:exact_velocity_correction}
+\end{equation}
+$\mathcal H_c'[\bm u']$表示邻单元速度修正通过动量非对角系数对当前单元的影响。它使压力方程与速度修正耦合，不能直接求解。
+\source{\Rone，第15.5.2节式(15.85)--(15.92)。}
+
+\subsubsection{第一次可解近似与压力校正方程}
+PISO的第一校正与SIMPLE型校正相同：暂时忽略$\mathcal H_c'[\bm u']$，得到
+\begin{equation}
+  \boxed{\bm u_c'\approx-\alpha_c(\nabla\pi')_c.}
+  \label{eq:first_uprime}
+\end{equation}
+相应面通量修正为
+\begin{equation}
+  \boxed{F_f'=-\alpha_f(\nabla\pi')_f\cdot\bm S_f.}
+  \label{eq:first_fluxprime}
+\end{equation}
+把$F_f^{**}=F_f^*+F_f'$代入离散连续性
+\[
+  \sum_{f\in\mathcal F_c}F_{cf}^{**}=0,
+\]
+得到第一次压力校正方程
+\begin{equation}
+  \boxed{\sum_{f\in\mathcal F_c}
+  \alpha_f(\nabla\pi')_f\cdot\bm S_{cf}
+  =\sum_{f\in\mathcal F_c}F_{cf}^*.}
+  \label{eq:first_pressure_correction}
+\end{equation}
+求得$\pi'$后更新
+\begin{align}
+  \boxed{\pi^*=\pi^{(0)}+\pi',}
+  \label{eq:first_pupdate}\\
+  \boxed{\bm u_c^{**}=\bm u_c^*
+  -\alpha_c(\nabla\pi')_c,}
+  \label{eq:first_uupdate}\\
+  \boxed{F_f^{**}=F_f^*
+  -\alpha_f(\nabla\pi')_f\cdot\bm S_f.}
+  \label{eq:first_fluxupdate}
+\end{align}
+PISO通常不对该时间步内的压力校正施加SIMPLE式欠松弛，因为后续校正用于恢复被忽略项。
+将式\eqref{eq:first_pressure_correction}代回面通量更新可直接验证
+\begin{align}
+  Q_c^{m,**}
+  &=\sum_{f\in\mathcal F_c}F_{cf}^{**}\\
+  &=\sum_fF_{cf}^*-
+  \sum_f\alpha_f(\nabla\pi')_f\cdot\bm S_{cf}=0,\\
+  \boxed{R_c^{m,**}=Q_c^{m,**}/V_c=0.}
+  \label{eq:first_piso_continuity_proof}
+\end{align}
+因此第一次校正后的\emph{面通量}已经满足离散连续性；继续校正的目的不是再次“制造守恒”，而是恢复被忽略的动量非对角响应，使守恒通量与完整动量方程更加一致。
+\keytitle{第一次PISO校正的核心是式\eqref{eq:first_pressure_correction}，它由离散连续性和动量响应系数$\alpha_f$严格推出；式\eqref{eq:first_fluxupdate}保证第一次校正后的面通量守恒。}
+\source{\Issa，第一预测/校正阶段；\Rone，第15.5.2节式(15.98)--(15.101)及第15.7.3节步骤2--5。}
+
+\subsubsection{压力方程的非正交离散与矩阵系数}
+构造有效面积向量$\alpha_f\bm S_f$并分解
+\begin{equation}
+  \alpha_f\bm S_f=\bm E_f^p+\bm T_f^p,\qquad
+  \bm E_f^p\parallel\bm d_f.
+\end{equation}
+则
+\begin{equation}
+  \alpha_f(\nabla\pi')_f\cdot\bm S_f
+  \approx\frac{|\bm E_f^p|}{d_f}
+  (\pi'_{N_f}-\pi'_{O_f})
+  +(\nabla\pi')_f\cdot\bm T_f^p.
+  \label{eq:pprime_nonorth}
+\end{equation}
+正交项隐式进入压力矩阵，非正交项在内循环中显式更新；仅最后一次内循环更新守恒面通量。
+定义
+\begin{equation}
+  D_f^{p'}:=\frac{|\bm E_f^p|}{d_f}.
+\end{equation}
+内部面$f$对owner方程的隐式项为$D_f^{p'}(\pi'_{N_f}-\pi'_{O_f})$，对neighbour方程符号相反。逐面装配得到
+\begin{equation}
+  \boxed{a_c^{p'}\pi_c'
+  +\sum_{f\in\mathcal F_c^{\mathrm{int}}}a_{cf}^{p'}
+  \pi'_{\mathrm{other}(c,f)}=b_c^{p'},}
+  \label{eq:first_pressure_matrix}
+\end{equation}
+其中$a_{cf}^{p'}=-D_f^{p'}$，$a_c^{p'}$为相邻$D_f^{p'}$之和，$b_c^{p'}$由预测通量不平衡、边界项与显式非正交修正组成。
+\source{\Rone，第15.5.2--15.5.3节式(15.93)--(15.108)；\Jasak，非正交Laplacian校正。}
+
+\subsection{第二次及后续PISO校正}
+\subsubsection{为什么还需要第二校正}
+第一次校正使用式\eqref{eq:first_uprime}，忽略了精确式\eqref{eq:exact_velocity_correction}中的$\mathcal H_c'[\bm u']$。第一次修正后虽然面通量满足连续性，但修正速度一般不再严格满足完整离散动量方程。PISO的第二校正就是在不重新进入完整外迭代的情况下，恢复这部分动量耦合。
+
+\subsubsection{显式重算动量预测}
+使用最新的$\bm u^{**}$、$F_f^{**}$和$\pi^*$重新计算动量系数和非对角算子，并显式求一个新的动量满足速度
+\begin{equation}
+  \boxed{\bm u_c^{***}
+  =\bm h_c^{**}-\alpha_c^{**}(\nabla\pi^*)_c.}
+  \label{eq:second_predictor}
+\end{equation}
+再用Rhie--Chow插值得到$F_f^{***}$。由于重算包含最新速度，第一次忽略的$\mathcal H[\bm u']$的一部分已经进入$\bm h^{**}$。
+更具体地，第一次校正把$\bm u^*$改为$\bm u^{**}=\bm u^*+\bm u'$。非对角算子的变化满足
+\begin{equation}
+  \mathcal H_c[\bm u^{**}]-\mathcal H_c[\bm u^*]
+  =\mathcal H_c'[\bm u'].
+\end{equation}
+因此，用$\bm u^{**}$显式重算$\bm h^{**}$，就把第一次为形成可解压力方程而舍去的$\mathcal H_c'[\bm u']$部分重新带回预测速度；这正是第二校正区别于“重复同一次投影”的代数原因。
+\source{\Rone，第15.7.3节式(15.181)及步骤6--7。}
+
+\subsubsection{第二压力校正}
+定义
+\begin{equation}
+  \bm u^{****}=\bm u^{***}+\bm u'',\qquad
+  \pi^{**}=\pi^*+\pi'',\qquad
+  F_f^{****}=F_f^{***}+F_f''.
+\end{equation}
+第二校正满足
+\begin{equation}
+  \bm u_c''+\mathcal H_c^{**}[\bm u'']
+  =-\alpha_c^{**}(\nabla\pi'')_c.
+  \label{eq:second_exact}
+\end{equation}
+本次仍忽略更高一层的$\mathcal H^{**}[\bm u'']$，于是
+\begin{equation}
+  \boxed{\sum_{f\in\mathcal F_c}
+  \alpha_f^{**}(\nabla\pi'')_f\cdot\bm S_{cf}
+  =\sum_{f\in\mathcal F_c}F_{cf}^{***}.}
+  \label{eq:second_pressure}
+\end{equation}
+并更新
+\begin{align}
+  \boxed{\pi^{**}=\pi^*+\pi'',}\\
+  \boxed{\bm u_c^{****}
+  =\bm u_c^{***}-\alpha_c^{**}(\nabla\pi'')_c,}\\
+  \boxed{F_f^{****}
+  =F_f^{***}-\alpha_f^{**}(\nabla\pi'')_f\cdot\bm S_f.}
+  \label{eq:second_updates}
+\end{align}
+将式\eqref{eq:second_pressure}代入最后一个更新式，同样得到
+\begin{equation}
+  \boxed{Q_c^{m,****}=0,
+  \qquad R_c^{m,****}=Q_c^{m,****}/V_c=0.}
+\end{equation}
+第二校正后的通量再次严格满足当前压力方程对应的离散连续性，同时其预测部分已包含更多非对角动量响应。
+\source{\Issa，多校正operator-splitting；\Rone，第15.7.3节式(15.181)--(15.183)及步骤8--10。}
+
+\subsubsection{一般第k次校正}
+若继续校正，在最新场上重复
+\begin{align}
+  \sum_f\alpha_f^{(k)}(\nabla\pi^{(k+1)})_f\cdot\bm S_{cf}
+  &=\sum_fF_{cf}^{*,(k)},\\
+  F_f^{(k+1)}
+  &=F_f^{*,(k)}
+  -\alpha_f^{(k)}(\nabla\pi^{(k+1)})_f\cdot\bm S_f.
+\end{align}
+每次校正进一步恢复前一次忽略的非对角速度校正影响。校正次数不是越多越好，应结合时间精度、网格非正交性和计算成本设置。
+
+\keytitle{PISO的本质公式链为：离散动量关系\eqref{eq:velocity_H}，第一次压力校正\eqref{eq:first_pressure_correction}，显式动量重算\eqref{eq:second_predictor}，第二压力校正\eqref{eq:second_pressure}。}
+
+\subsection{边界条件与压力参考}
+\subsubsection{速度边界}
+方形顶盖驱动腔在$y=1$取$\bm u=(1,0)$，其他壁面$\bm u=\bm0$；等边三角腔在顶边取$\bm u=(1,0)$，两条斜壁$\bm u=\bm0$。所有壁面均不可穿透，因此边界体积通量为零。
+
+\subsubsection{压力校正边界}
+速度法向分量已指定的壁面，不能再由压力校正改变法向通量，故
+\begin{equation}
+  F_b'=0
+  \quad\Longrightarrow\quad
+  \alpha_b\nabla\pi'\cdot\bm S_{cb}=0
+  \quad\Longrightarrow\quad
+  \boxed{\frac{\partial\pi'}{\partial n}=0.}
+\end{equation}
+后续$\pi''$等校正同理。所有边界均为这种条件时，压力只确定到常数，需规定
+\begin{equation}
+  \boxed{\pi_{c_{\mathrm{ref}}}=0.}
+  \label{eq:pref}
+\end{equation}
+\source{\Rone，第15.6.2节，特别是壁面压力校正边界和第15.6.2.5节压力相对性。}
+
+\section{第四部分：OpenFOAM求解器构造、配置与验证}
+\subsection{选择正确的开发入口}
+OpenFOAM~14不再以复制旧式\texttt{pisoFoam.C}主循环作为首选开发路线。通用程序
+\texttt{foamRun}读取\texttt{controlDict}中的\texttt{solver}，构造运行时可选模块，
+然后在PIMPLE控制循环中依次调用\texttt{momentumPredictor()}和
+\texttt{pressureCorrector()}。对于本题PISO，最小且最符合底层结构的实现是直接使用官方
+\texttt{incompressibleFluid}模块；若必须提交“自行开发”的模块，则复制该模块为
+\texttt{myPisoFluid}并重命名运行时类型，保持下面的矩阵和校正次序不变。
+
+\begin{equation}
+  \boxed{\begin{aligned}
+  \texttt{foamRun}&\longrightarrow
+  \texttt{incompressibleFluid::momentumPredictor()}\\
+  &\longrightarrow
+  \texttt{incompressibleFluid::pressureCorrector()}.
+  \end{aligned}}
+  \label{eq:of14_piso_lifecycle}
+\end{equation}
+\source{\OFfourteen：\texttt{foamRun.C}第109--193行；官方
+\texttt{incompressibleFluid}类说明及其两个核心成员函数。}
+
+\subsection{字段、缓存矩阵与临时对象}
+\begin{longtable}{p{0.20\linewidth}p{0.28\linewidth}p{0.41\linewidth}}
+\toprule
+数学对象 & OpenFOAM对象 & 生命周期与开发含义\\
+\midrule
+$\pi$ & \texttt{volScalarField p\_} & 持久运动学压力；由\texttt{pressureReference}处理常数零空间\\
+$\bm u$ & \texttt{volVectorField U\_} & 持久单元速度；预测、压力校正及边界约束均更新它\\
+$F_f$ & \texttt{surfaceScalarField phi\_} & 持久守恒面体积通量；对流矩阵和连续性共同使用\\
+动量矩阵 & \texttt{tmp<fvVectorMatrix> tUEqn} & 在预测阶段装配，供一个或多个PISO压力校正共享\\
+$\alpha_c$ & \texttt{volScalarField rAU} & 每次压力校正由\texttt{1.0/UEqn.A()}计算\\
+$\bm h_c$ & \texttt{volVectorField HbyA} & 由受边界约束的\texttt{rAU*UEqn.H()}构造\\
+$F_f^*$ & \texttt{surfaceScalarField phiHbyA} & 动量一致预测通量，包含\texttt{ddtCorr}\\
+$\alpha_c^{\rm eff}$ & \texttt{tmp<volScalarField> rAtU} & 默认等于\texttt{rAU}；consistent模式下修正\\
+压力系统 & \texttt{fvScalarMatrix pEqn} & 每个非正交循环重新装配；最后一次更新\texttt{phi\_}\\
+\bottomrule
+\end{longtable}
+\texttt{tUEqn}是理解OpenFOAM~14 PISO实现的关键：动量矩阵先缓存，压力校正从它提取
+\texttt{A()}和\texttt{H()}；当只有一个PISO校正时可以提前清除，多校正时必须保留。
+
+\subsection{动量预测函数的实际装配顺序}
+官方模块的逻辑可压缩表示为
+\begin{lstlisting}[style=foam,language=C++]
+tUEqn =
+(
+    fvm::ddt(U_) + fvm::div(phi_, U_)
+  + MRF.DDt(U_)
+  + momentumTransport->divDevSigma(U_)
+ == fvModels().source(U_)
+);
+fvVectorMatrix& UEqn = tUEqn.ref();
+UEqn.relax();
+fvConstraints().constrain(UEqn);
+if (pimple.momentumPredictor())
+{
+    solve(UEqn == -fvc::grad(p_));
+    fvConstraints().constrain(U_);
+}
+\end{lstlisting}
+因此，固定黏度层流的\texttt{-fvm::laplacian(nu,U)}只是物理子集；为了符合OpenFOAM~14
+开发方式，应通过\texttt{momentumTransport->divDevSigma(U\_)}进入黏性、层流或湍流应力模型。
+矩阵松弛和\texttt{fvConstraints}必须在求解前执行，场约束在求解后再次执行。
+\source{\Rone，第15.5.1节；\OFfourteen：官方
+\texttt{incompressibleFluid/momentumPredictor.C}第36--54行。}
+
+\subsection{压力校正函数的实际数据流}
+在每次PISO校正中，OpenFOAM~14按以下不可交换的顺序更新对象：
+\begin{enumerate}
+  \item 从缓存的\texttt{UEqn}计算\texttt{rAU=1/UEqn.A()}，再构造受边界约束的\texttt{HbyA}。
+  \item 构造
+  \begin{equation}
+    \boxed{F_f^*=
+    \bigl[\operatorname{flux}(\bm H/A)\bigr]_f
+    +\overline{r_{AU}}_f\,F_f^{\mathrm{ddtCorr}}.}
+    \label{eq:of_phiHbyA}
+  \end{equation}
+  代码对象为\texttt{phiHbyA}。第二项保证瞬态面通量与离散时间项一致。
+  \item 对MRF与动网格通量执行相对/绝对转换；仅在压力需要参考值时调用\texttt{adjustPhi}。
+  \item 若启用\texttt{consistent}，由\texttt{UEqn.H1()}构造\texttt{rAtU}，并同步修正
+  \texttt{phiHbyA}和\texttt{HbyA}；否则\texttt{rAtU=rAU}。
+  \item 调用\texttt{constrainPressure(p,U,phiHbyA,rAtU,MRF)}，使压力边界与预测通量一致。
+  \item 在非正交循环中求解总压力方程
+  \begin{equation}
+    \boxed{\operatorname{fvm::laplacian}(r_{AtU},\pi)
+    =\operatorname{fvc::div}(F^*)-S_\pi.}
+    \label{eq:of_total_pressure}
+  \end{equation}
+  $S_\pi$对应可选体积源；无源本题取零。
+  \item 仅在最后一个非正交迭代执行
+  \begin{equation}
+    \boxed{F_f=F_f^*-\bigl[\texttt{pEqn.flux()}\bigr]_f.}
+    \label{eq:of_flux_update}
+  \end{equation}
+  \item 报告连续性误差，按需要显式松弛压力，再执行
+  \begin{equation}
+    \boxed{\bm u_c=(\bm H/A)_c-r_{AtU,c}(\nabla\pi)_c,}
+    \label{eq:of_U_update}
+  \end{equation}
+  随后修正速度边界、施加\texttt{fvConstraints}；动网格还要修正\texttt{Uf}并将通量转为相对通量。
+\end{enumerate}
+\source{\Rone，第15.5.2和15.9节；\OFfourteen：官方
+\texttt{incompressibleFluid/correctPressure.C}第47--124行。}
+
+\subsection{开发骨架：方法级而非旧式主循环}
+下面的伪代码按官方方法边界组织，避免把\texttt{foamRun}已经负责的时间循环重复写进模块：
+\begin{lstlisting}[style=foam,language=C++]
+void myPisoFluid::momentumPredictor()
+{
+    assembleAndCacheUEqn();       // ddt + div + stress = sources
+    relaxAndConstrainUEqn();
+    optionallySolveWithMinusGradP();
+}
+
+void myPisoFluid::pressureCorrector()
+{
+    readCachedUEqn();
+    build_rAU_HbyA_phiHbyA();     // includes ddtCorr
+    applyFluxAndPressureBCLogic();// MRF, adjustPhi, constrainPressure
+    applyConsistentCorrectionIfRequested();
+    solvePressureNonOrthogonalLoop();
+    updatePhiFromPressureMatrixFlux();
+    updateUAndApplyConstraints();
+    finishMovingMeshFluxLogicIfNeeded();
+}
+\end{lstlisting}
+每个占位函数都对应上一小节唯一的一组实际OpenFOAM调用；开发时应逐段从安装的
+\texttt{\$FOAM\_MODULES/incompressibleFluid}移植，不能把这些阶段合并成
+\texttt{phi=fvc::flux(U)}之类的简化操作。
+
+\subsection{参考书PISO与OpenFOAM~14实现的对应边界}
+Issa和\Rone 用$\pi',\pi''$显式解释第一次、第二次校正，并在第二阶段描述对动量非对角影响的恢复；
+OpenFOAM~14代码则在每个corrector内求解当前\emph{总压力}$\pi$，并通过缓存
+\texttt{tUEqn}反复重建\texttt{rAU}、\texttt{HbyA}和\texttt{phiHbyA}。因此：
+\begin{itemize}
+  \item 数学报告用式\eqref{eq:first_pressure_correction}和\eqref{eq:second_pressure}解释PISO为何有效；
+  \item 代码报告用式\eqref{eq:of_total_pressure}--\eqref{eq:of_U_update}解释OpenFOAM实际更新什么；
+  \item 不得声称OpenFOAM在每个pressure corrector中重新装配完整\texttt{UEqn}；官方实现共享缓存矩阵；
+  \item 外部PIMPLE迭代若再次进入\texttt{momentumPredictor()}才会重新装配动量矩阵，这与时间步内PISO校正不是同一层循环。
+\end{itemize}
+\keytitle{理论PISO的$\pi',\pi''$说明算子分裂误差如何被逐次修正；OpenFOAM~14的
+\texttt{p\_}保存总压力，\texttt{tUEqn}保存动量线性化，\texttt{phi\_}保存最终守恒通量。
+这三类对象不能混为同一个“迭代变量”。}
+
+\subsection{模块文件结构与构建选择}
+若允许直接使用官方模块，算例只需要\texttt{foamRun}、\texttt{solver incompressibleFluid}和字典配置；
+若要求提交自编模块，可采用
+\begin{lstlisting}[style=foam]
+myPisoFluid/
+|-- myPisoFluid.H
+|-- myPisoFluid.C
+|-- momentumPredictor.C
+|-- correctPressure.C
+`-- Make/
+    |-- files
+    `-- options
+\end{lstlisting}
+\texttt{myPisoFluid}继承\texttt{incompressibleFluid}，声明新的
+\texttt{TypeName("myPisoFluid")}并注册到运行时选择表。若不改变算法，最稳妥的是保留官方两个核心
+成员函数，只增加诊断输出；\texttt{Make/options}以本机OpenFOAM~14模块的依赖为准，
+用\texttt{wmake libso}生成用户库。
+
+\subsection{空间、时间与求解控制配置}
+\begin{lstlisting}[style=foam]
+ddtSchemes
+{
+    default         Euler;
+}
+gradSchemes
+{
+    default         Gauss linear;
+    grad(U)         cellLimited Gauss linear 1;
+}
+divSchemes
+{
+    default         none;
+    div(phi,U)      bounded Gauss linearUpwind grad(U);
+}
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+interpolationSchemes
+{
+    default         linear;
+}
+snGradSchemes
+{
+    default         corrected;
+}
+fluxRequired
+{
+    default         no;
+    p;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=foam]
+PIMPLE
+{
+    nOuterCorrectors             1;
+    nCorrectors                  2;
+    nNonOrthogonalCorrectors     1;
+    momentumPredictor            yes;
+    consistent                   no;
+}
+\end{lstlisting}
+\begin{lstlisting}[style=foam]
+application     foamRun;
+solver          incompressibleFluid; // or myPisoFluid
+\end{lstlisting}
+\texttt{nOuterCorrectors 1}关闭额外PIMPLE外迭代，\texttt{nCorrectors 2}保留一次时间步内的
+两次PISO压力--速度校正；\texttt{nNonOrthogonalCorrectors 1}只控制每个压力方程内部的网格非正交校正。
+压力参考由OpenFOAM~14的\texttt{pressureReference}对象读取，具体字典位置以安装模块的基类实现为准。
+\source{\Issa：一个预测与多个corrector；\Rone，第15.7.3节步骤1--15；\Rtwo、\Rthree{}及\OFfourteen，
+OpenFOAM字典和模块控制。}
+
+\subsection{完整算法：参考书推导与代码执行的双重对应}
+\subsubsection{参考书中的PISO算法}
+给定$t^n$的$\bm u^n$、$\pi^n$和守恒面通量$F_f^n$：
+\begin{enumerate}
+  \item 用旧时间层场作为$t^{n+1}$的初始猜测。
+  \item 根据时间、对流、扩散和边界条件装配离散动量矩阵\eqref{eq:piso_time_matrix}。
+  \item 隐式求解动量预测，得到$\bm u^*$。
+  \item 用Rhie--Chow式\eqref{eq:rhie_chow}构造动量一致的预测面通量$F_f^*$。
+  \item 由连续性装配第一次压力校正方程\eqref{eq:first_pressure_correction}。
+  \item 在非正交内循环中求解$\pi'$；在最后一次内循环用式\eqref{eq:first_fluxupdate}修正面通量。
+  \item 用式\eqref{eq:first_pupdate}--\eqref{eq:first_uupdate}修正压力和单元速度，得到$\pi^*,\bm u^{**},F^{**}$。
+  \item 用最新场显式重算动量预测式\eqref{eq:second_predictor}并重构$F^{***}$。
+  \item 装配和求解第二压力校正方程\eqref{eq:second_pressure}。
+  \item 用式\eqref{eq:second_updates}修正压力、单元速度和面通量。
+  \item 若达到规定corrector次数，接受最终场为$t^{n+1}$解；否则继续重复步骤8--10。
+  \item 计算$Q_c^m$、$R_c^m$和全局边界净通量，检查离散连续性。
+  \item 推进到下一时间步；稳态算例继续推进至残差、场变化量和基准量均稳定。
+\end{enumerate}
+
+\subsubsection{OpenFOAM~14中实际执行的PISO算法}
+对\texttt{nOuterCorrectors=1}、\texttt{nCorrectors=2}的瞬态算例，每个时间步的开发级执行顺序为：
+\begin{enumerate}
+  \item \texttt{foamRun}调用模块的\texttt{preSolve()}、\texttt{prePredictor()}及输运模型预测。
+  \item \texttt{momentumPredictor()}装配并缓存\texttt{tUEqn}，依次完成
+  \texttt{relax}$\to$矩阵\texttt{constrain}$\to$带$-\nabla\pi$求解$\to$场\texttt{constrain}。
+  \item 第一次\texttt{pressureCorrector()}从缓存矩阵计算\texttt{rAU}、\texttt{HbyA}、
+  \texttt{phiHbyA}，完成边界一致性和可选\texttt{consistent}修正。
+  \item 在非正交内循环求总压力$\pi$；最后一次以\texttt{pEqn.flux()}更新守恒\texttt{phi\_}，
+  再用\texttt{HbyA-rAtU*grad(p)}更新\texttt{U\_}。
+  \item 第二次\texttt{pressureCorrector()}仍使用保留的\texttt{tUEqn}，但从当前$\bm u,\pi,F_f$
+  重新构造临时\texttt{rAU/HbyA/phiHbyA}并再次完成压力、通量和速度更新。
+  \item 完成最后一次校正后清理缓存对象，调用输运模型校正、\texttt{postSolve()}和写出。
+  \item 逐单元检查$R_c^m=Q_c^m/V_c$；验证时另外报告全局边界净通量、时间步场变化和基准量。
+\end{enumerate}
+
+\keytitle{求解器最终必须成对保存单元速度\texttt{U\_}和守恒面通量\texttt{phi\_}。
+压力方程约束的是\texttt{phi\_}；若校正后用\texttt{fvc::flux(U\_)}覆盖它，就会破坏
+\texttt{pEqn.flux()}刚建立的离散连续性。}
+
+\subsection{PISO与投影法的严格区别}
+\begin{longtable}{p{0.25\linewidth}p{0.31\linewidth}p{0.31\linewidth}}
+\toprule
+项目 & Chorin型投影法 & PISO\\
+\midrule
+出发点 & 连续Helmholtz分解 & 已隐式离散的动量矩阵\\
+压力方程系数 & $\dt$ & $\alpha_c=V_c/a_c^u$\\
+中间速度 & 无新压力预测$\bm u^*$ & 由旧压力驱动的动量预测\\
+面通量 & 投影压力通量修正 & Rhie--Chow动量一致通量\\
+校正次数 & 基本形式一次投影 & 一个时间步内两次或更多校正\\
+后续校正作用 & 不适用 & 恢复被忽略的$\mathcal H[\bm u']$影响\\
+\bottomrule
+\end{longtable}
+两者都通过压力方程使速度/通量满足不可压条件，但不能把PISO称为“把同一个投影做两遍”。
+
+\subsection{实现与验证检查}
+\begin{enumerate}
+  \item \textbf{压力单位：}代码\texttt{p}是运动学压力$\pi=p/\rho$。
+  \item \textbf{矩阵系数：}$\alpha_c$必须来自当前动量矩阵对角，不能替换成固定$\dt$。
+  \item \textbf{共点耦合：}预测面通量必须包含Rhie--Chow压力差修正及非稳态一致修正。
+  \item \textbf{两类循环：}PISO corrector与非正交corrector的作用不同。
+  \item \textbf{通量守恒：}每次压力校正只在最后一个非正交循环更新面通量。
+  \item \textbf{压力零空间：}全速度边界必须设置参考压力。
+  \item \textbf{最终检查：}逐单元报告$R_c^m=Q_c^m/V_c$，并报告全局净通量。
+  \item \textbf{基准验证：}方腔用中心线速度和涡心位置与Ghia等比较；三角腔比较流线和主涡性质。
+\end{enumerate}
+
+\subsection{参考来源与使用范围}
+\begin{longtable}{p{0.13\linewidth}p{0.76\linewidth}}
+\toprule
+编号 & 本文实际使用内容\\
+\midrule
+\Task & 第5.1节PISO求解过程与有限体积OpenFOAM求解器要求。\\
+\Issa & PISO算子分裂、预测--多校正结构及时间步内非迭代思想。\\
+\Jasak & 一般非结构网格有限体积、非正交修正、共点压力--速度耦合的理论背景。\\
+\Rone & 第15.5节动量矩阵、压力校正和Rhie--Chow；第15.7.3节PISO式(15.181)--(15.183)及步骤；第15.9节瞬态面通量修正。\\
+\Rtwo & OpenFOAM网格、字段、面积向量、离散格式和求解器算子。\\
+\Rthree & OpenFOAM运行与字典配置辅助说明。\\
+\OFfourteen & OpenFOAM~14的\texttt{foamRun}模块生命周期、\texttt{incompressibleFluid}
+缓存动量矩阵、\texttt{rAU/HbyA/phiHbyA}数据流、压力边界与通量校正顺序。\\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{99}
+\bibitem{Issa1986}
+R.~I. Issa,
+“Solution of the implicitly discretised fluid flow equations by operator-splitting,”
+\emph{Journal of Computational Physics}, vol.~62, pp.~40--65, 1986.
+\bibitem{Jasak1996}
+H. Jasak,
+\emph{Error Analysis and Estimation for the Finite Volume Method with Applications to Fluid Flows},
+Ph.D. thesis, Imperial College London, 1996.
+\bibitem{Moukalled2016}
+F. Moukalled, L. Mangani, and M. Darwish,
+\emph{The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM and Matlab},
+Springer, 2016. 重点使用第8、9、11、13章和第15.5、15.6、15.7.3、15.9节。
+\bibitem{Primer2021}
+T. Holzmann and S. Rooney, \emph{The OpenFOAM Technology Primer}, 2021.
+\bibitem{Holzinger2020}
+G. Holzinger, \emph{OpenFOAM: A Little User-Manual}, 2020.
+\bibitem{OpenFOAM14}
+OpenFOAM Foundation, \emph{OpenFOAM~14 Source Code Guide}: 
+\texttt{foamRun.C}, \texttt{applications/modules/incompressibleFluid/momentumPredictor.C},
+\texttt{correctPressure.C} and class interface, 2026.\\
+\url{https://cpp.openfoam.org/v14/foamRun_8C_source.html}\\
+\url{https://cpp.openfoam.org/v14/incompressibleFluid_2momentumPredictor_8C_source.html}\\
+\url{https://cpp.openfoam.org/v14/incompressibleFluid_2correctPressure_8C_source.html}
+\end{thebibliography}
+\end{document}
