@@ -1,0 +1,44 @@
+{
+  "solverFamily": "03_advection_diffusion_equation",
+  "templateSolverFamily": "01_advection_equation",
+  "templateCaseName": "01_sine_wave_quad",
+  "caseName": "01_sine_wave_quad_upwind",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/03_advection_diffusion_equation/01_sine_wave_quad_upwind.json",
+  "equation": "advection_diffusion",
+  "problem": "sine_wave_advection_diffusion",
+  "meshType": "quad",
+  "meshBackend": "blockMesh",
+  "schemeName": "Gauss_upwind__Gauss_linear_corrected",
+  "divScheme": "Gauss upwind",
+  "resolution": 20,
+  "solver": "explicitAdvectionDiffusionFoamStudent",
+  "velocity": [
+    1.0,
+    1.0,
+    0.0
+  ],
+  "domain": [
+    0.0,
+    1.0,
+    0.0,
+    1.0
+  ],
+  "velocityModel": {},
+  "initialProfile": {},
+  "boundaryCondition": "periodicXY",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "sineWaveAdvectionDiffusion",
+    "reportTime": 1.0
+  },
+  "scalarField": "phi",
+  "mu": 1.0,
+  "diffusionCo": 0.5,
+  "advectionDiffusionCo": 0.45,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 1.0,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.001,
+  "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_advection_diffusion_equation/01_sine_wave_quad_upwind/N20/0.orig/phi"
+}

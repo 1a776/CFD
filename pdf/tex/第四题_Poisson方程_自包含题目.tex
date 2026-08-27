@@ -1,0 +1,390 @@
+\documentclass[11pt,a4paper]{ctexart}
+
+\usepackage[margin=2.45cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,array,longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.35em}
+\setlist[enumerate]{itemsep=0.35em,topsep=0.4em}
+\setlist[itemize]{itemsep=0.25em,topsep=0.35em}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\dif}{\mathop{}\!\mathrm{d}}
+
+\title{第四题：Poisson 方程\\
+有限体积空间离散与 OpenFOAM 数值验证\\
+\large 自包含题目}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{问题背景与符号约定}
+
+本题严格采用原题第 4 题的方程符号
+\begin{equation}
+  \nabla\cdot\nabla\phi=\omega,
+  \qquad\text{即}\qquad
+  \Delta\phi=\omega.
+  \label{eq:poisson-original-sign}
+\end{equation}
+参考文献~\cite{FerrerWillden2011} 使用的是
+$-\Delta u+\alpha u=g$。因此，当 $\alpha=0$ 时，文献中的 Poisson
+形式 $-\Delta u=g$ 与本题的关系为
+\begin{equation}
+  u=\phi,
+  \qquad g=-\omega.
+  \label{eq:sign-map}
+\end{equation}
+后文始终使用式~\eqref{eq:poisson-original-sign} 的符号，不混用两种约定。
+
+Poisson 方程不含时间变量，所以原题所称的 ``semi-discretized form''
+在本题中应理解为\textbf{有限体积空间离散后得到的代数方程组}，不存在时间离散。
+
+\section{连续初边值问题}
+
+令
+\begin{equation}
+  \Omega=(0,1)^2\subset\R^2,
+  \qquad
+  \partial\Omega=\Gamma_{x=0}\cup\Gamma_{x=1}
+  \cup\Gamma_{y=0}\cup\Gamma_{y=1}.
+\end{equation}
+求标量场 $\phi:\overline\Omega\to\R$，使其满足
+\begin{subequations}\label{eq:strong-problem}
+\begin{align}
+  \Delta\phi(x,y)&=\omega(x,y),
+  &&(x,y)\in\Omega,\label{eq:strong-pde}\\
+  \phi(x,y)&=g_D(x,y),
+  &&(x,y)\in\partial\Omega.\label{eq:strong-bc}
+\end{align}
+\end{subequations}
+
+采用制造解
+\begin{equation}
+  \phi_{\mathrm{exact}}(x,y)
+  =\cos(\pi x)\cos(\pi y).
+  \label{eq:exact}
+\end{equation}
+由式~\eqref{eq:exact} 直接计算得到
+\begin{equation}
+  \omega(x,y)
+  =\Delta\phi_{\mathrm{exact}}(x,y)
+  =-2\pi^2\cos(\pi x)\cos(\pi y).
+  \label{eq:source}
+\end{equation}
+Dirichlet 边界数据必须取制造解在边界上的迹，即
+\begin{equation}
+  g_D=\phi_{\mathrm{exact}}\big|_{\partial\Omega}.
+\end{equation}
+为使问题完全自包含，四条边上的边界值明确写为
+\begin{subequations}\label{eq:explicit-bc}
+\begin{align}
+  \phi(0,y)&= \cos(\pi y),
+  &\phi(1,y)&=-\cos(\pi y),
+  &&0\le y\le1,\\
+  \phi(x,0)&= \cos(\pi x),
+  &\phi(x,1)&=-\cos(\pi x),
+  &&0\le x\le1.
+\end{align}
+\end{subequations}
+四个角点的取值分别为
+$\phi(0,0)=1$、$\phi(1,0)=-1$、$\phi(0,1)=-1$、
+$\phi(1,1)=1$，故相邻边给出的 Dirichlet 数据在角点相容。
+
+\section{网格、未知量与统一面记号}
+
+分别构造两组逐级加密、与正方形边界相符的网格族：
+\begin{equation}
+  \{\T_h^{\mathrm{quad}}\}_{h\downarrow0},
+  \qquad
+  \{\T_h^{\mathrm{tri}}\}_{h\downarrow0},
+\end{equation}
+其中前者仅由四边形控制体组成，后者仅由三角形控制体组成。
+每组至少使用三个逐级加密层级，并在报告中给出每级网格的单元数、
+面数以及代表性网格尺度。不得把三角形和四边形网格上的误差混合后计算
+收敛阶；两类网格应分别分析。
+
+统一采用下列有限体积记号。
+
+\begin{longtable}{>{\centering\arraybackslash}p{0.18\textwidth}p{0.72\textwidth}}
+\toprule
+记号 & 含义\\
+\midrule
+$c$ & 当前控制体；其中心为 $\mathbf{x}_c$，体积（二维单位厚度下为面积）为 $V_c=|\Omega_c|$。\\
+$\F_c$ & 控制体 $c$ 的全部面集合。\\
+$f$ & 一个内部面；$\mathbf{x}_f$ 为面心，$|S_f|$ 为面长度（二维单位厚度下的面面积）。\\
+$O_f,N_f$ & 内部面 $f$ 的 owner 单元和 neighbour 单元。全局面方向固定为 $O_f\to N_f$。\\
+$\mathbf n_f$ & 从 $O_f$ 指向 $N_f$ 的全局单位面法向量。\\
+$\mathbf S_f$ & 全局有向面积向量，定义为 $\mathbf S_f=|S_f|\mathbf n_f$。\\
+$\mathbf d_f$ & 中心连线向量 $\mathbf d_f=\mathbf x_{N_f}-\mathbf x_{O_f}$；$d_f=\|\mathbf d_f\|$。\\
+$\sigma_{cf}$ & 面与单元的关联符号：当 $c=O_f$ 时为 $+1$，当 $c=N_f$ 时为 $-1$。\\
+$\mathbf S_{cf}$ & 相对于单元 $c$ 的外向面积向量：$\mathbf S_{cf}=\sigma_{cf}\mathbf S_f=|S_f|\mathbf n_{cf}$。\\
+$\phi_c$ & 单元中心 $\mathbf x_c$ 处的数值未知量，近似 $\phi(\mathbf x_c)$。\\
+$\omega_c$ & 单元源项，取 $\omega_c=\omega(\mathbf x_c)$；若使用更高阶体积分，须明确说明。\\
+$H_f$ & 沿全局方向 $O_f\to N_f$ 的内部面离散通量，近似 $\nabla\phi\cdot\mathbf S_f$。\\
+$Q_c$ & 尚未除以 $V_c$ 的单元代数残差。\\
+$R_c$ & 除以体积后的归一化残差，$R_c=Q_c/V_c$。\\
+\bottomrule
+\end{longtable}
+
+边界面没有 neighbour 单元。对边界面 $f\subset\partial\Omega_c$，
+$\mathbf n_{cf}$ 始终表示区域外法向量，
+$\mathbf S_{cf}=|S_f|\mathbf n_{cf}$，并在面心施加
+\begin{equation}
+  \phi_f=g_D(\mathbf x_f).
+  \label{eq:boundary-face-value}
+\end{equation}
+
+\section{有限体积空间离散要求}
+
+\subsection{控制体积分形式}
+
+对任意控制体 $\Omega_c$ 积分，并应用 Gauss 散度定理：
+\begin{equation}
+  \int_{\Omega_c}\Delta\phi\,\dif V
+  =\int_{\partial\Omega_c}\nabla\phi\cdot\mathbf n_c\,\dif S
+  =\int_{\Omega_c}\omega\,\dif V.
+\end{equation}
+采用单元中心源项积分后，有限体积平衡式为
+\begin{equation}
+  \sum_{f\in\F_c}
+  (\nabla\phi)_f\cdot\mathbf S_{cf}
+  =\omega_cV_c.
+  \label{eq:fv-balance}
+\end{equation}
+要求从式~\eqref{eq:fv-balance} 出发推导内部面和 Dirichlet 边界面的
+离散贡献，并说明同一个内部面通量只计算一次，随后按
+\begin{equation}
+  Q_{O_f}\mathrel{+}=H_f,
+  \qquad
+  Q_{N_f}\mathrel{-}=H_f
+  \label{eq:owner-neighbour-assembly}
+\end{equation}
+装配，从而保证内部面通量在全局求和中严格抵消。
+
+\subsection{OpenFOAM 基准空间格式}
+
+为使计算设置唯一且可复现，本题的基准计算使用 OpenFOAM 的
+\begin{center}
+\texttt{laplacian(phi) Gauss linear corrected;}
+\end{center}
+即用 Gauss 定理离散 Laplacian 项，用线性插值处理面量，并对内部面
+法向梯度加入显式非正交修正~\cite{OpenFOAMSchemes}。用于修正项的
+单元梯度采用
+\begin{center}
+\texttt{grad(phi) Gauss linear;}
+\end{center}
+
+为明确该格式的数学对象，对内部面 $f$ 定义
+\begin{equation}
+  \mathbf e_f=\frac{\mathbf d_f}{d_f},
+  \qquad
+  \alpha_f=\frac{1}{\mathbf n_f\cdot\mathbf e_f},
+  \qquad
+  \mathbf k_f=\mathbf n_f-\alpha_f\mathbf e_f.
+  \label{eq:nonorth-decomp}
+\end{equation}
+其中要求 $\mathbf n_f\cdot\mathbf e_f>0$。则 corrected
+面法向梯度可写为
+\begin{equation}
+  (\nabla\phi)_f\cdot\mathbf n_f
+  \approx
+  \alpha_f\frac{\phi_{N_f}-\phi_{O_f}}{d_f}
+  +(\nabla\phi)_f^{\mathrm{lin}}\cdot\mathbf k_f,
+  \label{eq:corrected-sngrad}
+\end{equation}
+从而全局内部面通量为
+\begin{equation}
+  H_f
+  =|S_f|\left[
+  \alpha_f\frac{\phi_{N_f}-\phi_{O_f}}{d_f}
+  +(\nabla\phi)_f^{\mathrm{lin}}\cdot\mathbf k_f
+  \right].
+  \label{eq:global-face-flux}
+\end{equation}
+当网格正交时，$\mathbf n_f=\mathbf e_f$，故
+$\alpha_f=1$、$\mathbf k_f=\mathbf0$，式~\eqref{eq:global-face-flux}
+退化为标准中心差分通量
+\begin{equation}
+  H_f=\frac{|S_f|}{d_f}
+  (\phi_{N_f}-\phi_{O_f}).
+\end{equation}
+
+Gauss linear 单元梯度应从
+\begin{equation}
+  (\nabla\phi)_c
+  \approx\frac{1}{V_c}
+  \sum_{f\in\F_c}\phi_f^{\mathrm{lin}}\mathbf S_{cf}
+  \label{eq:gauss-gradient}
+\end{equation}
+构造；内部面梯度 $(\nabla\phi)_f^{\mathrm{lin}}$ 再由相邻单元梯度
+线性插值得到。边界面使用式~\eqref{eq:boundary-face-value} 给出的
+精确 Dirichlet 面值，并采用 OpenFOAM 的 \texttt{fixedValue}
+边界离散。实现时可把各边面心处的 $g_D(\mathbf x_f)$ 写为
+\texttt{nonuniform List<scalar>}，或使用等价的解析边界实现；不得把
+四条边错误地设为同一个常数。
+
+\subsection{单元残差与线性系统}
+
+对控制体 $c$，定义未归一化残差
+\begin{equation}
+  Q_c(\phi)
+  =\sum_{f\in\F_c^{\mathrm{int}}}\sigma_{cf}H_f
+  +\sum_{f\in\F_c^{\mathrm{bnd}}}H_{cf}^{\mathrm{bnd}}
+  -\omega_cV_c,
+  \label{eq:Qc}
+\end{equation}
+以及归一化残差
+\begin{equation}
+  R_c(\phi)=\frac{Q_c(\phi)}{V_c}.
+  \label{eq:Rc}
+\end{equation}
+离散问题是求所有单元未知量 $\{\phi_c\}$，使得
+\begin{equation}
+  Q_c(\phi)=0
+  \quad\Longleftrightarrow\quad
+  R_c(\phi)=0,
+  \qquad \forall c\in\T_h.
+  \label{eq:algebraic-problem}
+\end{equation}
+要求将其装配为线性系统
+\begin{equation}
+  A\boldsymbol\phi=\mathbf b
+\end{equation}
+并求解。为避免正负号混淆，OpenFOAM 中可以直接实现
+\begin{equation}
+  -\Delta\phi=-\omega
+  \label{eq:spd-equivalent}
+\end{equation}
+这一与原题完全等价的形式，即使用
+\begin{center}
+\texttt{-fvm::laplacian(phi) == -omega}
+\end{center}
+构造具有通常正定符号约定的线性系统。必须在报告中说明采用的是
+式~\eqref{eq:poisson-original-sign} 还是等价式~\eqref{eq:spd-equivalent}，
+并验证源项符号与之相容。
+
+\section{数值实验与评价指标}
+
+\subsection{必须完成的计算}
+
+分别在四边形网格族 $\T_h^{\mathrm{quad}}$ 和三角形网格族
+$\T_h^{\mathrm{tri}}$ 上完成以下任务：
+
+\begin{enumerate}[label=\arabic*.]
+  \item 计算离散解 $\phi_h$，绘制 $\phi_h$ 的等值线图或云图，并与
+  $\phi_{\mathrm{exact}}$ 使用相同的色标进行比较。
+
+  \item 绘制点误差场
+  \begin{equation}
+    e_c=\phi_c-\phi_{\mathrm{exact}}(\mathbf x_c).
+  \end{equation}
+
+  \item 对每个网格层级报告单元数 $N_e$、代表性尺度
+  \begin{equation}
+    h=N_e^{-1/2},
+    \label{eq:effective-h}
+  \end{equation}
+  线性求解器及收敛容差，并计算下述 $L_1$、$L_2$ 和 $L_\infty$
+  相对误差。
+
+  \item 分别对三角形网格和四边形网格计算相邻层级之间的观测收敛阶，
+  作 $\log E$--$\log h$ 图，并比较两类网格的误差常数与收敛行为。
+
+  \item 检查最终代数残差，并说明若收敛阶偏离预期，是由网格非正交性、
+  边界离散、源项积分、线性求解误差还是实现错误导致。
+\end{enumerate}
+
+\subsection{误差范数}
+
+令 $N_e$ 为单元总数，
+\begin{equation}
+  \phi_c^{n}=\phi_c,
+  \qquad
+  \phi_c^{e}=\phi_{\mathrm{exact}}(\mathbf x_c),
+\end{equation}
+其中上标 $n$ 表示 numerical，而不是时间层。严格按原题附录 A 的
+体积加权相对误差定义
+\begin{align}
+  E(L_1)
+  &=\frac{\displaystyle\sum_{c=1}^{N_e}
+  |\phi_c^{n}-\phi_c^{e}|V_c}
+  {\displaystyle\sum_{c=1}^{N_e}|\phi_c^{e}|V_c},
+  \label{eq:L1}\\[0.5em]
+  E(L_2)
+  &=\left(
+  \frac{\displaystyle\sum_{c=1}^{N_e}
+  (\phi_c^{n}-\phi_c^{e})^2V_c}
+  {\displaystyle\sum_{c=1}^{N_e}(\phi_c^{e})^2V_c}
+  \right)^{1/2},
+  \label{eq:L2}\\[0.5em]
+  E(L_\infty)
+  &=\frac{\displaystyle\max_{1\le c\le N_e}
+  |\phi_c^{n}-\phi_c^{e}|}
+  {\displaystyle\max_{1\le c\le N_e}|\phi_c^{e}|}.
+  \label{eq:Linf}
+\end{align}
+
+对二维网格上单元数为 $N_1<N_2$ 的两个相邻层级，误差 $E_q$
+（$q\in\{1,2,\infty\}$）的观测收敛阶定义为
+\begin{equation}
+  p_q
+  =\frac{\log\!\left(E_q(N_1)/E_q(N_2)\right)}
+  {\log\!\left((N_2/N_1)^{1/2}\right)}
+  =\frac{\log\!\left(E_q(h_1)/E_q(h_2)\right)}
+  {\log(h_1/h_2)}.
+  \label{eq:order}
+\end{equation}
+
+\section{最终交付要求}
+
+最终提交应至少包含：
+\begin{enumerate}[label=(\arabic*)]
+  \item 从强形式到式~\eqref{eq:fv-balance} 的有限体积积分推导；
+  \item 式~\eqref{eq:global-face-flux} 的正交项与非正交修正项，以及
+  owner--neighbour 的守恒装配；
+  \item Dirichlet 边界数据、源项和方程符号的一致性说明；
+  \item OpenFOAM 求解器或可复现算例，包含 \texttt{fvSchemes}、
+  \texttt{fvSolution}、网格和场文件；
+  \item 三角形与四边形逐级加密网格上的解场、误差场、
+  $E(L_1)$、$E(L_2)$、$E(L_\infty)$ 及观测收敛阶；
+  \item 对守恒性、代数残差、网格影响和异常收敛行为的解释。
+\end{enumerate}
+
+\paragraph{参考资料使用边界。}
+参考文献~\cite{FerrerWillden2011} 采用高阶 DG--SIPG 方法；本题只从中
+继承制造解、区域、Dirichlet 数据及 Poisson/Helmholtz 验证问题的设定，
+不把该文的 DG 罚参数或 $p$ 阶理论收敛率移植到 OpenFOAM 的单元中心
+有限体积格式中。有限体积离散必须以本题规定的 OpenFOAM 基准空间格式
+为准。
+
+\begin{thebibliography}{9}
+
+\bibitem{OriginalTests}
+\emph{Numerical TESTs for Partial Differential Equations (PDEs)},
+第四题 ``Poisson equation'' 与附录 A，2023-09-26（用户提供文件）。
+
+\bibitem{FerrerWillden2011}
+E. Ferrer and R. H. J. Willden,
+``A high order discontinuous Galerkin finite element solver for the
+incompressible Navier--Stokes equations,''
+\emph{Computers \& Fluids}, 46(1):224--230, 2011.
+\href{https://doi.org/10.1016/j.compfluid.2010.10.018}
+{doi:10.1016/j.compfluid.2010.10.018}.
+
+\bibitem{OpenFOAMSchemes}
+OpenFOAM Foundation,
+``OpenFOAM User Guide: Numerical schemes,''
+\url{https://doc.cfd.direct/openfoam/user-guide/fvschemes}.
+
+\end{thebibliography}
+
+\end{document}

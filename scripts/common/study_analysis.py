@@ -183,6 +183,28 @@ def analyse(solver_family: str, case_name: str) -> Path:
         )
         monitor_heading = "diffusionCo"
         amplitude_heading = "final range"
+    elif problem == "sine_wave_advection_diffusion":
+        study_description = (
+            f"本研究使用第三题第一个周期正弦波对流-扩散算例，"
+            f"比较不同 {mesh_label} 网格分辨率。"
+        )
+        setup_description = (
+            "所有网格使用相同的区域 [0,1]^2、速度 U=(1,1)、扩散系数 μ=1、"
+            "x/y 周期边界、全显式对流-扩散稳定时间步和终止时间 t=1。"
+        )
+        monitor_heading = "max AD stability"
+        amplitude_heading = "final amplitude"
+    elif problem == "rotating_peak_advection_diffusion":
+        study_description = (
+            f"本研究使用第三题第二个旋转尖峰对流-扩散算例，"
+            f"比较不同 {mesh_label} 网格分辨率。"
+        )
+        setup_description = (
+            "所有网格使用相同的区域 [-1,1]^2、速度 U=(-y,x)、扩散系数 ε=1e-3、"
+            "外边界 fixedValue 0、全显式对流-扩散稳定时间步，并从 tau=0 旋转到 tau=2π。"
+        )
+        monitor_heading = "max AD stability"
+        amplitude_heading = "final range"
     else:
         study_description = (
             f"本研究使用周期正弦波线性对流算例，比较不同 {mesh_label} 网格分辨率。"
@@ -251,6 +273,45 @@ def analyse(solver_family: str, case_name: str) -> Path:
             "",
         ]
     )
+    if problem == "sine_wave_advection_diffusion":
+        exact_amplitude = math.exp(-8.0 * math.pi * math.pi)
+        insert_index = report_lines.index("## 结论")
+        report_lines[insert_index:insert_index] = [
+            "",
+            "## 数值尺度说明",
+            "",
+            (
+                "该原题指定 μ=1、t=1，因此解析正弦波振幅为 "
+                f"`exp(-8*pi^2) = {exact_amplitude:.8e}`。"
+            ),
+            (
+                "该数值远低于双精度舍入量级；数值场和解析场都已接近零时，"
+                "原题规定的“以解析解范数归一化”会使 L1/L2/Linf 放大，"
+                "由这些归一化误差得到的观察收敛阶不具备稳定的物理解释。"
+            ),
+            (
+                "本研究仍保留原题定义的归一化误差以保证可追溯性；"
+                "各 N 的 summary.json 同时记录 absoluteL1、absoluteL2、"
+                "absoluteLinf 和 exactAmplitudeAtFinal，适合判断绝对残余量。"
+            ),
+            "",
+        ]
+    if problem == "rotating_peak_advection_diffusion":
+        insert_index = report_lines.index("## 结论")
+        report_lines[insert_index:insert_index] = [
+            "",
+            "## 边界和时间说明",
+            "",
+            (
+                "本案例用 OpenFOAM 计算时间 tau 表示从初始尖峰出发后的旋转时间，"
+                "终止时间为 tau=2π。解析解中的扩散年龄为 t0+tau，其中 t0=π/2。"
+            ),
+            (
+                "当前实现先采用 fixedValue 0 外边界。由于尖峰在区域内部旋转，"
+                "边界解析值为指数小量，该处理用于先验证内部对流-扩散求解链路。"
+            ),
+            "",
+        ]
     report_path = data_dir / "analysis.md"
     report_path.write_text("\n".join(report_lines), encoding="utf-8")
     print(f"convergenceSummary={summary_path}")
@@ -277,6 +338,16 @@ def plot(solver_family: str, case_name: str) -> None:
     if problem == "diffusion_discontinuity":
         x_label = "N cells per direction"
         y_label = "normalized error at t=0.2"
+        amplitude_label = "final range"
+        amplitude_reference = None
+    elif problem == "sine_wave_advection_diffusion":
+        x_label = "N cells per direction"
+        y_label = "normalized error at t=1"
+        amplitude_label = "final amplitude"
+        amplitude_reference = math.exp(-8.0 * math.pi * math.pi)
+    elif problem == "rotating_peak_advection_diffusion":
+        x_label = "N cells per direction"
+        y_label = "normalized error at tau=2*pi"
         amplitude_label = "final range"
         amplitude_reference = None
     else:

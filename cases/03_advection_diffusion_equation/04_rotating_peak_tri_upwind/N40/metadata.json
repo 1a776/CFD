@@ -1,0 +1,55 @@
+{
+  "solverFamily": "03_advection_diffusion_equation",
+  "templateSolverFamily": "03_advection_diffusion_equation",
+  "templateCaseName": "02_sine_wave_tri_upwind",
+  "caseName": "04_rotating_peak_tri_upwind",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/03_advection_diffusion_equation/04_rotating_peak_tri_upwind.json",
+  "equation": "advection_diffusion",
+  "problem": "rotating_peak_advection_diffusion",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "schemeName": "Gauss_upwind__Gauss_linear_corrected",
+  "divScheme": "Gauss upwind",
+  "resolution": 40,
+  "solver": "explicitAdvectionDiffusionFoamStudent",
+  "velocity": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "domain": [
+    -1.0,
+    1.0,
+    -1.0,
+    1.0
+  ],
+  "velocityModel": {
+    "type": "solidRotationOrigin",
+    "formula": "U=(-y,x,0)"
+  },
+  "initialProfile": {
+    "type": "rotatingSharpPeak",
+    "center": [
+      0.0,
+      0.5
+    ],
+    "diffusionStartTime": 1.5707963267948966,
+    "centerMotion": "x=x0*cos(tau)-y0*sin(tau), y=x0*sin(tau)+y0*cos(tau)"
+  },
+  "boundaryCondition": "zeroDirichletApproximation",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "rotatingSharpPeakAdvectionDiffusion",
+    "reportTime": 6.283185307179586
+  },
+  "scalarField": "phi",
+  "mu": 0.001,
+  "diffusionCo": 0.5,
+  "advectionDiffusionCo": 0.45,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 6.283185307179586,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.001,
+  "initialField": "generated-after-mesh"
+}

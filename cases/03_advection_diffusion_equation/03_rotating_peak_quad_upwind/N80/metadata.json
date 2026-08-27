@@ -1,0 +1,55 @@
+{
+  "solverFamily": "03_advection_diffusion_equation",
+  "templateSolverFamily": "03_advection_diffusion_equation",
+  "templateCaseName": "01_sine_wave_quad_upwind",
+  "caseName": "03_rotating_peak_quad_upwind",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/03_advection_diffusion_equation/03_rotating_peak_quad_upwind.json",
+  "equation": "advection_diffusion",
+  "problem": "rotating_peak_advection_diffusion",
+  "meshType": "quad",
+  "meshBackend": "blockMesh",
+  "schemeName": "Gauss_upwind__Gauss_linear_corrected",
+  "divScheme": "Gauss upwind",
+  "resolution": 80,
+  "solver": "explicitAdvectionDiffusionFoamStudent",
+  "velocity": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "domain": [
+    -1.0,
+    1.0,
+    -1.0,
+    1.0
+  ],
+  "velocityModel": {
+    "type": "solidRotationOrigin",
+    "formula": "U=(-y,x,0)"
+  },
+  "initialProfile": {
+    "type": "rotatingSharpPeak",
+    "center": [
+      0.0,
+      0.5
+    ],
+    "diffusionStartTime": 1.5707963267948966,
+    "centerMotion": "x=x0*cos(tau)-y0*sin(tau), y=x0*sin(tau)+y0*cos(tau)"
+  },
+  "boundaryCondition": "zeroDirichletApproximation",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "rotatingSharpPeakAdvectionDiffusion",
+    "reportTime": 6.283185307179586
+  },
+  "scalarField": "phi",
+  "mu": 0.001,
+  "diffusionCo": 0.5,
+  "advectionDiffusionCo": 0.45,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 6.283185307179586,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.001,
+  "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/03_advection_diffusion_equation/03_rotating_peak_quad_upwind/N80/0.orig/phi"
+}

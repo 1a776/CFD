@@ -1,0 +1,7 @@
+# 需要编译的 C++ 源文件。
+poissonFoamStudent.C
+
+# 可执行文件的输出路径。
+# FOAM_USER_APPBIN 在 scripts/build_student_solver.sh 中被设置为：
+# student_project/build/04_poisson_equation/bin
+EXE = $(FOAM_USER_APPBIN)/poissonFoamStudent

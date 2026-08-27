@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+
+// 当前文件对应：第三题第二个旋转尖峰案例。
+// 这里写“空间离散格式怎么选”，不写具体物理参数。
+// 具体入口关系：
+//     div(faceFlux,phi)  -> 对流项 div(U phi)，格式来自 JSON divScheme；
+//     laplacian(mu,phi) -> 扩散项 div(mu grad(phi))，格式来自 JSON laplacianScheme；
+//     snGradSchemes     -> 边界面和非正交面法向梯度修正，来自 JSON snGradScheme。
+
+ddtSchemes
+{
+    // 显式 Euler 更新写在求解器源码中：
+    //     phi(c,n+1) = phi(c,n) + deltaT R(c,n)
+    // 此处保留 Euler，作为该案例的时间离散记录。
+    default         Euler;
+}
+
+gradSchemes
+{
+    // Gauss linear 的单元中心梯度会供 corrected 扩散修正使用。
+    default         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+
+    // 对应源码：
+    //     -fvc::div(faceFlux, phi, "div(faceFlux,phi)")
+    //
+    // 对应有限体积对流项：
+    //     -1/V(c) sum_f [ F(cf) phi_f ]
+    //     F(cf) = U_f dot S(cf)
+    //
+    // Gauss：用控制体表面通量和计算散度；
+    // upwind：phi_f 取迎风侧单元值，是一阶有界格式。
+    div(faceFlux,phi) Gauss upwind;
+}
+
+laplacianSchemes
+{
+    // 对应源码：
+    //     fvc::laplacian(mu, phi)
+    //
+    // 对应有限体积扩散项：
+    //     1/V(c) sum_f [ mu_f grad(phi)_f dot S(cf) ]
+    //
+    // linear：面上 mu/phi 的线性重构；
+    // corrected：加入非正交网格的法向梯度修正。
+    laplacian(mu,phi) Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    // 对流面值由 divSchemes 的 upwind 决定；
+    // 该默认项服务于其它线性面插值。
+    default         linear;
+}
+
+snGradSchemes
+{
+    // 与 laplacian(mu,phi) 的 corrected 选项配套，
+    // 控制扩散通量中的法向梯度修正。
+    default         corrected;
+}

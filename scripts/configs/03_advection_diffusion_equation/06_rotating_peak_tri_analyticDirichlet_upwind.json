@@ -1,0 +1,45 @@
+{
+  "caseName": "06_rotating_peak_tri_analyticDirichlet_upwind",
+  "solverFamily": "03_advection_diffusion_equation",
+  "templateSolverFamily": "03_advection_diffusion_equation",
+  "templateCaseName": "02_sine_wave_tri_upwind",
+  "description": "Third problem, second example: rotating sharp peak advection-diffusion on a triangular prism mesh with analytic Dirichlet boundary values.",
+  "equation": "advection_diffusion",
+  "problem": "rotating_peak_advection_diffusion",
+  "meshType": "tri",
+  "meshBackend": "gmsh",
+  "gmshPython": "/home/a776/vibeflow/python-env/bin/python",
+  "schemeName": "Gauss_upwind__Gauss_linear_corrected__analyticDirichlet",
+  "divScheme": "Gauss upwind",
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "solver": "explicitAdvectionDiffusionFoamStudent",
+  "templateResolution": 20,
+  "resolutions": [20, 40, 80],
+  "domain": [-1.0, 1.0, -1.0, 1.0],
+  "resolutionMeaning": "baseIntervalsPerEdge",
+  "scalarField": "phi",
+  "velocity": [0.0, 0.0, 0.0],
+  "velocityModel": {
+    "type": "solidRotationOrigin",
+    "formula": "U=(-y,x,0)"
+  },
+  "initialProfile": {
+    "type": "rotatingSharpPeak",
+    "center": [0.0, 0.5],
+    "diffusionStartTime": 1.5707963267948966,
+    "centerMotion": "x=x0*cos(tau)-y0*sin(tau), y=x0*sin(tau)+y0*cos(tau)"
+  },
+  "mu": 0.001,
+  "boundaryCondition": "analyticDirichlet",
+  "postprocess": {
+    "type": "exactError",
+    "exactSolution": "rotatingSharpPeakAdvectionDiffusion",
+    "reportTime": 6.283185307179586
+  },
+  "endTime": 6.283185307179586,
+  "advectionDiffusionCo": 0.45,
+  "maxDeltaT": 0.001,
+  "thickness": 0.1,
+  "implemented": true
+}

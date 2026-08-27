@@ -26,6 +26,14 @@ import matplotlib.tri as mtri
 import numpy as np
 
 from advection_sine import exact_values_at_centres
+from advection_diffusion_tools import (
+    exact_value as advection_diffusion_exact_value,
+    parse_advection_diffusion_solver_log,
+    rotating_peak_exact_value,
+    rotating_peak_structured_values,
+    rotating_peak_values_at_centres,
+    structured_values as advection_diffusion_structured_values,
+)
 from advection_tools import (
     control_value,
     exact_values,
@@ -411,6 +419,269 @@ def plot_field_comparison(
     plt.close(fig)
 
 
+def plot_advection_diffusion_field_comparison(
+    initial: np.ndarray,
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    output: Path,
+    final_time: float,
+    domain: tuple[float, float, float, float],
+) -> None:
+    """Plot the third-problem scalar field with phi-specific labels."""
+    xmin, xmax, ymin, ymax = domain
+    error = numerical - exact
+    initial_maximum = max(float(np.max(np.abs(initial))), 1.0e-16)
+    numerical_maximum = max(float(np.max(np.abs(numerical))), 1.0e-40)
+    exact_maximum = max(float(np.max(np.abs(exact))), 1.0e-40)
+    error_maximum = max(float(np.max(np.abs(error))), 1.0e-16)
+    ny, nx = numerical.shape
+    x_edges = np.linspace(xmin, xmax, nx + 1)
+    y_edges = np.linspace(ymin, ymax, ny + 1)
+    panels = [
+        (initial, "Initial field phi(x,y,0)", -initial_maximum, initial_maximum),
+        (numerical, f"Numerical field, t={final_time:g}", -numerical_maximum, numerical_maximum),
+        (exact, f"Exact field, t={final_time:g}", -exact_maximum, exact_maximum),
+        (error, "Numerical minus exact", -error_maximum, error_maximum),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
+    for axis, (values, title, lower, upper) in zip(axes.flat, panels):
+        image = axis.pcolormesh(
+            x_edges,
+            y_edges,
+            values,
+            shading="auto",
+            cmap="coolwarm",
+            vmin=lower,
+            vmax=upper,
+        )
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(title)
+        fig.colorbar(image, ax=axis, shrink=0.86)
+    fig.suptitle("Periodic sine-wave advection-diffusion field comparison")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_advection_diffusion_diagonal_profile(
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot phi along x=y for the structured advection-diffusion case."""
+    count = min(numerical.shape)
+    coordinate = (np.arange(count) + 0.5) / max(numerical.shape)
+    index = np.arange(count)
+    fig, axis = plt.subplots(figsize=(8, 4.8), constrained_layout=True)
+    axis.plot(coordinate, numerical[index, index], "o-", markersize=3.5, label="numerical")
+    axis.plot(coordinate, exact[index, index], "--", linewidth=1.5, label="exact")
+    axis.set_xlabel("diagonal coordinate, x = y")
+    axis.set_ylabel("phi")
+    axis.set_title(f"Diagonal phi profile at t={final_time:g}")
+    axis.grid(True, alpha=0.25)
+    axis.legend()
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_advection_diffusion_amplitude_history(
+    records: list[dict[str, float]],
+    output: Path,
+    mu: float,
+) -> None:
+    """Compare numerical decay with exp(-8*pi^2*mu*t)."""
+    times = [record["time"] for record in records]
+    numerical_amplitude = [record["amplitude"] for record in records]
+    exact_amplitude = [math.exp(-8.0 * math.pi * math.pi * mu * time) for time in times]
+    fig, axis = plt.subplots(figsize=(8, 4.8), constrained_layout=True)
+    axis.plot(times, numerical_amplitude, "o-", markersize=2.5, label="numerical amplitude")
+    axis.plot(times, exact_amplitude, "--", linewidth=1.5, label="exact exp(-8*pi^2*mu*t)")
+    axis.set_xlabel("time")
+    axis.set_ylabel("amplitude, (max(phi)-min(phi))/2")
+    axis.set_title("Diffusive amplitude decay")
+    axis.grid(True, alpha=0.25)
+    axis.legend()
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_advection_diffusion_stability_history(
+    records: list[dict[str, float]],
+    output: Path,
+    target: float,
+) -> None:
+    """Plot the combined explicit stability number logged by the solver."""
+    fig, axis = plt.subplots(figsize=(8, 4.8), constrained_layout=True)
+    axis.plot(
+        [record["time"] for record in records],
+        [record["maxCo"] for record in records],
+        "o-",
+        markersize=2.5,
+        label="actual advectionDiffusionCo",
+    )
+    axis.axhline(target, linestyle="--", color="black", label="target safety coefficient")
+    axis.set_xlabel("time")
+    axis.set_ylabel("combined explicit stability number")
+    axis.set_title("Advection-diffusion explicit stability monitor")
+    axis.grid(True, alpha=0.25)
+    axis.legend()
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def _rotating_peak_parameters(
+    metadata: dict[str, object],
+) -> tuple[float, tuple[float, float]]:
+    profile = metadata.get("initialProfile", {})
+    if not isinstance(profile, dict):
+        profile = {}
+    centre_raw = profile.get("center", [0.0, 0.5])
+    if not isinstance(centre_raw, list | tuple) or len(centre_raw) != 2:
+        centre_raw = [0.0, 0.5]
+    return (
+        float(profile.get("diffusionStartTime", math.pi / 2.0)),
+        (float(centre_raw[0]), float(centre_raw[1])),
+    )
+
+
+def plot_rotating_peak_midline_profile(
+    centres: list[tuple[float, float]],
+    numerical_values: list[float],
+    exact_values_at_final: list[float],
+    output: Path,
+    final_time: float,
+    centre_y: float,
+) -> None:
+    """Plot the horizontal line closest to the final peak centre."""
+    rows: dict[float, list[tuple[float, float, float]]] = {}
+    for (x, y), numerical, exact in zip(
+        centres, numerical_values, exact_values_at_final
+    ):
+        rows.setdefault(round(float(y), 12), []).append((float(x), numerical, exact))
+    y_key = min(rows, key=lambda value: abs(value - centre_y))
+    points = sorted(rows[y_key], key=lambda item: item[0])
+
+    fig, axis = plt.subplots(figsize=(8, 4.8), constrained_layout=True)
+    axis.plot(
+        [item[0] for item in points],
+        [item[1] for item in points],
+        "o-",
+        markersize=3.0,
+        label="numerical",
+    )
+    axis.plot(
+        [item[0] for item in points],
+        [item[2] for item in points],
+        "--",
+        linewidth=1.5,
+        label="exact",
+    )
+    axis.set_xlabel(f"x at cell centres nearest y={centre_y:g}")
+    axis.set_ylabel("phi")
+    axis.set_title(f"Rotating peak horizontal profile at tau={final_time:g}")
+    axis.grid(True, alpha=0.25)
+    axis.legend()
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_rotating_peak_structured_final_contour(
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    output: Path,
+    final_time: float,
+    domain: tuple[float, float, float, float],
+) -> None:
+    """Plot final numerical, exact and error contours for a structured mesh."""
+    xmin, xmax, ymin, ymax = domain
+    error = numerical - exact
+    maximum = max(float(np.max(numerical)), float(np.max(exact)), 1.0e-40)
+    error_maximum = max(float(np.max(np.abs(error))), 1.0e-40)
+    ny, nx = numerical.shape
+    x = np.linspace(xmin + 0.5 * (xmax - xmin) / nx, xmax - 0.5 * (xmax - xmin) / nx, nx)
+    y = np.linspace(ymin + 0.5 * (ymax - ymin) / ny, ymax - 0.5 * (ymax - ymin) / ny, ny)
+    x_grid, y_grid = np.meshgrid(x, y)
+    positive_levels = np.linspace(0.0, maximum, 18)
+    error_levels = np.linspace(-error_maximum, error_maximum, 18)
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.2, 4.2), constrained_layout=True)
+    panels = [
+        (axes[0], numerical, "Numerical final contours", positive_levels, "viridis"),
+        (axes[1], exact, "Exact final contours", positive_levels, "viridis"),
+        (axes[2], error, "Numerical minus exact", error_levels, "coolwarm"),
+    ]
+    for axis, values, title, levels, cmap in panels:
+        filled = axis.contourf(x_grid, y_grid, values, levels=levels, cmap=cmap)
+        axis.contour(x_grid, y_grid, values, levels=levels, colors="black", linewidths=0.35, alpha=0.55)
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(title)
+        fig.colorbar(filled, ax=axis, shrink=0.86)
+    fig.suptitle(f"Rotating sharp-peak contours, t={final_time:g}")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
+def plot_rotating_peak_tri_final_contour(
+    triangulation: mtri.Triangulation,
+    numerical: np.ndarray,
+    exact: np.ndarray,
+    triangle_to_cell: list[int],
+    output: Path,
+    final_time: float,
+) -> None:
+    """Plot final numerical, exact and error contours on triangular cells."""
+    numerical_faces = numerical[triangle_to_cell]
+    exact_faces = exact[triangle_to_cell]
+    error_faces = numerical_faces - exact_faces
+    maximum = max(float(np.max(numerical_faces)), float(np.max(exact_faces)), 1.0e-40)
+    error_maximum = max(float(np.max(np.abs(error_faces))), 1.0e-40)
+    positive_levels = np.linspace(0.0, maximum, 18)
+    error_levels = np.linspace(-error_maximum, error_maximum, 18)
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.2, 4.2), constrained_layout=True)
+    panels = [
+        (axes[0], numerical_faces, "Numerical final contours", positive_levels, "viridis"),
+        (axes[1], exact_faces, "Exact final contours", positive_levels, "viridis"),
+        (axes[2], error_faces, "Numerical minus exact", error_levels, "coolwarm"),
+    ]
+    for axis, values, title, levels, cmap in panels:
+        filled = axis.tripcolor(
+            triangulation,
+            facecolors=values,
+            shading="flat",
+            cmap=cmap,
+            vmin=float(levels[0]),
+            vmax=float(levels[-1]),
+        )
+        node_values = np.zeros(len(triangulation.x), dtype=float)
+        node_counts = np.zeros(len(triangulation.x), dtype=float)
+        for triangle_index, nodes in enumerate(triangulation.triangles):
+            node_values[nodes] += values[triangle_index]
+            node_counts[nodes] += 1.0
+        node_values /= np.maximum(node_counts, 1.0)
+        axis.tricontour(
+            triangulation,
+            node_values,
+            levels=levels,
+            colors="black",
+            linewidths=0.35,
+            alpha=0.55,
+        )
+        axis.triplot(triangulation, color="black", linewidth=0.16, alpha=0.18)
+        axis.set_aspect("equal")
+        axis.set_xlabel("x")
+        axis.set_ylabel("y")
+        axis.set_title(title)
+        fig.colorbar(filled, ax=axis, shrink=0.86)
+    fig.suptitle(f"Rotating sharp-peak contours on triangular cells, t={final_time:g}")
+    fig.savefig(output, dpi=220)
+    plt.close(fig)
+
+
 def plot_structured_field_comparison(
     initial: np.ndarray,
     numerical: np.ndarray,
@@ -716,6 +987,9 @@ def plot_tri_field_comparison(
     triangle_to_cell: list[int],
     output: Path,
     final_time: float,
+    field_name: str = "T",
+    figure_title: str = "Periodic linear-advection field comparison on triangular cells",
+    independent_scales: bool = False,
 ) -> None:
     """Plot cell-centred fields on the actual triangular mesh."""
     error = numerical - exact
@@ -727,12 +1001,31 @@ def plot_tri_field_comparison(
         float(np.max(np.abs(initial_faces))),
         float(np.max(np.abs(numerical_faces))),
         float(np.max(np.abs(exact_faces))),
+        1.0e-16,
     )
     error_maximum = max(float(np.max(np.abs(error_faces))), 1.0e-16)
+    initial_maximum = max(float(np.max(np.abs(initial_faces))), 1.0e-16)
+    numerical_maximum = max(float(np.max(np.abs(numerical_faces))), 1.0e-40)
+    exact_maximum = max(float(np.max(np.abs(exact_faces))), 1.0e-40)
     panels = [
-        (initial_faces, "Initial field T(x,y,0)", -maximum, maximum),
-        (numerical_faces, f"Numerical field, t={final_time:g}", -maximum, maximum),
-        (exact_faces, f"Exact field, t={final_time:g}", -maximum, maximum),
+        (
+            initial_faces,
+            f"Initial field {field_name}(x,y,0)",
+            -initial_maximum if independent_scales else -maximum,
+            initial_maximum if independent_scales else maximum,
+        ),
+        (
+            numerical_faces,
+            f"Numerical field, t={final_time:g}",
+            -numerical_maximum if independent_scales else -maximum,
+            numerical_maximum if independent_scales else maximum,
+        ),
+        (
+            exact_faces,
+            f"Exact field, t={final_time:g}",
+            -exact_maximum if independent_scales else -maximum,
+            exact_maximum if independent_scales else maximum,
+        ),
         (error_faces, "Numerical minus exact", -error_maximum, error_maximum),
     ]
 
@@ -753,7 +1046,7 @@ def plot_tri_field_comparison(
         axis.set_title(title)
         fig.colorbar(image, ax=axis, shrink=0.86)
 
-    fig.suptitle("Periodic linear-advection field comparison on triangular cells")
+    fig.suptitle(figure_title)
     fig.savefig(output, dpi=220)
     plt.close(fig)
 
@@ -784,6 +1077,7 @@ def plot_tri_diagonal_profile(
     output: Path,
     final_time: float,
     resolution: int,
+    field_name: str = "T",
 ) -> None:
     """Plot cells nearest to x=y as a practical diagonal slice."""
     coordinates = np.asarray([(x, y) for x, y, _ in centres], dtype=float)
@@ -811,8 +1105,8 @@ def plot_tri_diagonal_profile(
         label="exact at same centres",
     )
     axis.set_xlabel("diagonal coordinate, cells nearest x = y")
-    axis.set_ylabel("T")
-    axis.set_title(f"Approximate diagonal profile at t={final_time:g}")
+    axis.set_ylabel(field_name)
+    axis.set_title(f"Approximate diagonal {field_name} profile at t={final_time:g}")
     axis.grid(True, alpha=0.25)
     axis.legend()
     fig.savefig(output, dpi=220)
@@ -1346,6 +1640,317 @@ def _postprocess_tri_solid_rotation_case(
     return summary
 
 
+def _postprocess_tri_advection_diffusion_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the third problem's first example on triangular cells."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    velocity = _case_velocity(case)
+    mu = float(metadata.get("mu", 1.0))
+    resolution = int(metadata["resolution"])
+
+    centres, volumes = read_cell_geometry(case)
+    geometry_metadata = read_tri_geometry_metadata(case / "mesh" / "mesh_geometry.json")
+    triangulation = _triangulation_from_metadata(geometry_metadata)
+    triangle_to_cell = _match_triangles_to_cells(centres, triangulation)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    if len(initial_values) != len(centres) or len(numerical_values) != len(centres):
+        raise RuntimeError(
+            f"Field size does not match triangular mesh in {case}: "
+            f"cells={len(centres)}, initial={len(initial_values)}, "
+            f"final={len(numerical_values)}"
+        )
+
+    exact_values_at_final = [
+        advection_diffusion_exact_value(float(x), float(y), final_time, velocity, mu)
+        for x, y, _ in centres
+    ]
+    records = parse_advection_diffusion_solver_log(
+        case / "log.explicitAdvectionDiffusionFoamStudent"
+    )
+    initial = np.asarray(initial_values, dtype=float)
+    numerical = np.asarray(numerical_values, dtype=float)
+    exact = np.asarray(exact_values_at_final, dtype=float)
+    volumes_array = np.asarray(volumes, dtype=float)
+
+    l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, volumes)
+    total_volume = float(np.sum(volumes_array))
+    absolute_l1 = float(np.dot(np.abs(numerical - exact), volumes_array) / total_volume)
+    absolute_l2 = float(
+        math.sqrt(np.dot((numerical - exact) ** 2, volumes_array) / total_volume)
+    )
+    absolute_linf = float(np.max(np.abs(numerical - exact)))
+    exact_amplitude = math.exp(-8.0 * math.pi * math.pi * mu * final_time)
+    initial_mass = float(np.dot(initial, volumes_array))
+    final_mass = float(np.dot(numerical, volumes_array))
+    mass_scale = float(np.dot(np.abs(initial), volumes_array))
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitAdvectionDiffusionFoamStudent").read_text(
+        encoding="utf-8"
+    )
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 1.0)
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, resolution)
+    figure_dir = solver_figure_dir(solver_family, case_name, resolution)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_tri_field_data(
+        centres,
+        volumes,
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "tri",
+        "problem": "sine_wave_advection_diffusion",
+        "resolution": resolution,
+        "nominalH": 1.0 / resolution,
+        "nCells": len(centres),
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "absoluteL1": absolute_l1,
+        "absoluteL2": absolute_l2,
+        "absoluteLinf": absolute_linf,
+        "exactAmplitudeAtFinal": exact_amplitude,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "initialAmplitude": 0.5 * (float(initial.max()) - float(initial.min())),
+        "finalAmplitude": 0.5 * (float(numerical.max()) - float(numerical.min())),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_tri_field_comparison(
+        triangulation,
+        initial,
+        numerical,
+        exact,
+        triangle_to_cell,
+        figure_dir / "field_comparison.png",
+        final_time,
+        field_name="phi",
+        figure_title="Periodic sine-wave advection-diffusion on triangular cells",
+        independent_scales=True,
+    )
+    plot_tri_diagonal_profile(
+        centres,
+        numerical,
+        exact,
+        figure_dir / "diagonal_profile.png",
+        final_time,
+        resolution,
+        field_name="phi",
+    )
+    plot_advection_diffusion_amplitude_history(
+        records, figure_dir / "amplitude_history.png", mu
+    )
+    plot_advection_diffusion_stability_history(
+        records, figure_dir / "advection_diffusion_stability_history.png", target_co
+    )
+
+    print(f"case={case}")
+    print(f"resolution={resolution}")
+    print("mesh=tri")
+    print(f"nCells={len(centres)}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_tri_rotating_peak_advection_diffusion_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the third problem's rotating sharp-peak case on triangles."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    mu = float(metadata.get("mu", 1.0e-3))
+    resolution = int(metadata["resolution"])
+    diffusion_start_time, initial_center = _rotating_peak_parameters(metadata)
+
+    centres, volumes = read_cell_geometry(case)
+    geometry_metadata = read_tri_geometry_metadata(case / "mesh" / "mesh_geometry.json")
+    triangulation = _triangulation_from_metadata(geometry_metadata)
+    triangle_to_cell = _match_triangles_to_cells(centres, triangulation)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    exact_values_at_final = rotating_peak_values_at_centres(
+        centres,
+        final_time,
+        mu,
+        diffusion_start_time,
+        initial_center,
+    )
+    records = parse_advection_diffusion_solver_log(
+        case / "log.explicitAdvectionDiffusionFoamStudent"
+    )
+
+    initial = np.asarray(initial_values, dtype=float)
+    numerical = np.asarray(numerical_values, dtype=float)
+    exact = np.asarray(exact_values_at_final, dtype=float)
+    volumes_array = np.asarray(volumes, dtype=float)
+    l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, volumes)
+    initial_mass = float(np.dot(initial, volumes_array))
+    final_mass = float(np.dot(numerical, volumes_array))
+    mass_scale = float(np.dot(np.abs(initial), volumes_array))
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitAdvectionDiffusionFoamStudent").read_text(
+        encoding="utf-8"
+    )
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, resolution)
+    figure_dir = solver_figure_dir(solver_family, case_name, resolution)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_tri_field_data(
+        centres,
+        volumes,
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    final_center = (
+        initial_center[0] * math.cos(final_time) - initial_center[1] * math.sin(final_time),
+        initial_center[0] * math.sin(final_time) + initial_center[1] * math.cos(final_time),
+    )
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "tri",
+        "problem": "rotating_peak_advection_diffusion",
+        "resolution": resolution,
+        "nominalH": 2.0 / resolution,
+        "nCells": len(centres),
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "initialAmplitude": float(initial.max()) - float(initial.min()),
+        "finalAmplitude": float(numerical.max()) - float(numerical.min()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= -1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+        "diffusionStartTime": diffusion_start_time,
+        "initialCenter": list(initial_center),
+        "finalCenterExact": list(final_center),
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_tri_field_comparison(
+        triangulation,
+        initial,
+        numerical,
+        exact,
+        triangle_to_cell,
+        figure_dir / "field_comparison.png",
+        final_time,
+        field_name="phi",
+        figure_title="Rotating sharp-peak advection-diffusion on triangular cells",
+        independent_scales=True,
+    )
+    plot_rotating_peak_tri_final_contour(
+        triangulation,
+        numerical,
+        exact,
+        triangle_to_cell,
+        figure_dir / "contour_final.png",
+        final_time,
+    )
+    plot_tri_diagonal_profile(
+        centres,
+        numerical,
+        exact,
+        figure_dir / "diagonal_profile.png",
+        final_time,
+        resolution,
+        field_name="phi",
+    )
+    plot_advection_diffusion_stability_history(
+        records, figure_dir / "advection_diffusion_stability_history.png", target_co
+    )
+
+    print(f"case={case}")
+    print(f"resolution={resolution}")
+    print("mesh=tri")
+    print(f"nCells={len(centres)}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
 def _postprocess_tri_case(
     case: Path, output_root: Path, target_co: float
 ) -> dict[str, object]:
@@ -1353,6 +1958,12 @@ def _postprocess_tri_case(
     problem = _read_problem(case)
     if problem == "solid_rotation_advection":
         return _postprocess_tri_solid_rotation_case(case, output_root, target_co)
+    if problem == "sine_wave_advection_diffusion":
+        return _postprocess_tri_advection_diffusion_case(case, output_root, target_co)
+    if problem == "rotating_peak_advection_diffusion":
+        return _postprocess_tri_rotating_peak_advection_diffusion_case(
+            case, output_root, target_co
+        )
     case = case.resolve()
     field_name = str(json.loads((case / "metadata.json").read_text(encoding="utf-8")).get("scalarField", "T"))
     centres, volumes = read_cell_geometry(case)
@@ -1519,7 +2130,310 @@ def _postprocess_quad_case(
         return _postprocess_quad_diffusion_gaussian_case(case, output_root, target_co)
     if problem == "solid_rotation_advection":
         return _postprocess_quad_solid_rotation_case(case, output_root, target_co)
+    if problem == "sine_wave_advection_diffusion":
+        return _postprocess_quad_advection_diffusion_case(case, output_root, target_co)
+    if problem == "rotating_peak_advection_diffusion":
+        return _postprocess_quad_rotating_peak_advection_diffusion_case(
+            case, output_root, target_co
+        )
     return _postprocess_quad_advection_case(case, output_root, target_co)
+
+
+def _postprocess_quad_advection_diffusion_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the third problem's first periodic sine-wave example."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    domain_raw = metadata.get("domain", [0.0, 1.0, 0.0, 1.0])
+    domain = tuple(float(value) for value in domain_raw)
+    if len(domain) != 4:
+        raise RuntimeError(f"Invalid domain in metadata.json: {case}")
+    domain4 = (domain[0], domain[1], domain[2], domain[3])
+    velocity = _case_velocity(case)
+    mu = float(metadata.get("mu", 1.0))
+
+    nx, ny = mesh_resolution(case)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    if len(initial_values) != nx * ny or len(numerical_values) != nx * ny:
+        raise RuntimeError(f"Field size does not match mesh in {case}")
+
+    exact_values_at_final = advection_diffusion_structured_values(
+        nx, ny, domain4, final_time, velocity, mu
+    )
+    initial = np.asarray(initial_values, dtype=float).reshape(ny, nx)
+    numerical = np.asarray(numerical_values, dtype=float).reshape(ny, nx)
+    exact = np.asarray(exact_values_at_final, dtype=float).reshape(ny, nx)
+    records = parse_advection_diffusion_solver_log(
+        case / "log.explicitAdvectionDiffusionFoamStudent"
+    )
+
+    dx = (domain4[1] - domain4[0]) / nx
+    dy = (domain4[3] - domain4[2]) / ny
+    cell_volume = dx * dy * THICKNESS
+    l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, cell_volume)
+    absolute_l1 = float(np.sum(np.abs(numerical - exact)) * cell_volume / (dx * dy * nx * ny * THICKNESS))
+    absolute_l2 = float(np.sqrt(np.sum((numerical - exact) ** 2) * cell_volume / (dx * dy * nx * ny * THICKNESS)))
+    absolute_linf = float(np.max(np.abs(numerical - exact)))
+    exact_amplitude = math.exp(-8.0 * math.pi * math.pi * mu * final_time)
+    initial_mass = float(np.sum(initial) * cell_volume)
+    final_mass = float(np.sum(numerical) * cell_volume)
+    mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitAdvectionDiffusionFoamStudent").read_text(
+        encoding="utf-8"
+    )
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 1.0)
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, nx)
+    figure_dir = solver_figure_dir(solver_family, case_name, nx)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_structured_field_data(
+        [
+            (
+                domain4[0] + (i + 0.5) * dx,
+                domain4[2] + (j + 0.5) * dy,
+            )
+            for j in range(ny)
+            for i in range(nx)
+        ],
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "quad",
+        "problem": "sine_wave_advection_diffusion",
+        "resolution": nx,
+        "nominalH": max(dx, dy),
+        "nCells": nx * ny,
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "absoluteL1": absolute_l1,
+        "absoluteL2": absolute_l2,
+        "absoluteLinf": absolute_linf,
+        "exactAmplitudeAtFinal": exact_amplitude,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "initialAmplitude": 0.5 * (float(initial.max()) - float(initial.min())),
+        "finalAmplitude": 0.5 * (float(numerical.max()) - float(numerical.min())),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= float(initial.min()) - 1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_advection_diffusion_field_comparison(
+        initial, numerical, exact, figure_dir / "field_comparison.png", final_time, domain4
+    )
+    plot_advection_diffusion_diagonal_profile(
+        numerical, exact, figure_dir / "diagonal_profile.png", final_time
+    )
+    plot_advection_diffusion_amplitude_history(
+        records, figure_dir / "amplitude_history.png", mu
+    )
+    plot_advection_diffusion_stability_history(
+        records, figure_dir / "advection_diffusion_stability_history.png", target_co
+    )
+
+    print(f"case={case}")
+    print(f"resolution={nx}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
+
+
+def _postprocess_quad_rotating_peak_advection_diffusion_case(
+    case: Path, output_root: Path, target_co: float
+) -> dict[str, object]:
+    """Post-process the structured rotating sharp-peak advection-diffusion case."""
+    case = case.resolve()
+    metadata = json.loads((case / "metadata.json").read_text(encoding="utf-8"))
+    field_name = str(metadata.get("scalarField", "phi"))
+    domain_raw = metadata.get("domain", [-1.0, 1.0, -1.0, 1.0])
+    domain = tuple(float(value) for value in domain_raw)
+    if len(domain) != 4:
+        raise RuntimeError(f"Invalid domain in metadata.json: {case}")
+    domain4 = (domain[0], domain[1], domain[2], domain[3])
+    mu = float(metadata.get("mu", 1.0e-3))
+    diffusion_start_time, initial_center = _rotating_peak_parameters(metadata)
+
+    nx, ny = mesh_resolution(case)
+    final_time, final_dir = latest_time(case)
+    initial_values = read_scalar_field(case / "0" / field_name)
+    numerical_values = read_scalar_field(final_dir / field_name)
+    if len(initial_values) != nx * ny or len(numerical_values) != nx * ny:
+        raise RuntimeError(f"Field size does not match mesh in {case}")
+
+    centres = structured_centres(nx, ny, domain4)
+    exact_values_at_final = rotating_peak_structured_values(
+        nx,
+        ny,
+        domain4,
+        final_time,
+        mu,
+        diffusion_start_time,
+        initial_center,
+    )
+    initial = np.asarray(initial_values, dtype=float).reshape(ny, nx)
+    numerical = np.asarray(numerical_values, dtype=float).reshape(ny, nx)
+    exact = np.asarray(exact_values_at_final, dtype=float).reshape(ny, nx)
+    records = parse_advection_diffusion_solver_log(
+        case / "log.explicitAdvectionDiffusionFoamStudent"
+    )
+
+    dx = (domain4[1] - domain4[0]) / nx
+    dy = (domain4[3] - domain4[2]) / ny
+    cell_volume = dx * dy * THICKNESS
+    l1, l2, linf = normalized_errors(
+        numerical_values, exact_values_at_final, cell_volume
+    )
+    initial_mass = float(np.sum(initial) * cell_volume)
+    final_mass = float(np.sum(numerical) * cell_volume)
+    mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
+    mass_change = final_mass - initial_mass
+    solver_log = (case / "log.explicitAdvectionDiffusionFoamStudent").read_text(
+        encoding="utf-8"
+    )
+    mesh_log_path = case / "log.checkMesh"
+    mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
+    configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
+    final_center = (
+        initial_center[0] * math.cos(final_time) - initial_center[1] * math.sin(final_time),
+        initial_center[0] * math.sin(final_time) + initial_center[1] * math.cos(final_time),
+    )
+
+    solver_family, case_name = _case_namespace(case)
+    data_dir = solver_data_dir(solver_family, case_name, nx)
+    figure_dir = solver_figure_dir(solver_family, case_name, nx)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    figure_dir.mkdir(parents=True, exist_ok=True)
+
+    write_time_history(records, data_dir / "time_history.csv")
+    write_structured_field_data(
+        centres,
+        initial_values,
+        numerical_values,
+        exact_values_at_final,
+        data_dir / "field_data.csv",
+        data_dir / "error_field.csv",
+    )
+
+    summary: dict[str, object] = {
+        "case": str(case),
+        "solverFamily": solver_family,
+        "caseName": case_name,
+        "mesh": "quad",
+        "problem": "rotating_peak_advection_diffusion",
+        "resolution": nx,
+        "nominalH": max(dx, dy),
+        "nCells": nx * ny,
+        "finalTime": final_time,
+        "finalDirectory": str(final_dir),
+        "finalTimeError": abs(final_time - configured_end_time),
+        "normalizedL1": l1,
+        "normalizedL2": l2,
+        "normalizedLinf": linf,
+        "initialMass": initial_mass,
+        "finalMass": final_mass,
+        "massChange": mass_change,
+        "normalizedMassError": abs(mass_change) / mass_scale if mass_scale else 0.0,
+        "maxAbsResidualIntegral": "",
+        "minCo": min(record["maxCo"] for record in records),
+        "maxCo": max(record["maxCo"] for record in records),
+        "targetCo": target_co,
+        "initialAmplitude": float(initial.max()) - float(initial.min()),
+        "finalAmplitude": float(numerical.max()) - float(numerical.min()),
+        "minFinal": float(numerical.min()),
+        "maxFinal": float(numerical.max()),
+        "maxAbsFinal": float(np.max(np.abs(numerical))),
+        "timeSteps": len(records),
+        "meshOK": "Mesh OK." in mesh_log,
+        "boundedBelowInitial": float(numerical.min()) >= -1.0e-12,
+        "boundedAboveInitial": float(numerical.max()) <= float(initial.max()) + 1.0e-12,
+        "solverEnded": "End" in solver_log,
+        "solverFatal": "FOAM FATAL ERROR" in solver_log,
+        "diffusionStartTime": diffusion_start_time,
+        "initialCenter": list(initial_center),
+        "finalCenterExact": list(final_center),
+    }
+    (data_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+
+    plot_advection_diffusion_field_comparison(
+        initial,
+        numerical,
+        exact,
+        figure_dir / "field_comparison.png",
+        final_time,
+        domain4,
+    )
+    plot_rotating_peak_structured_final_contour(
+        numerical,
+        exact,
+        figure_dir / "contour_final.png",
+        final_time,
+        domain4,
+    )
+    plot_rotating_peak_midline_profile(
+        centres,
+        numerical_values,
+        exact_values_at_final,
+        figure_dir / "peak_profile.png",
+        final_time,
+        final_center[1],
+    )
+    plot_advection_diffusion_stability_history(
+        records, figure_dir / "advection_diffusion_stability_history.png", target_co
+    )
+
+    print(f"case={case}")
+    print(f"resolution={nx}")
+    print(f"finalTime={final_time:.16g}")
+    print(f"normalizedL1={l1:.16e}")
+    print(f"normalizedL2={l2:.16e}")
+    print(f"normalizedLinf={linf:.16e}")
+    print(f"data={data_dir}")
+    print(f"figures={figure_dir}")
+    return summary
 
 
 def _postprocess_quad_diffusion_gaussian_case(

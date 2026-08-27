@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     | Mesh patch construction
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createPatchDict;
+}
+
+pointSync false;
+writeCyclicMatch false;
+
+patches
+{
+    zMin
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (zMinSource);
+    }
+
+    zMax
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (zMaxSource);
+    }
+
+    xMin
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (xMinSource);
+    }
+
+    xMax
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (xMaxSource);
+    }
+
+    yMin
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMinSource);
+    }
+
+    yMax
+    {
+        patchInfo { type patch; }
+        constructFrom patches;
+        patches (yMaxSource);
+    }
+
+}

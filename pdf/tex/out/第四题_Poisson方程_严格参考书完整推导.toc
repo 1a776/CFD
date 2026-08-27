@@ -1,0 +1,27 @@
+\contentsline {section}{题目、依据范围与符号约定}{3}{section*.2}%
+\contentsline {section}{\numberline {1}控制体积分与有限体积半离散形式}{6}{section.1}%
+\contentsline {subsection}{\numberline {1.1}控制体积分}{6}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}作为理解辅助的物理扩散通量}{6}{subsection.1.2}%
+\contentsline {section}{\numberline {2}空间离散：OpenFOAM的Laplacian装配逻辑}{8}{section.2}%
+\contentsline {subsection}{\numberline {2.1}正交网格上的线性面法向梯度}{8}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}非正交网格的面积向量分解}{8}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}corrected格式的面通量}{9}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}梯度计算与延迟修正}{9}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Dirichlet边界与完整离散方程}{11}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Dirichlet边界面通量}{11}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}守恒装配}{11}{subsection.3.2}%
+\contentsline {section}{\numberline {4}代数矩阵形式与OpenFOAM符号约定}{13}{section.4}%
+\contentsline {subsection}{\numberline {4.1}内部面、边界面和源项对矩阵的贡献}{13}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}离散守恒性}{14}{subsection.4.2}%
+\contentsline {section}{\numberline {5}OpenFOAM空间离散与求解器实现}{15}{section.5}%
+\contentsline {subsection}{\numberline {5.1}数学算子与OpenFOAM算子的对应}{15}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}空间格式配置}{15}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}求解器数学核心}{16}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}公式--cases文件--代码对应关系}{17}{subsection.5.4}%
+\contentsline {section}{\numberline {6}题目第4.2节数值算例与验证}{18}{section.6}%
+\contentsline {subsection}{\numberline {6.1}解析解与源项自洽性}{18}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}三角形与四边形网格上的计算流程}{18}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}严格采用题目附录A的误差定义}{19}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}收敛阶}{19}{subsection.6.4}%
+\contentsline {section}{\numberline {7}重要公式汇总}{20}{section.7}%
+\contentsline {section}{参考文献}{20}{Item.15}%

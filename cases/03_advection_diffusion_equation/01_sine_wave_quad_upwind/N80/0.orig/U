@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volVectorField;
+    location    "0";
+    object      U;
+}
+
+// 对应第三题第一个算例的常速度：
+//
+//     U = (1, 1, 0)
+//
+// 求解器用 fvc::flux(U) 计算每个面上的体积通量：
+//
+//     F_f = U_f dot S_f
+//
+// 然后用 fvc::div(faceFlux, phi) 构造对流散度项。
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (1 1 0);
+
+boundaryField
+{
+    // 速度场必须与标量场使用相同的周期 patch 配对，
+    // 才能使跨越 x/y 边界的面通量连续。
+    xMin { type cyclic; }
+    xMax { type cyclic; }
+    yMin { type cyclic; }
+    yMax { type cyclic; }
+
+    // 二维 empty 面没有 z 向速度自由度。
+    zMin { type empty; }
+    zMax { type empty; }
+}

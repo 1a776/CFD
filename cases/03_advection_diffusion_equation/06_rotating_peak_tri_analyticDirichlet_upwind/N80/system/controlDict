@@ -1,0 +1,56 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+// 应用程序入口。它必须与 build/03_advection_diffusion_equation/bin
+// 中的可执行文件名一致。
+application     explicitAdvectionDiffusionFoamStudent;
+
+// 求解时间区间。第三题第二个案例用 tau 从 0 旋转一圈到 2*pi，并与解析旋转尖峰比较。
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         6.2831853071795862;
+
+// 初值 deltaT 是 OpenFOAM 标准字段；求解器每一步会根据
+//
+//     deltaT = alpha / max_c[(0.5 sum_f |F(cf)| + sum_f D(cf))/V(c)]
+//
+// 自动改写实际时间步。
+deltaT          1e-4;
+
+// 每 0.1 个物理时间写一次，便于观察衰减过程，同时避免显式细时间步
+// 产生过多时间目录。求解器循环结束后还会强制写出 t=endTime。
+writeControl    runTime;
+writeInterval   0.1;
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  12;
+timePrecision   17;
+writeCompression off;
+runTimeModifiable no;
+
+// 这两个字段决定求解器读取哪两个 0/ 文件：
+// velocityField U   -> 0/U
+// scalarField phi   -> 0/phi
+velocityField   U;
+scalarField     phi;
+
+// alpha 是上式中的显式稳定安全系数。
+// 它不是纯对流 CFL，而是对流和扩散共同构成的稳定监测量。
+advectionDiffusionCo 0.45;
+
+// 粗网格时额外限制最大时间步；细网格时通常由扩散稳定条件控制。
+maxDeltaT       0.001;

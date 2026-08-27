@@ -9,742 +9,565 @@
 
 \ifusectex\else
   \usepackage{fontspec}
-  \IfFileExists{output/pdf/fonts/NotoSansCJKsc-Regular.otf}{%
-    \def\localcjkfontpath{output/pdf/fonts/}%
+  \IfFontExistsTF{Noto Sans CJK SC}{%
+    \setmainfont[AutoFakeBold=2,AutoFakeSlant=0.2]{Noto Sans CJK SC}
+    \setsansfont[AutoFakeBold=2,AutoFakeSlant=0.2]{Noto Sans CJK SC}
   }{%
-    \def\localcjkfontpath{fonts/}%
+    \IfFileExists{fonts/NotoSansCJKsc-Regular.otf}{%
+      \def\localcjkfontpath{fonts/}%
+    }{%
+      \def\localcjkfontpath{output/pdf/fonts/}%
+    }
+    \setmainfont[
+      Path=\localcjkfontpath,
+      AutoFakeBold=2,
+      AutoFakeSlant=0.2
+    ]{NotoSansCJKsc-Regular.otf}
+    \setsansfont[
+      Path=\localcjkfontpath,
+      AutoFakeBold=2,
+      AutoFakeSlant=0.2
+    ]{NotoSansCJKsc-Regular.otf}
   }
-  \setmainfont[
-    Path=\localcjkfontpath,
-    AutoFakeBold=2,
-    AutoFakeSlant=0.2
-  ]{NotoSansCJKsc-Regular.otf}
-  \setsansfont[
-    Path=\localcjkfontpath,
-    AutoFakeBold=2,
-    AutoFakeSlant=0.2
-  ]{NotoSansCJKsc-Regular.otf}
   \setmonofont{DejaVu Sans Mono}
   \XeTeXlinebreaklocale "zh"
   \XeTeXlinebreakskip=0pt plus 1pt
   \renewcommand{\contentsname}{目录}
+  \renewcommand{\abstractname}{摘要}
 \fi
 
+\usepackage[a4paper,margin=2.35cm,headheight=15pt]{geometry}
 \usepackage{amsmath,amssymb,mathtools,bm}
-\usepackage{geometry}
-\usepackage{booktabs,longtable,array}
-\usepackage{enumitem}
+\usepackage{booktabs,array,longtable}
 \usepackage{xcolor}
+\usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{hyperref}
 \usepackage{listings}
-\usepackage[most]{tcolorbox}
+\renewcommand{\refname}{参考文献}
 
-\geometry{left=2.35cm,right=2.35cm,top=2.45cm,bottom=2.45cm}
-\setlength{\parindent}{2em}
-\setlength{\parskip}{0.35em}
-\linespread{1.25}
-\allowdisplaybreaks[4]
-\numberwithin{equation}{section}
-
-\definecolor{mainblue}{HTML}{1F4E79}
-\definecolor{softblue}{HTML}{EAF2F8}
-\definecolor{sourcegray}{HTML}{555555}
-\definecolor{codebg}{HTML}{F5F7FA}
+\definecolor{sourcegray}{RGB}{74,84,98}
+\definecolor{sourcebg}{RGB}{244,247,250}
+\definecolor{linkblue}{RGB}{31,78,121}
+\definecolor{codegreen}{RGB}{38,116,78}
 
 \hypersetup{
   colorlinks=true,
-  linkcolor=mainblue,
-  urlcolor=mainblue,
-  citecolor=mainblue,
+  linkcolor=linkblue,
+  citecolor=linkblue,
+  urlcolor=linkblue,
   pdftitle={第三题：对流扩散方程的有限体积法完整推导},
   pdfauthor={张云飞}
 }
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{第三题：对流扩散方程}
-\fancyhead[R]{有限体积法全显式求解器}
-\fancyfoot[C]{\thepage}
-\setlength{\headheight}{16pt}
-\renewcommand{\headrulewidth}{0.4pt}
+\lhead{对流扩散方程的有限体积离散}
+\rhead{OpenFOAM 显式求解器推导}
+\cfoot{\thepage}
 
-\ifusectex
-  \ctexset{
-    section={format=\Large\bfseries\color{mainblue},beforeskip=1.2ex,afterskip=0.8ex},
-    subsection={format=\large\bfseries,beforeskip=1.0ex,afterskip=0.5ex},
-    subsubsection={format=\normalsize\bfseries,beforeskip=0.8ex,afterskip=0.3ex}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=2.4em,itemsep=0.35em,topsep=0.35em}
+\numberwithin{equation}{section}
+\allowdisplaybreaks[2]
+
+\newcommand{\Rone}{\textnormal{[R1]}}
+\newcommand{\Rtwo}{\textnormal{[R2]}}
+\newcommand{\Rthree}{\textnormal{[R3]}}
+\newcommand{\Task}{\textnormal{[题目]}}
+\newcommand{\source}[1]{%
+  \par\smallskip
+  \noindent\colorbox{sourcebg}{%
+    \parbox{0.955\linewidth}{\raggedright\footnotesize\color{sourcegray}\textbf{参考来源：}#1}%
   }
-\else
-  \usepackage{titlesec}
-  \titleformat{\section}{\Large\bfseries\color{mainblue}}{\thesection}{0.7em}{}
-  \titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.7em}{}
-  \titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.7em}{}
-\fi
-
-\newcommand{\vect}[1]{\bm{#1}}
-\newcommand{\dd}{\mathop{}\!\mathrm{d}}
-\newcommand{\src}[1]{\par\noindent{\small\color{sourcegray}\textbf{参考来源：}#1}\par}
-
-\newtcolorbox{resultbox}{
-  colback=softblue,
-  colframe=mainblue,
-  boxrule=0.7pt,
-  arc=1.5mm,
-  left=2mm,right=2mm,top=1.5mm,bottom=1.5mm
+  \par\smallskip
 }
+\newcommand{\dd}{\,\mathrm d}
+\newcommand{\Sf}{\bm S}
+\newcommand{\xf}{\bm x}
+\newcommand{\uf}{\bm u}
+\newcommand{\Jd}{\bm J_D}
 
-\lstset{
+\lstdefinestyle{solver}{
   basicstyle=\ttfamily\small,
-  backgroundcolor=\color{codebg},
+  keywordstyle=\color{linkblue}\bfseries,
+  commentstyle=\color{codegreen},
   frame=single,
-  rulecolor=\color{gray!45},
-  breaklines=true,
+  framerule=0.4pt,
+  rulecolor=\color{sourcegray},
+  backgroundcolor=\color{sourcebg},
+  numbers=left,
+  numberstyle=\tiny\color{sourcegray},
+  stepnumber=1,
+  numbersep=8pt,
   columns=fullflexible,
-  showstringspaces=false
+  keepspaces=true,
+  showstringspaces=false,
+  breaklines=true,
+  xleftmargin=1.4em,
+  framexleftmargin=1.0em
 }
 
-\title{\bfseries 第三题：对流扩散方程\\[0.4em]
-\Large 有限体积法半离散、全显式离散与求解算法}
+\title{\bfseries 第三题：对流扩散方程的有限体积推导\\与全显式 OpenFOAM 求解器形式}
 \author{张云飞}
-\date{2026年8月24日}
+\date{2026年8月26日}
 
 \begin{document}
 
 \maketitle
 
-\begin{tcolorbox}[colback=white,colframe=mainblue,title=离散方案]
-本文严格按照题目给出的控制方程和此前提供的三份参考资料，采用如下方案：
-\begin{itemize}[leftmargin=2.2em,itemsep=0.25em]
-  \item 对流项：Gauss 有限体积积分与一阶迎风格式；
-  \item 扩散项：Gauss 有限体积积分与中心差分；非正交网格采用 corrected 修正；
-  \item 时间项：一阶前向欧拉格式；
-  \item 显式性：所有空间通量均由旧时刻 $\phi^n$ 计算，不组装和求解隐式线性方程组。
-\end{itemize}
-\end{tcolorbox}
-
-题目控制方程为
-\begin{equation}
-\boxed{
-\frac{\partial\phi}{\partial t}
-+\nabla\cdot(\vect u\phi)
--\nabla\cdot(\mu\nabla\phi)=0 .
-}
-\label{eq:governing}
-\end{equation}
-它对应参考书一般标量输运方程
-\begin{equation}
-\frac{\partial(\rho\phi)}{\partial t}
-+\nabla\cdot(\rho\vect u\phi)
-=\nabla\cdot(\Gamma^\phi\nabla\phi)+Q^\phi
-\end{equation}
-中的
-\begin{equation}
-\rho=1,\qquad \Gamma^\phi=\mu,\qquad Q^\phi=0.
-\end{equation}
-\src{R1，第5.2节，式(5.1)。}
+\begin{abstract}
+本文重新推导第三题二维对流扩散方程
+\[
+  \frac{\partial\phi}{\partial t}
+  +\nabla\cdot(\uf\phi)
+  -\nabla\cdot(\mu\nabla\phi)=0
+\]
+的有限体积半离散和全显式格式。推导按一个主线展开：先把方程写成守恒通量形式，
+再在控制体上积分并定义体积归一化残差 $R_c$，最后分别用显式对流面通量和显式扩散
+Laplacian 闭合 $R_c$。扩散通量记号与第二题保持一致：
+\[
+  \Jd=-\mu\nabla\phi,\qquad H_f=\Jd{}_{f}\cdot\Sf_f.
+\]
+因此最终 OpenFOAM 右端可以直接写成“显式对流残差加显式扩散残差”的形式。
+\end{abstract}
 
 \tableofcontents
 \newpage
 
-%============================================================
-\section{第一部分：有限体积法半离散形式}
+\section{题目要求和统一记号}
 
-\subsection{控制体、单元平均值与面几何量}
+\subsection{题目给出的方程}
 
-将计算区域划分为互不重叠的控制体。对任意控制体 $P$，定义其体积
+第三题要求对如下对流扩散方程写出有限体积半离散形式，并基于时间和空间均显式的
+离散格式开发数值求解器：
 \begin{equation}
-V_P=\int_{V_P}\dd V,
+  \frac{\partial\phi}{\partial t}
+  +\nabla\cdot(\uf\phi)
+  -\nabla\cdot(\mu\nabla\phi)=0.
+  \label{eq:governing}
 \end{equation}
-以及单元平均值
+其中 $\phi(\xf,t)$ 为待求标量，$\uf(\xf,t)$ 为给定速度，$\mu>0$ 为扩散系数。
+式\eqref{eq:governing}也可以写成右端形式
 \begin{equation}
-\phi_P(t)=\frac{1}{V_P}\int_{V_P}\phi(\vect x,t)\dd V.
-\label{eq:cell-average}
+  \frac{\partial\phi}{\partial t}
+  =
+  -\nabla\cdot(\uf\phi)
+  +
+  \nabla\cdot(\mu\nabla\phi).
+  \label{eq:rhs_form}
 \end{equation}
-控制体边界写成各个面的并：
-\begin{equation}
-\partial V_P=\bigcup_{f\in\partial P}f.
-\end{equation}
-对控制体 $P$ 的面 $f$，定义相对于 $P$ 向外的面积矢量
-\begin{equation}
-\vect S_{P,f}
-=\int_f\vect n_P\dd S
-\approx \vect n_{P,f}A_f,
-\label{eq:area-vector}
-\end{equation}
-其中 $A_f$ 是面面积，$\vect n_{P,f}$ 是单位外法向量。对于内部面，若其 owner 单元为 $P$、neighbour 单元为 $N$，则
-\begin{equation}
-\vect S_{N,f}=-\vect S_{P,f}.
-\label{eq:area-opposite}
-\end{equation}
+后续求解器开发最重要的是式\eqref{eq:rhs_form}：对流项进入右端时带负号，扩散项
+进入右端时带正号。
 
-三维情况下，$\int_{V_P}\dd V$ 是三重体积分，$\int_{\partial V_P}\dd S$ 是二重曲面积分；题目中的二维算例则分别退化为面积积分和边界线积分。参考书采用 $\dd V$ 与 $\dd S$ 的坐标无关写法，因而不需要在推导中分别展开成直角坐标的二重或三重积分。
-\src{R1，第5.2节，式(5.3)--(5.4)；R2，式(1.16)--(1.17)。}
+\source{\Task，第3.1节：对流扩散方程及显式时空离散求解器要求；\Rone，第5.2节：
+一般标量输运方程；\Rone，第8章和第11章：扩散项与对流项的有限体积离散。}
 
-\subsection{在控制体上积分}
+\subsection{为什么先写成守恒通量形式}
 
-将式\eqref{eq:governing}在控制体 $V_P$ 上积分：
+为了让符号与第二题扩散方程一致，定义扩散物理通量
 \begin{equation}
-\int_{V_P}\frac{\partial\phi}{\partial t}\dd V
-+\int_{V_P}\nabla\cdot(\vect u\phi)\dd V
--\int_{V_P}\nabla\cdot(\mu\nabla\phi)\dd V=0.
-\label{eq:volume-integral}
-\end{equation}
-
-控制体固定不动，因此
-\begin{align}
-\int_{V_P}\frac{\partial\phi}{\partial t}\dd V
-&=\frac{\dd}{\dd t}\int_{V_P}\phi\dd V \\
-&=V_P\frac{\dd\phi_P}{\dd t}.
-\label{eq:transient-integral}
-\end{align}
-
-对对流项应用 Gauss 散度定理：
-\begin{equation}
-\int_{V_P}\nabla\cdot(\vect u\phi)\dd V
-=\int_{\partial V_P}\vect u\phi\cdot\vect n_P\dd S.
-\label{eq:gauss-advection}
-\end{equation}
-对扩散项同样应用 Gauss 散度定理：
-\begin{equation}
-\int_{V_P}\nabla\cdot(\mu\nabla\phi)\dd V
-=\int_{\partial V_P}\mu\nabla\phi\cdot\vect n_P\dd S.
-\label{eq:gauss-diffusion}
-\end{equation}
-代回式\eqref{eq:volume-integral}：
-\begin{equation}
-V_P\frac{\dd\phi_P}{\dd t}
-+\int_{\partial V_P}\vect u\phi\cdot\vect n_P\dd S
--\int_{\partial V_P}\mu\nabla\phi\cdot\vect n_P\dd S=0.
-\label{eq:integral-balance}
-\end{equation}
-\src{R1，第5.2节，式(5.3)--(5.10)。}
-
-\subsection{由边界积分得到面通量求和}
-
-把控制体边界积分分解成所有面的积分，并在每个面上使用单点 Gauss 积分：
-\begin{align}
-\int_f\vect u\phi\cdot\vect n_P\dd S
-&\approx (\vect u\phi)_f\cdot\vect S_{P,f}, \\
-\int_f\mu\nabla\phi\cdot\vect n_P\dd S
-&\approx \mu_f(\nabla\phi)_f\cdot\vect S_{P,f}.
-\end{align}
-于是
-\begin{equation}
-V_P\frac{\dd\phi_P}{\dd t}
-+\sum_{f\in\partial P}(\vect u\phi)_f\cdot\vect S_{P,f}
--\sum_{f\in\partial P}\mu_f(\nabla\phi)_f\cdot\vect S_{P,f}=0.
-\label{eq:face-sum-before-F}
-\end{equation}
-
-定义相对于控制体 $P$ 向外的面体积通量
-\begin{equation}
-F_{P,f}=\vect u_f\cdot\vect S_{P,f}.
-\label{eq:face-flux}
+  \Jd=-\mu\nabla\phi.
+  \label{eq:diffusive_physical_flux}
 \end{equation}
 于是
 \begin{equation}
-(\vect u\phi)_f\cdot\vect S_{P,f}=F_{P,f}\phi_f.
+  -\nabla\cdot(\mu\nabla\phi)=\nabla\cdot\Jd,
 \end{equation}
-因此有限体积半离散骨架为
-\begin{resultbox}
+原方程可写为
 \begin{equation}
-V_P\frac{\dd\phi_P}{\dd t}
-+\sum_{f\in\partial P}F_{P,f}\phi_f
--\sum_{f\in\partial P}\mu_f(\nabla\phi)_f\cdot\vect S_{P,f}=0.
-\label{eq:semidiscrete-skeleton}
+  \frac{\partial\phi}{\partial t}
+  +
+  \nabla\cdot(\uf\phi+\Jd)
+  =
+  0.
+  \label{eq:conservative_form}
 \end{equation}
-等价地，
+这里 $\uf\phi$ 是对流通量，$\Jd$ 是扩散物理通量。这个写法的好处是：有限体积法只需
+对每个控制体边界上的总通量求和，内部共享面天然守恒。
+
+\subsection{网格和面方向记号}
+
+本文沿用第二题扩散推导的控制体记号。第 $c$ 个控制体记为 $\Omega_c$，体积为
+$V_c=|\Omega_c|$，单元平均值为
 \begin{equation}
-\frac{\dd\phi_P}{\dd t}
-=-\frac{1}{V_P}\sum_{f\in\partial P}F_{P,f}\phi_f
-+\frac{1}{V_P}\sum_{f\in\partial P}\mu_f(\nabla\phi)_f\cdot\vect S_{P,f}.
-\label{eq:semidiscrete-rhs}
+  \phi_c(t)=\frac{1}{V_c}\int_{\Omega_c}\phi(\xf,t)\dd V.
+  \label{eq:cell_average}
 \end{equation}
-\end{resultbox}
 
-式\eqref{eq:semidiscrete-skeleton}已经完成“控制体积分、Gauss 定理、面通量求和”的过程；时间方向仍保持连续，因此称为半离散形式。但面值 $\phi_f$ 和面法向梯度 $(\nabla\phi)_f$ 尚未由单元值表示，故还需要空间离散使方程封闭。
-\src{R1，第5.2节，式(5.8)--(5.13)；R2，式(1.22)--(1.23)。}
-
-%============================================================
-\section{第二部分：空间显式离散}
-
-\subsection{对流项的一阶迎风离散}
-
-考虑连接 owner 单元 $P$ 与 neighbour 单元 $N$ 的内部面 $f$。以下统一采用 owner 单元 $P$ 的外法向，简记
+对内部面 $f$，OpenFOAM 使用 owner--neighbour 寻址。记 owner 单元为 $O_f$，
+neighbour 单元为 $N_f$，全局面积向量 $\Sf_f$ 从 $O_f$ 指向 $N_f$。对任意相邻
+控制体 $c$，定义
 \begin{equation}
-F_f=\vect u_f\cdot\vect S_{P,f}.
+  \sigma_{cf}
+  =
+  \begin{cases}
+    +1,&c=O_f,\\
+    -1,&c=N_f.
+  \end{cases}
+  \label{eq:sigma}
 \end{equation}
-若 $F_f\geq0$，流体从 $P$ 流向 $N$，上游单元为 $P$；若 $F_f<0$，流体从 $N$ 流向 $P$，上游单元为 $N$。所以
+于是面 $f$ 相对于控制体 $c$ 的局部外法向面积向量为
 \begin{equation}
-\phi_f^{\mathrm{up}}
-=\begin{cases}
-\phi_P,&F_f\geq0,\\[1mm]
-\phi_N,&F_f<0.
-\end{cases}
-\label{eq:upwind-piecewise}
+  \Sf_{cf}=\sigma_{cf}\Sf_f.
+  \label{eq:local_area_vector}
 \end{equation}
-定义
+
+\begin{longtable}{>{\centering\arraybackslash}p{0.20\linewidth}p{0.70\linewidth}}
+\toprule
+符号 & 含义\\
+\midrule
+$\Omega_c$ & 第 $c$ 个控制体\\
+$V_c$ & 控制体体积；二维单位厚度下等价于单元面积\\
+$\mathcal F_c$ & 控制体 $c$ 的面集合\\
+$O_f,N_f$ & 内部面 $f$ 的 owner 和 neighbour 单元\\
+$\Sf_f$ & 从 $O_f$ 指向 $N_f$ 的全局有向面积向量\\
+$\Sf_{cf}$ & 面 $f$ 相对于控制体 $c$ 的局部外法向面积向量\\
+$\sigma_{cf}$ & 局部外法向与全局面方向的符号关系\\
+$F_f$ & 对流体积通量，$F_f=\uf_f\cdot\Sf_f$\\
+$A_f$ & 对流数值通量，$A_f=F_f\phi_f$\\
+$H_f$ & 扩散物理通量，$H_f=\Jd{}_{f}\cdot\Sf_f=-\mu_f(\nabla\phi)_f\cdot\Sf_f$\\
+$R_c$ & 体积归一化右端残差，近似 $-\nabla\cdot(\uf\phi)+\nabla\cdot(\mu\nabla\phi)$\\
+\bottomrule
+\end{longtable}
+
+\section{有限体积半离散}
+
+\subsection{控制体积分}
+
+对式\eqref{eq:conservative_form}在固定控制体 $\Omega_c$ 上积分：
 \begin{equation}
-F_f^+=\max(F_f,0),\qquad F_f^-=\min(F_f,0),
-\label{eq:Fplusminus}
+  \int_{\Omega_c}\frac{\partial\phi}{\partial t}\dd V
+  +
+  \int_{\Omega_c}\nabla\cdot(\uf\phi+\Jd)\dd V
+  =
+  0.
+  \label{eq:cell_integral}
 \end{equation}
-则
+由于网格固定，控制体体积不随时间变化，所以
 \begin{equation}
-F_f=F_f^++F_f^-,
+  \int_{\Omega_c}\frac{\partial\phi}{\partial t}\dd V
+  =
+  \frac{\dd}{\dd t}\int_{\Omega_c}\phi\dd V
+  =
+  V_c\frac{\dd\phi_c}{\dd t}.
+  \label{eq:time_integral}
 \end{equation}
-且一阶迎风对流通量可统一写成
-\begin{resultbox}
+
+\subsection{Gauss 定理和面通量}
+
+对空间散度项使用 Gauss 定理：
 \begin{equation}
-F_f\phi_f^{\mathrm{up}}
-=F_f^+\phi_P+F_f^-\phi_N.
-\label{eq:upwind-flux}
+  \int_{\Omega_c}\nabla\cdot(\uf\phi+\Jd)\dd V
+  =
+  \oint_{\partial\Omega_c}(\uf\phi+\Jd)\cdot\bm n_c\dd S.
+  \label{eq:gauss}
 \end{equation}
-\end{resultbox}
-\src{R1，第11.2.4节，式(11.33)--(11.42)；R3，第59.2.1节。}
-
-本题要求空间离散为显式，因此实际计算时所有量均取旧时刻 $n$：
+将控制体边界拆成所有面，并采用面中心一点积分，得到
 \begin{equation}
-\left(F_f\phi_f\right)^n
-=(F_f^n)^+\phi_P^n+(F_f^n)^-\phi_N^n.
-\label{eq:explicit-upwind}
+  V_c\frac{\dd\phi_c}{\dd t}
+  +
+  \sum_{f\in\mathcal F_c}
+  \left[
+  (\uf\phi)_f\cdot\Sf_{cf}
+  +
+  \Jd{}_{f}\cdot\Sf_{cf}
+  \right]
+  =
+  0.
+  \label{eq:local_flux_sum}
 \end{equation}
-这里“显式”不仅指选择了迎风插值，还要求通量表达式中不存在待求的 $\phi^{n+1}$。
 
-\subsection{正交网格上的中心扩散离散}
-
-设
+对内部面使用全局 owner--neighbour 方向后，定义
 \begin{equation}
-\vect d_{PN}=\vect x_N-\vect x_P,
-\qquad d_{PN}=|\vect d_{PN}|.
+  A_f=F_f\phi_f,
+  \qquad
+  F_f=\uf_f\cdot\Sf_f,
+  \qquad
+  H_f=\Jd{}_{f}\cdot\Sf_f.
+  \label{eq:face_flux_definitions}
 \end{equation}
-在正交网格上，单元中心连线与面法向平行，面法向梯度用中心差分近似：
+则内部面相对于控制体 $c$ 的总通量贡献为 $\sigma_{cf}(A_f+H_f)$。
+
+\subsection{半离散残差}
+
+边界面的局部外向对流通量和扩散通量分别记为 $A_{cb}$ 与 $H_{cb}$。定义体积归一化
+右端残差
 \begin{equation}
-(\nabla\phi)_f\cdot\vect n_f
-\approx\frac{\phi_N-\phi_P}{d_{PN}}.
+  \boxed{
+  R_c(\bm\phi)
+  =
+  -\frac{1}{V_c}
+  \left[
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}
+  \sigma_{cf}(A_f+H_f)
+  +
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}
+  (A_{cb}+H_{cb})
+  \right].}
+  \label{eq:residual}
 \end{equation}
-故
+于是半离散方程为
 \begin{equation}
-(\nabla\phi)_f\cdot\vect S_{P,f}
-\approx A_f\frac{\phi_N-\phi_P}{d_{PN}},
+  \boxed{
+  \frac{\dd\phi_c}{\dd t}=R_c(\bm\phi).}
+  \label{eq:semi_discrete}
 \end{equation}
-从而
+
+这就是题目要求的有限体积半离散形式。注意这里的 $R_c$ 已经是除以 $V_c$ 之后的
+单元场量。它对应 OpenFOAM 中的 \texttt{volScalarField}，而不是未除以体积的通量和。
+
+\source{\Rtwo，第1.3.1节：owner--neighbour 面寻址；\Rone，第5.2节：有限体积
+控制体积分和面通量求和；第二题扩散推导：$H_f$ 和 $R_c$ 的符号约定。}
+
+\section{空间显式离散}
+
+\subsection{对流项：显式面通量和迎风面值}
+
+对内部面 $f$，先计算体积通量
 \begin{equation}
-\mu_f(\nabla\phi)_f\cdot\vect S_{P,f}
-\approx\frac{\mu_fA_f}{d_{PN}}(\phi_N-\phi_P).
+  F_f^n=\uf_f^n\cdot\Sf_f.
+  \label{eq:face_flux}
 \end{equation}
-定义
+一阶迎风格式用旧时刻上游单元值构造面值：
 \begin{equation}
-D_f=\frac{\mu_fA_f}{d_{PN}},
-\label{eq:D-orthogonal}
+  \phi_f^{\mathrm{up},n}
+  =
+  \begin{cases}
+    \phi_{O_f}^n,&F_f^n\ge 0,\\
+    \phi_{N_f}^n,&F_f^n<0.
+  \end{cases}
+  \label{eq:upwind}
 \end{equation}
-正交网格上的扩散通量为
-\begin{resultbox}
+因此对流通量为
 \begin{equation}
-G_f:=\mu_f(\nabla\phi)_f\cdot\vect S_{P,f}
-\approx D_f(\phi_N-\phi_P).
-\label{eq:diffusion-orthogonal}
+  \boxed{
+  A_f^n=F_f^n\phi_f^{\mathrm{up},n}.}
+  \label{eq:advective_flux}
 \end{equation}
-\end{resultbox}
-\src{R1，第8.1节，式(8.9)--(8.21)。}
-
-\subsection{非正交网格的 corrected 扩散离散}
-
-题目要求在三角形和四边形网格上计算，实际网格一般并不完全正交。按照参考书，将面面积矢量分解为
+也可写成
 \begin{equation}
-\vect S_{P,f}=\vect E_f+\vect T_f,
-\label{eq:nonorth-decomp}
+  A_f^n=(F_f^n)^+\phi_{O_f}^n+(F_f^n)^-\phi_{N_f}^n,
+  \qquad
+  (F_f)^+=\max(F_f,0),\quad (F_f)^-=\min(F_f,0).
+  \label{eq:upwind_split}
 \end{equation}
-其中 $\vect E_f$ 与 $\vect d_{PN}$ 平行，$\vect T_f$ 表示非正交部分。于是
-\begin{align}
-(\nabla\phi)_f\cdot\vect S_{P,f}
-&=(\nabla\phi)_f\cdot\vect E_f
-+(\nabla\phi)_f\cdot\vect T_f \\
-&\approx\frac{|\vect E_f|}{d_{PN}}(\phi_N-\phi_P)
-+(\nabla\phi)_f\cdot\vect T_f.
-\end{align}
-乘以 $\mu_f$，定义
+
+若以后使用二阶线性迎风，变化只发生在 $\phi_f$ 的插值方式上，半离散守恒结构
+\eqref{eq:residual} 不变。
+
+\subsection{扩散项：沿用第二题的 Laplacian 离散}
+
+扩散物理通量定义为
 \begin{equation}
-D_f=\mu_f\frac{|\vect E_f|}{d_{PN}},
-\qquad
-C_f=\mu_f(\nabla\phi)_f\cdot\vect T_f,
+  H_f^n=-\mu_f(\nabla\phi)^n_f\cdot\Sf_f.
+  \label{eq:H_definition}
 \end{equation}
-得到
-\begin{resultbox}
+在正交网格上，令
 \begin{equation}
-G_f
-=D_f(\phi_N-\phi_P)+C_f.
-\label{eq:diffusion-corrected}
+  \bm d_f=\xf_{N_f}-\xf_{O_f},
+  \qquad
+  d_f=|\bm d_f|,
+  \qquad
+  D_f=\mu_f\frac{|S_f|}{d_f}.
+  \label{eq:diffusion_coefficient}
 \end{equation}
-\end{resultbox}
-\src{R1，第8.6节，式(8.63)--(8.80)。}
-
-为使修正项仍然显式，使用旧时刻梯度：
+线性中心差分给出
 \begin{equation}
-C_f^n=\mu_f(\nabla\phi)_f^n\cdot\vect T_f.
+  \mu_f(\nabla\phi)^n_f\cdot\Sf_f
+  \approx
+  D_f(\phi_{N_f}^n-\phi_{O_f}^n),
+  \label{eq:orthogonal_laplacian_flux}
 \end{equation}
-单元梯度按照 Gauss 梯度公式计算：
+所以
 \begin{equation}
-(\nabla\phi)_P^n
-=\frac{1}{V_P}\sum_{f\in\partial P}\phi_f^n\vect S_{P,f}.
-\label{eq:gauss-gradient}
+  \boxed{
+  H_f^n
+  =
+  D_f(\phi_{O_f}^n-\phi_{N_f}^n).}
+  \label{eq:orthogonal_H}
 \end{equation}
-再将相邻单元梯度几何插值到面中心：
+把它代入残差时，owner 单元的扩散贡献为
 \begin{equation}
-(\nabla\phi)_f^n
-=\lambda_f(\nabla\phi)_P^n
-+(1-\lambda_f)(\nabla\phi)_N^n.
-\label{eq:face-gradient-interpolation}
+  -\frac{H_f^n}{V_{O_f}}
+  =
+  \frac{D_f(\phi_{N_f}^n-\phi_{O_f}^n)}{V_{O_f}},
+  \label{eq:owner_diffusion_contribution}
 \end{equation}
-\src{R1，第8.6节，式(8.75)--(8.76)。}
+这正是 Laplacian 对 owner 单元的贡献。
 
-\subsection{合并后的封闭空间半离散方程}
+\subsection{非正交网格上的 corrected 扩散}
 
-将一阶迎风对流通量\eqref{eq:upwind-flux}与扩散通量\eqref{eq:diffusion-corrected}代入式\eqref{eq:semidiscrete-skeleton}：
-\begin{align}
-V_P\frac{\dd\phi_P}{\dd t}
-=&-\sum_{f\in\partial P}
-\left(F_f^+\phi_P+F_f^-\phi_N\right) \\
-&+\sum_{f\in\partial P}
-\left[D_f(\phi_N-\phi_P)+C_f\right].
-\label{eq:closed-semidiscrete}
-\end{align}
-整理中心单元和相邻单元系数：
-\begin{resultbox}
-\begin{align}
-V_P\frac{\dd\phi_P}{\dd t}
-=&-\left[\sum_{f\in\partial P}(F_f^++D_f)\right]\phi_P \\
-&+\sum_{f\in\partial P}(D_f-F_f^-)\phi_N
-+\sum_{f\in\partial P}C_f.
-\label{eq:closed-coefficient}
-\end{align}
-\end{resultbox}
-因为
+三角形或一般非正交网格上，面面积向量 $\Sf_f$ 与中心连线 $\bm d_f$ 不完全平行。
+因此面法向扩散通量可分为正交部分和非正交修正部分：
 \begin{equation}
-F_f^+\geq0,\qquad F_f^-\leq0,\qquad D_f\geq0,
+  \mu_f(\nabla\phi)^n_f\cdot\Sf_f
+  =
+  D_f(\phi_{N_f}^n-\phi_{O_f}^n)
+  +
+  C_f^n.
+  \label{eq:corrected_laplacian}
 \end{equation}
-所以相邻单元系数 $D_f-F_f^-\geq0$。
-
-\subsection{均匀直角网格上的具体展开}
-
-设二维均匀直角网格步长为 $\Delta x,\Delta y$，速度和扩散系数为常数：
+其中 $C_f^n$ 由旧时刻单元梯度插值得到，因此仍然是显式项。于是
 \begin{equation}
-\vect u=(u,v),\qquad \mu=\text{const}.
-\end{equation}
-定义
-\begin{equation}
-u^+=\max(u,0),\quad u^-=\min(u,0),\quad
-v^+=\max(v,0),\quad v^-=\min(v,0).
-\end{equation}
-则式\eqref{eq:closed-semidiscrete}退化为
-\begin{align}
-\frac{\dd\phi_{i,j}}{\dd t}
-=&-\frac{u^+(\phi_{i,j}-\phi_{i-1,j})
-+u^-(\phi_{i+1,j}-\phi_{i,j})}{\Delta x} \\
-&-\frac{v^+(\phi_{i,j}-\phi_{i,j-1})
-+v^-(\phi_{i,j+1}-\phi_{i,j})}{\Delta y} \\
-&+\mu\frac{\phi_{i+1,j}-2\phi_{i,j}+\phi_{i-1,j}}{\Delta x^2} \\
-&+\mu\frac{\phi_{i,j+1}-2\phi_{i,j}+\phi_{i,j-1}}{\Delta y^2}.
-\label{eq:cartesian-general}
-\end{align}
-若 $u>0,v>0$，则
-\begin{resultbox}
-\begin{align}
-\frac{\dd\phi_{i,j}}{\dd t}
-=&-u\frac{\phi_{i,j}-\phi_{i-1,j}}{\Delta x}
--v\frac{\phi_{i,j}-\phi_{i,j-1}}{\Delta y} \\
-&+\mu\frac{\phi_{i+1,j}-2\phi_{i,j}+\phi_{i-1,j}}{\Delta x^2} \\
-&+\mu\frac{\phi_{i,j+1}-2\phi_{i,j}+\phi_{i,j-1}}{\Delta y^2}.
-\label{eq:cartesian-positive}
-\end{align}
-\end{resultbox}
-
-%============================================================
-\section{第三部分：前向欧拉时间离散与全显式求解器}
-
-\subsection{前向欧拉格式的推导}
-
-在 $t^n$ 对 $\phi_P(t)$ 作 Taylor 展开：
-\begin{equation}
-\phi_P(t^{n+1})
-=\phi_P(t^n)
-+\Delta t\left.\frac{\dd\phi_P}{\dd t}\right|_{t^n}
-+O(\Delta t^2).
-\end{equation}
-移项并除以 $\Delta t$：
-\begin{equation}
-\left.\frac{\dd\phi_P}{\dd t}\right|_{t^n}
-=\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}+O(\Delta t).
-\end{equation}
-忽略截断误差，得到一阶前向欧拉格式
-\begin{resultbox}
-\begin{equation}
-\left.\frac{\dd\phi_P}{\dd t}\right|_{t^n}
-\approx\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}.
-\label{eq:forward-euler}
-\end{equation}
-\end{resultbox}
-\src{R1，第13.2.1节，式(13.5)--(13.12)。}
-
-\subsection{完全显式更新公式}
-
-将式\eqref{eq:forward-euler}代入式\eqref{eq:closed-semidiscrete}，并把所有空间量放在旧时刻 $n$ 计算：
-\begin{align}
-V_P\frac{\phi_P^{n+1}-\phi_P^n}{\Delta t}
-=&-\sum_{f\in\partial P}
-\left[(F_f^n)^+\phi_P^n+(F_f^n)^-\phi_N^n\right] \\
-&+\sum_{f\in\partial P}
-\left[D_f^n(\phi_N^n-\phi_P^n)+C_f^n\right].
-\label{eq:fully-discrete-before-update}
-\end{align}
-因此
-\begin{resultbox}
-\begin{align}
-\phi_P^{n+1}
-=\phi_P^n+\frac{\Delta t}{V_P}\Bigg\{
-&-\sum_{f\in\partial P}
-\left[(F_f^n)^+\phi_P^n+(F_f^n)^-\phi_N^n\right] \\
-&+\sum_{f\in\partial P}
-\left[D_f^n(\phi_N^n-\phi_P^n)+C_f^n\right]
-\Bigg\}.
-\label{eq:fully-explicit-update}
-\end{align}
-\end{resultbox}
-
-进一步展开中心单元和相邻单元系数：
-\begin{align}
-\phi_P^{n+1}
-=&\left[1-\frac{\Delta t}{V_P}
-\sum_{f\in\partial P}(F_f^++D_f)\right]\phi_P^n \\
-&+\frac{\Delta t}{V_P}
-\sum_{f\in\partial P}(D_f-F_f^-)\phi_N^n
-+\frac{\Delta t}{V_P}\sum_{f\in\partial P}C_f^n.
-\label{eq:explicit-coefficient-form}
-\end{align}
-式\eqref{eq:fully-explicit-update}或式\eqref{eq:explicit-coefficient-form}就是本题要求的全显式有限体积求解器。右端只含已知的旧时刻变量，不需要求解全局线性方程组。
-
-\subsection{显式格式的稳定时间步}
-
-按照参考书对多维显式对流--扩散方程的稳定性分析，时间步需要满足
-\begin{resultbox}
-\begin{equation}
-\Delta t\leq
-\min_P
-\frac{V_P}{
-\displaystyle\sum_{f\in\partial P}
-\left[D_f+\max(F_f,0)\right]}.
-\label{eq:general-dt}
-\end{equation}
-\end{resultbox}
-实际计算引入安全系数 $0<\sigma<1$：
-\begin{equation}
-\Delta t
-=\sigma\min_P
-\frac{V_P}{
-\displaystyle\sum_{f\in\partial P}(D_f+F_f^+)}.
-\label{eq:safe-dt}
-\end{equation}
-可先取 $\sigma=0.5\sim0.8$。非正交修正项显式处理时，式\eqref{eq:general-dt}没有单独计入修正项的额外影响，因此高非正交网格应使用更保守的 $\sigma$。
-\src{R1，第13.2.2.3节，式(13.25)--(13.29)。}
-
-对二维均匀直角网格，式\eqref{eq:general-dt}化为
-\begin{equation}
-\Delta t\left[
-\frac{|u|}{\Delta x}+\frac{|v|}{\Delta y}
-+2\mu\left(\frac{1}{\Delta x^2}+\frac{1}{\Delta y^2}\right)
-\right]\leq1,
-\label{eq:cartesian-stability}
-\end{equation}
-即
-\begin{equation}
-\Delta t\leq
-\frac{1}{
-\dfrac{|u|}{\Delta x}+\dfrac{|v|}{\Delta y}
-+2\mu\left(\dfrac{1}{\Delta x^2}+\dfrac{1}{\Delta y^2}\right)}.
-\end{equation}
-第一个算例中 $\vect u=(a,a)$、$\mu=1$ 且 $\Delta x=\Delta y=h$，故
-\begin{equation}
-\Delta t\leq\frac{1}{2|a|/h+4/h^2}.
-\label{eq:sine-dt}
-\end{equation}
-题面没有给出 $a$ 的具体数值，实际计算前必须指定 $a$，否则不能确定数值时间步及精确解的具体平移距离。
-
-%============================================================
-\section{第四部分：总体算法、OpenFOAM 对应与算例验证}
-
-\subsection{网格预处理与初始化}
-
-读取网格，建立每个面的 owner--neighbour 关系，并计算
-\begin{equation}
-V_P,\quad \vect x_P,\quad \vect x_f,\quad
-\vect S_{P,f},\quad d_{PN},\quad \vect E_f,\quad \vect T_f.
-\end{equation}
-计算扩散面系数
-\begin{equation}
-D_f=\mu_f\frac{|\vect E_f|}{d_{PN}}.
-\end{equation}
-初始化单元平均值
-\begin{equation}
-\phi_P^0=\frac{1}{V_P}\int_{V_P}\phi(\vect x,t_0)\dd V.
-\label{eq:initial-cell-average}
-\end{equation}
-程序中可以采用单元中心近似 $\phi_P^0\approx\phi(\vect x_P,t_0)$；但若要严格研究网格收敛阶，宜使用单元积分或足够高阶的数值积分计算初始单元平均值。
-
-\subsection{单个时间步的守恒通量装配}
-
-在时刻 $t^n$，首先在面中心计算或插值速度：
-\begin{equation}
-\vect u_f^n=\vect u(\vect x_f,t^n),
-\qquad F_f^n=\vect u_f^n\cdot\vect S_{P,f}.
-\end{equation}
-根据式\eqref{eq:safe-dt}计算 $\Delta t^n$，并在最后一步使用
-\begin{equation}
-\Delta t^n=\min(\Delta t^n,T-t^n)
-\end{equation}
-以保证恰好到达目标时间。
-
-对于内部面 $f$，设其 owner 为 $P$、neighbour 为 $N$。迎风面值为
-\begin{equation}
-\phi_f^{\mathrm{up},n}
-=\begin{cases}
-\phi_P^n,&F_f^n\geq0,\\
-\phi_N^n,&F_f^n<0.
-\end{cases}
-\end{equation}
-定义对流通量、扩散通量和方程中的总向外通量：
-\begin{align}
-A_f^n&=F_f^n\phi_f^{\mathrm{up},n},\\
-G_f^n&=D_f(\phi_N^n-\phi_P^n)+C_f^n,\\
-J_f^n&=A_f^n-G_f^n.
-\label{eq:combined-face-flux}
-\end{align}
-初始化 $R_P^n=0$，然后对每个内部面执行
-\begin{resultbox}
-\begin{equation}
-R_P^n\mathrel{-}=J_f^n,
-\qquad
-R_N^n\mathrel{+}=J_f^n.
-\label{eq:owner-neighbour-assembly}
-\end{equation}
-\end{resultbox}
-同一面从 owner 流出的通量恰好等于 neighbour 流入的通量，故该装配方式保证内部面通量严格守恒。
-\src{R2，式(1.24)--(1.26)及 owner--neighbour 面通量装配过程。}
-
-所有面处理完后，使用
-\begin{equation}
-\phi_P^{n+1}=\phi_P^n+\frac{\Delta t^n}{V_P}R_P^n
-\label{eq:residual-update}
-\end{equation}
-更新单元值。
-
-\subsection{边界条件离散}
-
-\subsubsection{周期边界}
-将周期匹配面另一侧的单元视为 neighbour，按内部面通量装配。第一个正弦波算例的四周均使用周期边界。
-
-\subsubsection{Dirichlet 边界}
-若边界给定 $\phi=\phi_b$，对流通量按照迎风方向取值：
-\begin{equation}
-\phi_f^{\mathrm{up}}
-=\begin{cases}
-\phi_P,&F_b\geq0\quad\text{（流出）},\\
-\phi_b,&F_b<0\quad\text{（流入）}.
-\end{cases}
-\end{equation}
-扩散边界通量可近似为
-\begin{equation}
-G_b=D_b(\phi_b-\phi_P)+C_b,
-\qquad D_b=\frac{\mu_bA_b}{d_{Pb}}.
+  H_f^n
+  =
+  -D_f(\phi_{N_f}^n-\phi_{O_f}^n)
+  -
+  C_f^n.
+  \label{eq:corrected_H}
 \end{equation}
 
-\subsubsection{Neumann 边界}
-若给定 $\nabla\phi\cdot\vect n=g_b$，则扩散通量直接为
-\begin{equation}
-G_b=\mu_bg_bA_b.
-\end{equation}
-\src{R1，第8.3节，式(8.30)--(8.42)。}
-
-\subsection{总体算法}
-
-完整算法可写为：
-\begin{enumerate}[leftmargin=2.5em,label=\arabic*.,itemsep=0.45em]
-  \item 读取网格并计算单元、面和 owner--neighbour 几何信息；
-  \item 根据精确初值初始化 $\phi_P^0$，令 $t=t_0$；
-  \item 在所有面中心计算 $\vect u_f$ 和 $F_f=\vect u_f\cdot\vect S_f$；
-  \item 根据式\eqref{eq:safe-dt}计算稳定时间步，并截断最后一个时间步；
-  \item 由式\eqref{eq:gauss-gradient}--\eqref{eq:face-gradient-interpolation}计算旧时刻梯度及显式非正交修正 $C_f^n$；
-  \item 将所有单元残差初始化为零；
-  \item 遍历内部面，计算 $A_f^n,G_f^n,J_f^n$，按式\eqref{eq:owner-neighbour-assembly}守恒装配；
-  \item 处理周期、Dirichlet 或 Neumann 边界面；
-  \item 按式\eqref{eq:residual-update}作前向欧拉更新并修正边界值；
-  \item 更新时间，输出所需时刻的数值场；若 $t<T$，返回步骤3；
-  \item 在目标时刻计算误差范数和网格收敛阶。
-\end{enumerate}
-
-等价伪代码如下：
-\begin{lstlisting}
-readMesh();
-precomputeGeometry();
-initializePhi();
-
-while (time < endTime)
-{
-    computeFaceVelocityAndFlux();
-    dt = computeStableTimeStep();
-    dt = min(dt, endTime - time);
-
-    computeCellGradients(phiOld);
-    computeExplicitNonOrthogonalCorrection(phiOld);
-
-    residual = 0;
-    forAllInternalFaces(f)
-    {
-        P = owner[f];
-        N = neighbour[f];
-        phiUp = (faceFlux[f] >= 0) ? phiOld[P] : phiOld[N];
-
-        advFlux  = faceFlux[f]*phiUp;
-        diffFlux = D[f]*(phiOld[N] - phiOld[P]) + correction[f];
-        totalFlux = advFlux - diffFlux;
-
-        residual[P] -= totalFlux;
-        residual[N] += totalFlux;
-    }
-
-    applyBoundaryFluxes();
-    phiNew = phiOld + dt*residual/cellVolume;
-    correctBoundaryConditions();
-
-    phiOld = phiNew;
-    time += dt;
-}
+在 OpenFOAM 里，这部分不需要手工逐面写公式，推荐直接使用显式 Laplacian 算子，
+并在 \texttt{system/fvSchemes} 中指定 corrected 扩散格式：
+\begin{lstlisting}[style=solver]
+fvc::laplacian(mu, phi)
+laplacian(mu,phi) Gauss linear corrected;
 \end{lstlisting}
+这样正交部分、非正交修正和边界面的处理都交给 OpenFOAM 有限体积库。
 
-\subsection{OpenFOAM 显式算子的对应关系}
+\source{\Rone，第8章：扩散面梯度和非正交修正；第二题扩散推导：
+\texttt{fvc::laplacian(mu, phi)} 与 \texttt{Gauss linear corrected} 的对应关系。}
 
-参考书明确区分：\texttt{fvc::} 为显式有限体积算子，返回已经计算出的场；\texttt{fvm::} 为隐式算子，返回待求线性系统的离散矩阵。因此，本题的全显式空间算子可写成
-\begin{lstlisting}[language=C++]
-volScalarField rhs
+\subsection{对流扩散残差的最终形式}
+
+把对流通量和扩散通量代入式\eqref{eq:residual}，内部面给控制体 $c$ 的贡献为
+\begin{equation}
+  R_c^{(f),n}
+  =
+  -\frac{\sigma_{cf}}{V_c}
+  \left(A_f^n+H_f^n\right).
+  \label{eq:face_residual_contribution}
+\end{equation}
+对 owner 单元和 neighbour 单元分别为
+\begin{equation}
+  R_{O_f}^{(f),n}
+  =
+  -\frac{A_f^n+H_f^n}{V_{O_f}},
+  \qquad
+  R_{N_f}^{(f),n}
+  =
+  +\frac{A_f^n+H_f^n}{V_{N_f}}.
+  \label{eq:owner_neighbour_assembly}
+\end{equation}
+乘回体积后，同一内部面对两侧单元的贡献严格相反，因此内部面通量守恒。
+
+从微分算子角度看，完整残差就是
+\begin{equation}
+  \boxed{
+  R_c^n
+  =
+  \left[
+  -\nabla\cdot(\uf\phi)
+  +
+  \nabla\cdot(\mu\nabla\phi)
+  \right]_c^n.}
+  \label{eq:R_operator}
+\end{equation}
+这是最适合写求解器的形式。
+
+\section{时间显式离散和稳定性}
+
+\subsection{前向 Euler 更新}
+
+对半离散方程\eqref{eq:semi_discrete}使用前向 Euler：
+\begin{equation}
+  \frac{\phi_c^{n+1}-\phi_c^n}{\Delta t}
+  =
+  R_c(\bm\phi^n).
+  \label{eq:forward_euler}
+\end{equation}
+所以全显式更新式为
+\begin{equation}
+  \boxed{
+  \phi_c^{n+1}
+  =
+  \phi_c^n+\Delta t\,R_c(\bm\phi^n).}
+  \label{eq:explicit_update}
+\end{equation}
+右端全部使用旧时刻 $n$ 的场，不需要组装或求解线性方程组。
+
+\subsection{显式时间步限制}
+
+对流扩散方程的显式时间步同时受对流 CFL 和扩散 Fourier 数限制。对一般控制体，可用
+\begin{equation}
+  \Delta t
+  =
+  \alpha
+  \min_c
+  \frac{V_c}{
+  \displaystyle
+  \sum_{f\in\mathcal F_c}
+  \left[
+  \max(F_{cf},0)+D_{cf}
+  \right]},
+  \qquad
+  0<\alpha<1.
+  \label{eq:stable_dt_general}
+\end{equation}
+其中 $F_{cf}$ 是相对于控制体 $c$ 的外向对流通量，$D_{cf}$ 是扩散传递系数。
+在二维均匀矩形网格上，上式退化为
+\begin{equation}
+  \Delta t
+  \left(
+  \frac{|u|}{\Delta x}
+  +
+  \frac{|v|}{\Delta y}
+  +
+  2\mu
+  \left[
+  \frac{1}{\Delta x^2}
+  +
+  \frac{1}{\Delta y^2}
+  \right]
+  \right)
+  \le 1.
+  \label{eq:stable_dt_cartesian}
+\end{equation}
+因此显式扩散项通常比显式对流项更严格：当网格尺度为 $h$ 时，对流限制大致为
+$\Delta t=O(h)$，扩散限制大致为 $\Delta t=O(h^2)$。
+
+\section{OpenFOAM 求解器对应关系}
+
+\subsection{核心代码形式}
+
+按照式\eqref{eq:R_operator}，求解器的空间残差可直接写成
+\begin{lstlisting}[style=solver,language=C++]
+surfaceScalarField faceFlux = fvc::flux(U);
+
+volScalarField Rphi
 (
     -fvc::div(faceFlux, phi)
-    +fvc::laplacian(mu, phi)
+  +  fvc::laplacian(mu, phi)
 );
 
-phi.primitiveFieldRef()
-    += runTime.deltaTValue()*rhs.primitiveField();
-
+phi.primitiveFieldRef() += runTime.deltaTValue()*Rphi.primitiveField();
 phi.correctBoundaryConditions();
 \end{lstlisting}
-其中：
-\begin{itemize}[leftmargin=2.2em,itemsep=0.2em]
-  \item \texttt{-fvc::div(faceFlux, phi)} 对应负对流散度；
-  \item \texttt{fvc::laplacian(mu, phi)} 对应正扩散贡献。
+各项含义如下：
+\begin{itemize}
+  \item \texttt{fvc::flux(U)} 计算 $F_f=\uf_f\cdot\Sf_f$；
+  \item \texttt{-fvc::div(faceFlux, phi)} 对应 $-\nabla\cdot(\uf\phi)$；
+  \item \texttt{+fvc::laplacian(mu, phi)} 对应 $+\nabla\cdot(\mu\nabla\phi)$；
+  \item \texttt{Rphi} 对应本文的 $R_c$，已经是体积归一化残差；
+  \item 最后一行显式执行 $\phi^{n+1}=\phi^n+\Delta tR^n$。
 \end{itemize}
-离散格式设置为
-\begin{lstlisting}
+
+\subsection{cases 中的离散格式入口}
+
+推荐在 \texttt{system/fvSchemes} 中使用如下设置：
+\begin{lstlisting}[style=solver]
+ddtSchemes
+{
+    default                 Euler;
+}
+
 gradSchemes
 {
     default                 Gauss linear;
+    grad(phi)               Gauss linear;
 }
 
 divSchemes
@@ -758,89 +581,220 @@ laplacianSchemes
     default                 none;
     laplacian(mu,phi)       Gauss linear corrected;
 }
+
+snGradSchemes
+{
+    default                 corrected;
+}
+
+interpolationSchemes
+{
+    default                 linear;
+}
 \end{lstlisting}
-\src{R1，第5.10.2节表5.1、第11.9.2节和第8.10.2节。}
+如果需要把对流格式从一阶迎风改成线性迎风，主要修改 \texttt{divSchemes} 中的
+对流格式字段；扩散项仍然通过 \texttt{laplacianSchemes} 和 \texttt{snGradSchemes}
+控制。
 
-\subsection{算例一：正弦波的验证}
+\subsection{边界条件入口}
 
-题目给出
-\begin{equation}
-\phi(x,y,0)=\sin\bigl(2\pi(x+y)\bigr),
-\end{equation}
-\begin{equation}
-\vect u=(a,a),\qquad \mu=1,
-\end{equation}
-计算域为 $[0,1]^2$，边界条件为周期边界，目标时间为 $T=1$。精确解为
-\begin{equation}
-\phi_{\mathrm{exact}}(x,y,t)
-=\exp(-8\pi^2\mu t)
-\sin\bigl(2\pi(x+y-2at)\bigr).
-\label{eq:sine-exact}
-\end{equation}
+边界条件不在求解器公式里硬编码，而在 case 的 \texttt{0/phi} 或
+\texttt{0.orig/phi} 中给定。常见情况如下：
+\begin{itemize}
+  \item 周期边界：使用 \texttt{cyclic}，OpenFOAM 将匹配面按类似内部面的方式处理；
+  \item Dirichlet 边界：使用 \texttt{fixedValue}，给定边界 $\phi_b$；
+  \item Neumann 边界：使用 \texttt{fixedGradient} 或 \texttt{zeroGradient}，
+        给定 $\nabla\phi\cdot\bm n$；
+  \item 速度场：通常在 \texttt{0/U}、\texttt{constant} 字典或求解器初始化逻辑中给出；
+  \item 扩散系数：可在 \texttt{constant/transportProperties} 中给出 \texttt{mu}。
+\end{itemize}
 
-分别在逐步加密的三角形和四边形网格上计算体积加权误差：
+因此式\eqref{eq:residual}中的边界面项
+\begin{equation}
+  A_{cb}+H_{cb}
+  \label{eq:boundary_flux_sum}
+\end{equation}
+不是一个固定表达式，而是由具体边界条件决定。对流部分需要判断边界面是流入还是
+流出：
+\begin{equation}
+  A_{cb}=F_{cb}\phi_{b}^{\mathrm{up}},
+  \qquad
+  \phi_b^{\mathrm{up}}
+  =
+  \begin{cases}
+    \phi_c,&F_{cb}\ge 0,\\
+    \phi_b,&F_{cb}<0.
+  \end{cases}
+  \label{eq:boundary_advective_flux}
+\end{equation}
+扩散部分则由边界上的 $\phi$ 或法向梯度决定。例如 Dirichlet 边界给定
+$\phi=\phi_b$ 时，可由单元中心到边界面的差商近似扩散通量；Neumann 边界给定
+\begin{equation}
+  \nabla\phi\cdot\bm n=g_b
+  \label{eq:boundary_neumann}
+\end{equation}
+时，扩散物理通量为
+\begin{equation}
+  H_{cb}
+  =
+  \Jd{}_{b}\cdot\Sf_{cb}
+  =
+  -\mu_b g_b |S_b|.
+  \label{eq:boundary_diffusive_flux}
+\end{equation}
+如果边界是周期边界，OpenFOAM 的 \texttt{cyclic} patch 会把匹配边界面按成对面处理，
+其数值效果接近把周期另一侧单元作为 neighbour。
+
+\section{题目两个验证算例}
+
+\subsection{算例一：正弦波对流扩散}
+
+题目给出二维正弦波初值
+\begin{equation}
+  \phi(x,y,0)=\sin(2\pi(x+y)),
+  \label{eq:sine_initial}
+\end{equation}
+均匀速度
+\begin{equation}
+  \uf=(a,a),
+  \qquad
+  \mu=1,
+\end{equation}
+区域为 $[0,1]^2$，边界条件为 $x$ 和 $y$ 方向周期边界。也就是说，左右边界互相
+匹配，上下边界互相匹配：
+\begin{equation}
+  \phi(0,y,t)=\phi(1,y,t),
+  \qquad
+  \phi(x,0,t)=\phi(x,1,t).
+  \label{eq:sine_periodic_bc}
+\end{equation}
+对应 OpenFOAM case 中四个边界 patch 应设置为 \texttt{cyclic}。精确解为
+\begin{equation}
+  \phi_{\mathrm{ex}}(x,y,t)
+  =
+  e^{-8\pi^2\mu t}
+  \sin(2\pi(x+y-2at)).
+  \label{eq:sine_exact}
+\end{equation}
+题目要求在四边形和三角形网格上逐步加密，在 $t=1$ 统计误差和收敛行为。
+
+体积加权误差可写为
 \begin{align}
-L_1&=\frac{\sum_PV_P|e_P|}{\sum_PV_P},\\
-L_2&=\left(\frac{\sum_PV_Pe_P^2}{\sum_PV_P}\right)^{1/2},\\
-L_\infty&=\max_P|e_P|,
+  L_1
+  &=
+  \frac{\sum_c V_c|\phi_c-\phi_{\mathrm{ex},c}|}{\sum_c V_c},
+  \\
+  L_2
+  &=
+  \left(
+  \frac{\sum_c V_c(\phi_c-\phi_{\mathrm{ex},c})^2}{\sum_c V_c}
+  \right)^{1/2},
+  \\
+  L_\infty
+  &=
+  \max_c|\phi_c-\phi_{\mathrm{ex},c}|.
 \end{align}
-其中
+相邻两层网格的观察收敛阶为
 \begin{equation}
-e_P=\phi_P-\phi_{\mathrm{exact},P}.
+  p=\frac{\log(E_N/E_{2N})}{\log 2}.
+  \label{eq:order}
 \end{equation}
-相邻两层网格的观测收敛阶为
-\begin{equation}
-p=\frac{\ln(E_h/E_{h/2})}{\ln2}.
-\label{eq:observed-order}
-\end{equation}
-一阶迎风对流离散具有一阶数值耗散；虽然中心扩散项在规则网格上为二阶，但整体空间误差通常由迎风项主导，因此平滑正弦波算例的观测空间收敛阶预期接近一阶。另一方面，扩散稳定性使 $\Delta t=O(h^2)$，故前向欧拉的 $O(\Delta t)$ 时间误差通常为 $O(h^2)$，不会掩盖一阶迎风空间误差。
-\src{题目第3.2.1节给出初值、周期边界、精确解、网格类型和目标时间；迎风格式阶数依据 R1 第11.2.4节。}
 
-\subsection{算例二：旋转尖峰的验证}
+\subsection{算例二：旋转尖峰对流扩散}
 
-题目给出
+题目给出区域 $[-1,1]^2$，速度场
 \begin{equation}
-\vect u=(-y,x),\qquad \mu=\varepsilon=10^{-3},
+  \uf=(-y,x),
+  \label{eq:rotation_velocity}
 \end{equation}
-计算域为 $[-1,1]^2$。每个面上的速度和通量直接由面中心坐标计算：
+扩散系数
 \begin{equation}
-\vect u_f=(-y_f,x_f),
-\qquad F_f=(-y_f,x_f)\cdot\vect S_f.
+  \mu=\varepsilon=10^{-3}.
 \end{equation}
-题面解析函数为
+解析函数形态为
 \begin{equation}
-\phi(\vect x,t)
-=\frac{1}{4\pi\varepsilon t}
-\exp\left(-\frac{r^2}{4\varepsilon t}\right),
+  \phi(\xf,t)
+  =
+  \frac{1}{4\pi\varepsilon t}
+  \exp\left(-\frac{r^2}{4\varepsilon t}\right),
+  \qquad
+  r^2=(x-\widehat x)^2+(y-\widehat y)^2.
+  \label{eq:sharp_peak}
 \end{equation}
+题面给出的峰中心运动为
 \begin{equation}
-r^2=(x-\widehat x)^2+(y-\widehat y)^2.
+  \widehat x(t)=x_0\cos t-y_0\sin t,
+  \qquad
+  \widehat y(t)=y_0\cos t-x_0\sin t.
+  \label{eq:peak_center_problem}
 \end{equation}
-题面写出的峰中心为
-\begin{equation}
-\widehat x(t)=x_0\cos t-y_0\sin t,
-\qquad
-\widehat y(t)=y_0\cos t-x_0\sin t.
-\label{eq:printed-trajectory}
-\end{equation}
-从 $t_0=\pi/2$ 开始，一圈旋转的时间长度为 $2\pi$，若按角速度为1理解，则终止时间为
-\begin{equation}
-T=t_0+2\pi=\frac{5\pi}{2}.
-\end{equation}
-在终止时刻绘制等值线，并使用前述 $L_1,L_2,L_\infty$ 及式\eqref{eq:observed-order}比较三角形、四边形网格的误差和收敛行为。
+实验从 $t_0=\pi/2$ 开始，峰位于 $(x_0,y_0)=(0,0.5)$，要求经过一圈旋转后绘制
+等值线，并统计误差和收敛行为。
 
-\begin{tcolorbox}[colback=yellow!7,colframe=orange!70!black,title=题面符号需在编码前确认]
-速度场 $\dot x=-y,\ \dot y=x$ 对应的一般旋转轨迹应为
-\[
-\widehat x=x_0\cos t-y_0\sin t,
-\qquad
-\widehat y=x_0\sin t+y_0\cos t.
-\]
-题面式\eqref{eq:printed-trajectory}第二式中 $x_0\sin t$ 的符号与标准旋转解不同。不过本题指定 $x_0=0$，因此该符号差异在当前参数下不影响 $\widehat y=y_0\cos t$。此外，“从 $t_0=\pi/2$ 开始”与“峰位于 $(x_0,y_0)$”之间存在时间原点歧义：必须确认 $(x_0,y_0)$ 是 $t=0$ 还是 $t=t_0$ 的峰中心，不能在程序中混用两种定义。
-\end{tcolorbox}
+原题明确说明该解析函数同时给出初始条件和边界条件。因此实现时应在初始时刻写入
+\begin{equation}
+  \phi(\xf,t_0)=\phi_{\mathrm{ex}}(\xf,t_0),
+  \label{eq:peak_initial_condition}
+\end{equation}
+并在计算区域边界 $\partial[-1,1]^2$ 上施加随时间变化的解析边界值
+\begin{equation}
+  \phi(\xf_b,t)=\phi_{\mathrm{ex}}(\xf_b,t),
+  \qquad
+  \xf_b\in\partial[-1,1]^2.
+  \label{eq:peak_boundary_condition}
+\end{equation}
+从 OpenFOAM case 角度看，这更接近 \texttt{fixedValue} 类型的时间相关 Dirichlet
+边界，而不是第二题扩散算例中的齐次 Neumann 边界或其他边界条件。若后续为了简化
+代码临时使用 \texttt{zeroGradient}，必须在报告中说明这是工程近似，不能写成严格
+复现原题。
 
-由于一阶迎风格式具有明显数值扩散，尖峰在计算中会同时受到物理扩散 $\varepsilon$ 和迎风数值扩散的展宽作用。因此，验证时除误差范数外，还应比较峰值高度、峰中心位置与等值线宽度；网格加密后数值扩散应逐渐减弱。
-\src{题目第3.2.2节给出区域、速度场、扩散系数、解析函数、起始时间、峰位置及“一圈旋转”验证要求。}
+需要注意，速度场 $\dot x=-y,\dot y=x$ 对应的标准旋转轨迹通常写为
+\begin{equation}
+  \widehat x(t)=x_0\cos t-y_0\sin t,
+  \qquad
+  \widehat y(t)=x_0\sin t+y_0\cos t.
+  \label{eq:peak_center_standard}
+\end{equation}
+因此在真正编码前，需要明确采用题面打印公式还是标准旋转公式。若 $x_0=0$，两者在
+$\widehat y$ 的符号表现上仍可能影响峰中心位置和误差计算，不能混用。
+
+\section{最终可执行算法}
+
+按照上面的推导，一个时间步的全显式算法为：
+\begin{enumerate}
+  \item 读取网格、体积 $V_c$、面面积向量 $\Sf_f$ 和 owner--neighbour 寻址；
+  \item 根据当前时刻或配置读取速度场 $\uf^n$、扩散系数 $\mu$ 和旧场 $\phi^n$；
+  \item 计算面通量 $F_f^n=\uf_f^n\cdot\Sf_f$；
+  \item 用显式对流格式计算 $A_f^n$；
+  \item 用显式 Laplacian 格式计算 $+\nabla\cdot(\mu\nabla\phi^n)$；
+  \item 形成
+        \[
+          R^n=-\nabla\cdot(\uf^n\phi^n)+\nabla\cdot(\mu\nabla\phi^n);
+        \]
+  \item 根据对流和扩散稳定性计算 $\Delta t$，最后一步截断到目标时间；
+  \item 执行 $\phi^{n+1}=\phi^n+\Delta tR^n$；
+  \item 修正边界条件并输出结果；
+  \item 若未到终止时间，进入下一步。
+\end{enumerate}
+
+这套算法与第一题对流求解器和第二题扩散求解器的关系非常清楚：
+\begin{equation}
+  \boxed{
+  \text{第三题右端}
+  =
+  \text{第一题对流右端}
+  +
+  \text{第二题扩散右端}.}
+\end{equation}
+在 OpenFOAM 代码层面就是
+\begin{equation}
+  \boxed{
+  R_\phi
+  =
+  -\texttt{fvc::div(faceFlux, phi)}
+  +
+  \texttt{fvc::laplacian(mu, phi)}.}
+\end{equation}
 
 \section*{参考资料}
 \addcontentsline{toc}{section}{参考资料}
@@ -849,7 +803,7 @@ T=t_0+2\pi=\frac{5\pi}{2}.
   \item[R1] F. Moukalled, L. Mangani, M. Darwish, \textit{The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM and Matlab}, Springer, 2016.
   \item[R2] T. Holzmann, K. Rooney, \textit{The OpenFOAM Technology Primer}, First Edition, 2021.
   \item[R3] G. Holzinger, \textit{OpenFOAM: A Little User-Manual}, 2020.
-  \item[题目] \textit{Training Examples}, 第3题 ``Advection and diffusion equation''，包括第3.1节控制方程与第3.2节两个验证算例。
+  \item[题目] \textit{Training Examples}, 第3题 ``Advection and diffusion equation''。
 \end{description}
 
 \end{document}

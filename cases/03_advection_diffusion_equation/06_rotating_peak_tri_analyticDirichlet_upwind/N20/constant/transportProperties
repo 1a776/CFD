@@ -1,0 +1,18 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}
+
+// 对应求解器里的 dimensionedScalar mu。
+// 数学上是扩散系数 μ，量纲是 L2/T。
+mu              [0 2 -1 0 0 0 0] 0.001;

@@ -33,3 +33,13 @@ wmake UDF/solver/01_advection_equation/explicitAdvectionFoamStudent
 export FOAM_USER_APPBIN="$projectRoot/build/02_diffusion_equation/bin"
 mkdir -p "$FOAM_USER_APPBIN"
 wmake UDF/solver/02_diffusion_equation/explicitDiffusionFoamStudent
+
+# 第三题：显式对流扩散方程求解器。
+export FOAM_USER_APPBIN="$projectRoot/build/03_advection_diffusion_equation/bin"
+mkdir -p "$FOAM_USER_APPBIN"
+wmake UDF/solver/03_advection_diffusion_equation/explicitAdvectionDiffusionFoamStudent
+
+# 第四题：Poisson 方程求解器。
+export FOAM_USER_APPBIN="$projectRoot/build/04_poisson_equation/bin"
+mkdir -p "$FOAM_USER_APPBIN"
+wmake UDF/solver/04_poisson_equation/poissonFoamStudent

@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+solvers
+{
+    // 本求解器不调用 fvm::ddt、fvm::laplacian，也不组装 A*phi=b。
+    //
+    // 每一步直接计算：
+    //     R = -div(U phi) + div(mu grad(phi))
+    //     phi(new) = phi(old) + deltaT R
+    //
+    // 因而不存在需要在这里配置的线性方程组求解器或残差容限。
+}

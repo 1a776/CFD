@@ -1,0 +1,76 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : blockMesh
+Date   : Aug 27 2026
+Time   : 09:04:20
+Host   : "DELL"
+PID    : 503
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/03_advection_diffusion_equation/05_rotating_peak_quad_analyticDirichlet_upwind/N20
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Reading "blockMeshDict"
+
+Creating block mesh from
+    "system/blockMeshDict"
+Creating block edges
+No non-planar block faces defined
+Creating topology blocks
+Creating topology patches
+
+Creating block mesh topology
+
+Basic statistics
+    Number of internal faces : 0
+    Number of boundary faces : 6
+    Number of defined boundary faces : 6
+    Number of undefined boundary faces : 0
+
+Checking topology
+Creating block offsets
+Creating merge list .
+
+Creating polyMesh from blockMesh
+Creating patches
+Creating cells
+Creating points with scale 1
+    Block 0 cell size :
+        i : 0.1 .. 0.1
+        j : 0.1 .. 0.1
+        k : 0.1
+
+No patch pairs to merge
+
+Writing polyMesh
+----------------
+Mesh Information
+----------------
+  boundingBox: (-1 -1 0) (1 1 0.1)
+  nPoints: 882
+  nCells: 400
+  nFaces: 1640
+  nInternalFaces: 760
+----------------
+Patches
+----------------
+  patch 0 (start: 760 size: 20) name: xMin
+  patch 1 (start: 780 size: 20) name: xMax
+  patch 2 (start: 800 size: 20) name: yMin
+  patch 3 (start: 820 size: 20) name: yMax
+  patch 4 (start: 840 size: 400) name: zMin
+  patch 5 (start: 1240 size: 400) name: zMax
+
+End
+

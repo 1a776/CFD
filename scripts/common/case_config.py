@@ -23,6 +23,7 @@ class CaseConfig:
     path: Path
     solver_family: str
     case_name: str
+    template_solver_family: str
     template_case_name: str
     description: str
     equation: str
@@ -37,6 +38,7 @@ class CaseConfig:
     scalar_field: str
     diffusivity: float
     diffusion_co: float
+    advection_diffusion_co: float
     max_delta_t: float | None
     solver: str
     template_resolution: int
@@ -60,7 +62,7 @@ class CaseConfig:
     @property
     def template_case(self) -> Path:
         return solver_case_dir(
-            self.solver_family,
+            self.template_solver_family,
             self.template_case_name,
             self.template_resolution,
         )
@@ -135,6 +137,9 @@ def load_config(value: str | Path) -> CaseConfig:
         path=path,
         solver_family=str(data.get("solverFamily", "01_advection_equation")),
         case_name=str(data["caseName"]),
+        template_solver_family=str(
+            data.get("templateSolverFamily", data.get("solverFamily", "01_advection_equation"))
+        ),
         template_case_name=str(data.get("templateCaseName", data["caseName"])),
         description=str(data.get("description", "")),
         equation=str(data.get("equation", str(data.get("problem", "sine_wave_advection")).split("_")[-1])),
@@ -155,6 +160,9 @@ def load_config(value: str | Path) -> CaseConfig:
         scalar_field=str(data.get("scalarField", "T")),
         diffusivity=float(data.get("mu", 1.0)),
         diffusion_co=float(data.get("diffusionCo", data.get("maxCo", 0.5))),
+        advection_diffusion_co=float(
+            data.get("advectionDiffusionCo", data.get("diffusionCo", data.get("maxCo", 0.5)))
+        ),
         max_delta_t=(
             float(data["maxDeltaT"])
             if data.get("maxDeltaT") is not None

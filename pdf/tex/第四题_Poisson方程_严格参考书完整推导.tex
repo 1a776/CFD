@@ -1,0 +1,949 @@
+\documentclass[UTF8,12pt,a4paper]{ctexart}
+
+\usepackage[a4paper,margin=2.35cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,array,longtable}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\definecolor{sourcegray}{RGB}{75,84,97}
+\definecolor{sourcebg}{RGB}{244,247,250}
+\definecolor{linkblue}{RGB}{31,78,121}
+\definecolor{keyblue}{RGB}{17,83,142}
+\definecolor{keybg}{RGB}{239,247,255}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkblue,
+  citecolor=linkblue,
+  urlcolor=linkblue,
+  pdftitle={第四题：Poisson方程的有限体积离散与OpenFOAM求解器},
+  pdfauthor={张云飞}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{第四题：Poisson方程}
+\rhead{面向OpenFOAM求解器实现}
+\cfoot{\thepage}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=2.4em,itemsep=0.35em,topsep=0.35em}
+\numberwithin{equation}{section}
+
+\newcommand{\dd}{\,\mathrm d}
+\newcommand{\Rone}{\textnormal{[R1]}}
+\newcommand{\Rtwo}{\textnormal{[R2]}}
+\newcommand{\Rthree}{\textnormal{[R3]}}
+\newcommand{\Task}{\textnormal{[题目]}}
+\newcommand{\source}[1]{%
+  \par\smallskip
+  \noindent\colorbox{sourcebg}{%
+    \parbox{0.955\linewidth}{\footnotesize\color{sourcegray}\textbf{参考来源：}#1}%
+  }
+  \par\smallskip
+}
+\newcommand{\keytitle}[1]{%
+  \par\smallskip\noindent
+  \colorbox{keybg}{\parbox{0.965\linewidth}{\color{keyblue}\textbf{重要公式：}#1}}
+  \par\smallskip
+}
+
+\lstdefinestyle{foam}{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{sourcegray},
+  backgroundcolor=\color{sourcebg},
+  numbers=left,
+  numberstyle=\tiny\color{sourcegray},
+  numbersep=8pt,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  breaklines=true,
+  xleftmargin=1.4em,
+  framexleftmargin=1.0em
+}
+
+\title{\bfseries 第四题：Poisson方程的有限体积离散\\与OpenFOAM数值求解器推导}
+\author{张云飞}
+\date{2026年8月27日}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+本文严格按照题目第4题及OpenFOAM有限体积源码逻辑，对
+\[
+  \nabla\cdot\nabla\phi=\omega
+\]
+进行有限体积离散和求解器设计。本文的主线不是手工重写一个Laplacian矩阵，而是说明题目方程如何直接落到OpenFOAM的\texttt{fvm::laplacian(phi) == omega}：控制体积分对应Gauss面通量求和，\texttt{laplacianSchemes}决定面法向梯度和非正交修正，\texttt{fixedValue}边界给出Dirichlet边界贡献，\texttt{fvSolution}决定线性求解器和非正交修正控制。为和前三题的扩散记号衔接，文中仍保留物理扩散通量$H_f=-(\nabla\phi)_f\cdot\bm S_f$，但求解器代码层面以OpenFOAM的Laplacian算子符号为准。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section*{题目、依据范围与符号约定}
+\addcontentsline{toc}{section}{题目、依据范围与符号约定}
+
+\subsection*{题目范围}
+
+题目第4.1节给出的控制方程为
+\begin{equation}
+  \nabla\cdot\nabla\phi=\omega
+  \qquad\text{即}\qquad
+  \nabla^2\phi=\omega.
+  \label{eq:governing}
+\end{equation}
+题目要求写出基于有限体积法的半离散形式，并采用OpenFOAM提供的空间离散格式开发数值求解器。第4.2节指定：计算域为$[0,1]^2$，分别使用四边形和三角形网格，解析解、源项及Dirichlet边界为
+\begin{align}
+  \phi_{\mathrm{exact}}(x,y)
+  &=\cos(\pi x)\cos(\pi y),
+  \label{eq:exact_given}\\
+  \omega(x,y)
+  &=-2\pi^2\cos(\pi x)\cos(\pi y),
+  \label{eq:source_given}\\
+  \phi|_{\partial\Omega}
+  &=\phi_{\mathrm{exact}}|_{\partial\Omega}.
+  \label{eq:dirichlet_given}
+\end{align}
+题面没有规定网格数量、线性求解器容差、最大迭代次数或非正交修正次数，因此本文不人为固定这些参数。
+
+\source{\Task，第4.1--4.2节；误差和收敛阶定义见题目附录A。}
+
+\subsection*{与参考书控制方程的严格对应}
+
+参考书\Rone 第8章以稳态扩散--源项方程
+\begin{equation}
+  -\nabla\cdot\left(\Gamma^\phi\nabla\phi\right)=Q^\phi
+  \label{eq:R1_equation}
+\end{equation}
+为推导起点，并定义物理扩散通量
+\begin{equation}
+  \bm J_{\phi,D}=-\Gamma^\phi\nabla\phi.
+  \label{eq:physical_diffusive_flux}
+\end{equation}
+题目方程\eqref{eq:governing}与参考书方程\eqref{eq:R1_equation}的对应关系是
+\begin{equation}
+  \boxed{
+  \Gamma^\phi=1,
+  \qquad
+  Q^\phi=-\omega,
+  \qquad
+  \bm J_{\phi,D}=-\nabla\phi.}
+  \label{eq:book_mapping}
+\end{equation}
+这一映射非常重要：参考书第8章离散的是$-\nabla\cdot(\Gamma^\phi\nabla\phi)$；题目写的是$+\nabla^2\phi$。只要同时令$Q^\phi=-\omega$，两种写法完全等价。
+
+\source{\Rone，第8.1节式(8.1)--(8.3)：稳态扩散--源项方程及扩散通量定义。}
+
+\subsection*{面向OpenFOAM求解器的主约定}
+
+OpenFOAM的\texttt{fvm::laplacian(phi)}表示离散算子
+\begin{equation}
+  L_h(\phi)_c
+  \approx
+  \frac{1}{V_c}
+  \sum_{f\in\mathcal F_c}
+  (\nabla\phi)_f\cdot\bm S_{cf},
+  \label{eq:foam_laplacian_operator}
+\end{equation}
+其符号与题目方程$\nabla^2\phi=\omega$一致。因此第四题求解器最自然的核心方程写为
+\keytitle{第四题求解器的OpenFOAM主方程}
+\begin{equation}
+  \boxed{
+  \texttt{fvm::laplacian(phi) == omega}.}
+  \label{eq:foam_primary_equation}
+\end{equation}
+源码调用链是：
+\begin{itemize}
+  \item \texttt{fvm::laplacian(phi)}进入\texttt{fvmLaplacian.C}；
+  \item OpenFOAM根据算子名\texttt{laplacian(phi)}从\texttt{system/fvSchemes}读取格式；
+  \item 若配置为\texttt{Gauss linear corrected}，则由\texttt{gaussLaplacianScheme}组装隐式矩阵；
+  \item 正交主贡献进入\texttt{fvMatrix}的LDU系数，非正交修正进入\texttt{fvMatrix::source()}；
+  \item \texttt{phiEqn.solve()}从\texttt{system/fvSolution}读取线性求解器、容差和迭代控制。
+\end{itemize}
+所以本文后续推导中的通量、矩阵和边界项，都服务于理解OpenFOAM这一行代码，而不是要求在学生求解器中逐面手动装配矩阵。
+
+\source{OpenFOAM 14源码：\texttt{src/finiteVolume/finiteVolume/fvm/fvmLaplacian.C}中\texttt{fvm::laplacian}通过\texttt{mesh().schemes().laplacian(name)}读取格式；\texttt{gaussLaplacianScheme.C}中\texttt{fvmLaplacian}组装正交主矩阵并把修正项写入\texttt{fvm.source()}；\texttt{potentialFoam.C}中Poisson型方程直接使用\texttt{fvm::laplacian(...)}。}
+
+\subsection*{统一记号}
+
+\begin{longtable}{>{\centering\arraybackslash}p{0.20\linewidth}p{0.69\linewidth}}
+\toprule
+记号 & 含义\\
+\midrule
+$c$ & 当前控制体编号\\
+$\Omega_c$，$V_c=|\Omega_c|$ & 控制体及其面积/体积\\
+$\mathcal F_c$ & 控制体$c$的全部面集合\\
+$f$ & 内部面\\
+$O_f,N_f$ & 内部面$f$的owner单元和neighbour单元\\
+$\bm x_{O_f},\bm x_{N_f}$ & owner、neighbour单元中心\\
+$\bm d_f=\bm x_{N_f}-\bm x_{O_f}$ & 从$O_f$指向$N_f$的中心连线向量\\
+$d_f=\lVert\bm d_f\rVert$ & owner与neighbour中心距离\\
+$\bm n_f$ & 从$O_f$指向$N_f$的全局单位法向量\\
+$\bm S_f=|S_f|\bm n_f$ & 从$O_f$指向$N_f$的全局有向面积向量\\
+$\sigma_{cf}$ & $c=O_f$时为$+1$，$c=N_f$时为$-1$\\
+$\bm S_{cf}=\sigma_{cf}\bm S_f$ & 面$f$相对于控制体$c$的外向面积向量\\
+$H_f$ & 按$O_f\to N_f$定向的物理扩散数值通量\\
+$Q_c$ & 控制体$c$尚未除以体积的净外向扩散通量和\\
+$R_c=Q_c/V_c$ & 控制体$c$体积归一化的扩散通量散度\\
+$\omega_c$ & 源项$\omega$在控制体$c$上的体积平均值\\
+\bottomrule
+\end{longtable}
+
+内部面方向关系统一为
+\begin{equation}
+  \boxed{
+  \sigma_{cf}=
+  \begin{cases}
+    +1,&c=O_f,\\
+    -1,&c=N_f,
+  \end{cases}
+  \qquad
+  \bm S_{cf}=\sigma_{cf}\bm S_f,
+  \qquad
+  \bm S_f=|S_f|\bm n_f.}
+  \label{eq:orientation}
+\end{equation}
+因此每个内部面只计算一次全局通量，再以相反符号装配到两个相邻控制体。
+
+\source{\Rtwo，第1.3.1节式(1.22)--(1.26)：面面积向量、面通量、owner--neighbour寻址以及同一内部面对两侧单元的反号装配。}
+
+\newpage
+\section{控制体积分与有限体积半离散形式}
+
+\subsection{控制体积分}
+
+对式\eqref{eq:governing}在固定控制体$\Omega_c$上积分：
+\begin{equation}
+  \int_{\Omega_c}\nabla\cdot\nabla\phi\dd V
+  =\int_{\Omega_c}\omega\dd V.
+  \label{eq:cell_integral}
+\end{equation}
+应用Gauss散度定理，左端由体积分变为控制体边界上的面积分：
+\begin{equation}
+  \oint_{\partial\Omega_c}\nabla\phi\cdot\dd\bm S
+  =\int_{\Omega_c}\omega\dd V.
+  \label{eq:gauss_integral}
+\end{equation}
+把控制体边界分解为各个面，并在每个面中心采用一点Gauss积分：
+\begin{align}
+  \oint_{\partial\Omega_c}\nabla\phi\cdot\dd\bm S
+  &\approx
+  \sum_{f\in\mathcal F_c}
+  (\nabla\phi)_f\cdot\bm S_{cf},
+  \label{eq:face_gauss}\\
+  \int_{\Omega_c}\omega\dd V
+  &=V_c\omega_c,
+  \qquad
+  \omega_c:=\frac{1}{V_c}\int_{\Omega_c}\omega\dd V.
+  \label{eq:source_average}
+\end{align}
+因此，直接按题目Laplacian符号写出的有限体积通量平衡骨架为
+\begin{equation}
+  \boxed{
+  \sum_{f\in\mathcal F_c}
+  (\nabla\phi)_f\cdot\bm S_{cf}
+  =V_c\omega_c.}
+  \label{eq:semi_direct}
+\end{equation}
+此时空间微分已经转化为有限个面通量，但面法向梯度尚未由单元值封闭，故式\eqref{eq:semi_direct}是题目所称的有限体积半离散骨架。由于本题没有时间导数，面通量一经空间格式封闭，方程便直接成为代数方程，而不再需要时间离散。
+
+\source{\Rone，第5.2节关于控制体积分与Gauss定理的第一阶段离散；第8.1节式(8.4)--(8.5)：稳态扩散--源项方程的面通量求和。}
+
+\subsection{作为理解辅助的物理扩散通量}
+
+为保持第二、第三题中$H_f$的物理含义不变，定义按全局面方向$O_f\to N_f$的物理扩散通量
+\begin{equation}
+  \boxed{
+  H_f:=-\left(\nabla\phi\right)_f\cdot\bm S_f.}
+  \label{eq:H_definition}
+\end{equation}
+对于控制体$c$，内部面的局部外向通量为$H_{cf}=\sigma_{cf}H_f$；边界面通量代数和记为$Q_c^{\mathrm{bnd}}$。于是
+\begin{align}
+  Q_c(\phi)
+  &:=%
+  \sum_{f\in\mathcal F_c^{\mathrm{int}}}
+  \sigma_{cf}H_f+Q_c^{\mathrm{bnd}},
+  \label{eq:Q_definition}\\
+  R_c(\phi)
+  &:=\frac{Q_c(\phi)}{V_c}.
+  \label{eq:R_definition}
+\end{align}
+由于$H_f$比式\eqref{eq:semi_direct}中的Laplacian面通量多一个负号，得到与前三题扩散通量记号一致的等价半离散式：
+\keytitle{第四题的有限体积半离散形式}
+\begin{equation}
+  \boxed{
+  Q_c(\phi)=-V_c\omega_c,
+  \qquad
+  R_c(\phi)=\frac{Q_c(\phi)}{V_c}=-\omega_c.}
+  \label{eq:semi_unified}
+\end{equation}
+式\eqref{eq:semi_direct}与式\eqref{eq:semi_unified}只是通量符号约定不同，数学内容完全相同。写第四题求解器时，以式\eqref{eq:semi_direct}和\texttt{fvm::laplacian(phi) == omega}为主线；式\eqref{eq:semi_unified}只用于理解参考书中的物理扩散通量、守恒装配和正对角矩阵形式。
+
+\source{\Rone，第8.1节式(8.2)--(8.4)：$\bm J_{\phi,D}=-\Gamma^\phi\nabla\phi$及其控制体面通量平衡；本题取$\Gamma^\phi=1$、$Q^\phi=-\omega$。}
+
+\newpage
+\section{空间离散：OpenFOAM的Laplacian装配逻辑}
+
+本节的目的不是手工重写OpenFOAM的Laplacian矩阵，而是说明\texttt{Gauss linear corrected}这一行配置背后的数学含义。对第四题求解器来说，代码中只需要调用\texttt{fvm::laplacian(phi)}；具体的正交项、非正交修正、边界贡献和矩阵装配由OpenFOAM根据\texttt{system/fvSchemes}和\texttt{0.orig/phi}自动完成。
+
+\subsection{正交网格上的线性面法向梯度}
+
+考虑内部面$f$，其全局方向由$O_f$指向$N_f$。若网格正交，则$\bm S_f$与$\bm d_f$平行。参考书采用单元中心之间的线性变化假设，面法向梯度为
+\begin{equation}
+  (\nabla\phi)_f\cdot\bm n_f
+  \approx
+  \frac{\phi_{N_f}-\phi_{O_f}}{d_f}.
+  \label{eq:orth_snGrad}
+\end{equation}
+代入物理扩散通量定义\eqref{eq:H_definition}：
+\begin{align}
+  H_f
+  &=-|S_f|
+  \frac{\phi_{N_f}-\phi_{O_f}}{d_f}
+  \notag\\
+  &=D_f(\phi_{O_f}-\phi_{N_f}),
+  \qquad
+  D_f:=\frac{|S_f|}{d_f}.
+  \label{eq:orth_H}
+\end{align}
+因此正交网格的物理扩散通量是
+\begin{equation}
+  \boxed{
+  H_f=D_f(\phi_{O_f}-\phi_{N_f}),
+  \qquad
+  D_f=\frac{|S_f|}{d_f}.}
+  \label{eq:orth_key}
+\end{equation}
+从OpenFOAM的Laplacian符号看，同一内部面的Laplacian面通量为
+\begin{equation}
+  (\nabla\phi)_f\cdot\bm S_f
+  \approx
+  D_f(\phi_{N_f}-\phi_{O_f}).
+  \label{eq:orth_lap_flux}
+\end{equation}
+这正是\texttt{fvm::laplacian(phi)}在正交网格上隐式装配的主贡献。该式对应参考书中线性扩散通量系数$\Gamma_f g\mathrm{Diff}_f$；本题$\Gamma_f=1$。
+
+\source{\Rone，第8.1节式(8.9)--(8.12)、(8.18)--(8.21)：单元中心线性变化、正交面扩散通量、几何扩散系数和代数方程。}
+
+\subsection{非正交网格的面积向量分解}
+
+三角形和一般四边形网格通常不是严格正交网格。参考书指出，此时$\bm S_f$与$\bm d_f$不共线，不能只用$\phi_{O_f},\phi_{N_f}$表示完整的面法向梯度。将面积向量分解为
+\begin{equation}
+  \boxed{
+  \bm S_f=\bm E_f+\bm T_f,
+  \qquad
+  \bm E_f\parallel\bm d_f.}
+  \label{eq:decomposition}
+\end{equation}
+其中$\bm E_f$产生能够由两侧单元值线性化的正交型贡献，$\bm T_f$产生非正交交叉扩散贡献。与OpenFOAM的\texttt{corrected}面法向梯度相对应，可采用参考书的over-relaxed分解：
+\begin{equation}
+  \bm E_f
+  =\frac{\bm S_f\cdot\bm S_f}
+  {\bm S_f\cdot\bm d_f}\,\bm d_f,
+  \qquad
+  \bm T_f=\bm S_f-\bm E_f.
+  \label{eq:over_relaxed}
+\end{equation}
+定义非负的正交扩散传递系数
+\begin{equation}
+  D_f:=\frac{|\bm E_f|}{d_f}
+  =\frac{|S_f|^2}{\bm S_f\cdot\bm d_f},
+  \label{eq:D_nonorth}
+\end{equation}
+其中对有效owner--neighbour网格有$\bm S_f\cdot\bm d_f>0$。
+
+\source{\Rone，第8.6.1节式(8.63)--(8.67)：非正交性及$\bm S_f=\bm E_f+\bm T_f$；第8.6.4节式(8.70)：over-relaxed分解；第8.10.2节Listing 8.8--8.10：OpenFOAM非正交修正向量及\texttt{corrected}配置。}
+
+\subsection{corrected格式的面通量}
+
+由式\eqref{eq:decomposition}，Laplacian面通量为
+\begin{align}
+  (\nabla\phi)_f\cdot\bm S_f
+  &=(\nabla\phi)_f\cdot\bm E_f
+   +(\nabla\phi)_f\cdot\bm T_f
+  \notag\\
+  &\approx
+  D_f(\phi_{N_f}-\phi_{O_f})
+  +(\nabla\phi)_f\cdot\bm T_f.
+  \label{eq:lap_flux_corrected}
+\end{align}
+定义非正交修正
+\begin{equation}
+  C_f:=(\nabla\phi)_f\cdot\bm T_f,
+  \label{eq:C_definition}
+\end{equation}
+则OpenFOAM corrected格式对应的内部面Laplacian面通量为
+\keytitle{OpenFOAM corrected格式对应的Laplacian面通量}
+\begin{equation}
+  \boxed{
+  (\nabla\phi)_f\cdot\bm S_f
+  \approx
+  D_f(\phi_{N_f}-\phi_{O_f})+C_f,
+  \qquad
+  C_f=(\nabla\phi)_f\cdot\bm T_f.}
+  \label{eq:lap_corrected_key}
+\end{equation}
+若改用物理扩散通量$H_f=-(\nabla\phi)_f\cdot\bm S_f$，同一公式写为
+\begin{equation}
+  \boxed{
+  H_f
+  =D_f(\phi_{O_f}-\phi_{N_f})-C_f,
+  \qquad
+  C_f=(\nabla\phi)_f\cdot\bm T_f.}
+  \label{eq:H_corrected}
+\end{equation}
+正交网格上$\bm T_f=\bm0$，式\eqref{eq:lap_corrected_key}自动退化为式\eqref{eq:orth_lap_flux}，式\eqref{eq:H_corrected}自动退化为式\eqref{eq:orth_key}。
+
+\source{\Rone，第8.6.1节式(8.66)--(8.67)、第8.6.5节和第8.6.7节式(8.77)--(8.79)：正交可线性化部分、交叉扩散及延迟修正代数方程。}
+
+\subsection{梯度计算与延迟修正}
+
+非正交项$C_f$不能仅由$\phi_{O_f},\phi_{N_f}$直接线性化。按照参考书与OpenFOAM的\texttt{corrected}实现，先用Green--Gauss公式计算单元梯度：
+\begin{equation}
+  (\nabla\phi)_c
+  \approx
+  \frac{1}{V_c}
+  \sum_{g\in\mathcal F_c}
+  \phi_g\bm S_{cg},
+  \label{eq:gauss_grad}
+\end{equation}
+再将两侧单元梯度线性插值到内部面：
+\begin{equation}
+  (\nabla\phi)_f
+  =\lambda_f(\nabla\phi)_{O_f}
+  +(1-\lambda_f)(\nabla\phi)_{N_f},
+  \label{eq:face_grad_interp}
+\end{equation}
+其中$\lambda_f$由面中心相对于两单元中心的位置确定。OpenFOAM把正交主项$D_f(\phi_{N_f}-\phi_{O_f})$隐式放入\texttt{fvMatrix}，把非正交修正$C_f$按当前迭代场显式计算并放入矩阵源项，这就是参考书的deferred correction。对非正交网格，应重新计算梯度和修正项并迭代更新，直至采用的非正交修正停止准则满足；题面没有规定修正次数或容差，故它们应作为求解控制参数，而不能从题面臆造。
+
+\source{\Rone，第8.6.5节：交叉扩散的延迟修正；第8.6.6节式(8.72)--(8.76)：Green--Gauss单元梯度和面梯度插值。}
+
+\newpage
+\section{Dirichlet边界与完整离散方程}
+
+\subsection{Dirichlet边界面通量}
+
+设$b$是控制体$c$的边界面，$\bm x_b$为边界面中心，$\bm S_{cb}=|S_b|\bm n_{cb}$为控制体外向面积向量，
+\begin{equation}
+  \bm d_{cb}:=\bm x_b-\bm x_c,
+  \qquad
+  d_{cb}:=\lVert\bm d_{cb}\rVert.
+  \label{eq:boundary_d}
+\end{equation}
+题目给定
+\begin{equation}
+  \phi_b=\phi_{\mathrm{exact}}(\bm x_b).
+  \label{eq:boundary_value}
+\end{equation}
+边界面同样作$\bm S_{cb}=\bm E_{cb}+\bm T_{cb}$分解，并定义
+\begin{equation}
+  D_{cb}:=\frac{|\bm E_{cb}|}{d_{cb}},
+  \qquad
+  C_{cb}:=(\nabla\phi)_b\cdot\bm T_{cb}.
+  \label{eq:boundary_DC}
+\end{equation}
+于是边界外向物理扩散通量为
+\begin{equation}
+  \boxed{
+  H_{cb}=D_{cb}(\phi_c-\phi_b)-C_{cb}.}
+  \label{eq:boundary_flux}
+\end{equation}
+正交边界上$C_{cb}=0$，只剩$D_{cb}(\phi_c-\phi_b)$。在OpenFOAM中，题目的Dirichlet条件对应\texttt{fixedValue}边界类型，入口文件是\texttt{0.orig/phi}或运行时复制出的\texttt{0/phi}：
+\begin{lstlisting}[style=foam]
+boundaryField
+{
+    left
+    {
+        type    fixedValue;
+        value   uniform 0;  // 实际开发时由脚本按 phi_exact 写入非均匀边界值
+    }
+}
+\end{lstlisting}
+四条边的边界值来自式\eqref{eq:x_boundaries}--\eqref{eq:y_boundaries}，不是在求解器C++中硬编码。
+
+\source{\Rone，第8.3.1节：Dirichlet边界条件的扩散通量与系数；第8.6.8.1节：非正交网格上的Dirichlet边界；第8.10.2节：边界系数在\texttt{fvMatrix}中的实现。}
+
+\subsection{守恒装配}
+
+内部面$f$只计算一次式\eqref{eq:H_corrected}，然后装配到两侧单元的未归一化通量和：
+\begin{equation}
+  \boxed{
+  Q_{O_f}\mathrel{+}=H_f,
+  \qquad
+  Q_{N_f}\mathrel{-}=H_f.}
+  \label{eq:assembly}
+\end{equation}
+因此同一内部面在全局求和时严格抵消。对任意控制体$c$，完整通量和是
+\begin{equation}
+  Q_c(\phi)
+  =\sum_{f\in\mathcal F_c^{\mathrm{int}}}
+  \sigma_{cf}
+  \left[D_f(\phi_{O_f}-\phi_{N_f})-C_f\right]
+  +\sum_{b\in\mathcal F_c^{\mathrm{bnd}}}
+  \left[D_{cb}(\phi_c-\phi_b)-C_{cb}\right].
+  \label{eq:Q_full}
+\end{equation}
+与式\eqref{eq:semi_unified}组合，得到封闭的有限体积方程
+\keytitle{第四题在一般非正交网格上的封闭离散方程}
+\begin{equation}
+  \boxed{
+  \begin{aligned}
+  &\sum_{f\in\mathcal F_c^{\mathrm{int}}}
+  \sigma_{cf}
+  \left[D_f(\phi_{O_f}-\phi_{N_f})-C_f\right]\\
+  &\quad+
+  \sum_{b\in\mathcal F_c^{\mathrm{bnd}}}
+  \left[D_{cb}(\phi_c-\phi_b)-C_{cb}\right]
+  =-V_c\omega_c.
+  \end{aligned}}
+  \label{eq:closed_discrete}
+\end{equation}
+
+\source{\Rtwo，第1.3.1节式(1.24)--(1.26)：内部面的owner--neighbour守恒装配；\Rone，第8.6.7节式(8.77)--(8.79)：非正交扩散代数方程。}
+
+\newpage
+\section{代数矩阵形式与OpenFOAM符号约定}
+
+\subsection{内部面、边界面和源项对矩阵的贡献}
+
+OpenFOAM会在\texttt{fvMatrix}内部完成LDU矩阵装配，写求解器时不需要手工给出每个面的矩阵系数。本节只解释参考书中的正对角扩散矩阵与OpenFOAM方程之间的关系。
+
+若按参考书的物理扩散通量$H_f=-(\nabla\phi)_f\cdot\bm S_f$整理，则等价求解的是
+\begin{equation}
+  -\nabla^2\phi=-\omega.
+  \label{eq:negative_lap_equation}
+\end{equation}
+这一写法可得到正对角的对称扩散矩阵。记全局线性系统为
+\begin{equation}
+  \bm A\bm\phi=\bm b.
+  \label{eq:matrix_general}
+\end{equation}
+对每个内部面$f$，令$D=D_f$、$C=C_f$，由式\eqref{eq:H_corrected}得到以下装配：
+\begin{equation}
+  \begin{array}{c|ccc}
+  \text{行} & A_{O_fO_f} & A_{O_fN_f} & b_{O_f}\\
+  \hline
+  O_f & {+}{=}D & {-}{=}D & {+}{=}C
+  \end{array}
+  \qquad
+  \begin{array}{c|ccc}
+  \text{行} & A_{N_fN_f} & A_{N_fO_f} & b_{N_f}\\
+  \hline
+  N_f & {+}{=}D & {-}{=}D & {-}{=}C
+  \end{array}.
+  \label{eq:internal_matrix_assembly}
+\end{equation}
+对控制体$c$的Dirichlet边界面$b$：
+\begin{equation}
+  A_{cc}\mathrel{+}=D_{cb},
+  \qquad
+  b_c\mathrel{+}=D_{cb}\phi_b+C_{cb}.
+  \label{eq:boundary_matrix_assembly}
+\end{equation}
+体源项贡献为
+\begin{equation}
+  b_c\mathrel{+}=-V_c\omega_c.
+  \label{eq:source_matrix_assembly}
+\end{equation}
+把三类贡献相加，得到
+\begin{align}
+  A_{cc}
+  &=\sum_{f\in\mathcal F_c^{\mathrm{int}}}D_f
+    +\sum_{b\in\mathcal F_c^{\mathrm{bnd}}}D_{cb},
+  \label{eq:diag_coefficient}\\
+  A_{cO_f}\ \text{或}\ A_{cN_f}
+  &=-D_f\quad\text{（按$c$位于该面的哪一侧确定列号）},
+  \label{eq:offdiag_coefficient}\\
+  b_c
+  &=-V_c\omega_c
+  +\sum_{f\in\mathcal F_c^{\mathrm{int}}}\sigma_{cf}C_f
+  +\sum_{b\in\mathcal F_c^{\mathrm{bnd}}}
+   \left(D_{cb}\phi_b+C_{cb}\right).
+  \label{eq:rhs_coefficient}
+\end{align}
+
+\keytitle{最终线性代数系统}
+\begin{equation}
+  \boxed{
+  \begin{aligned}
+  &\bm A\bm\phi=\bm b,
+  \qquad A_{cc}>0,
+  \qquad A_{cd}\le0\quad(c\ne d),\\
+  &A_{cc}=-\sum_{d\ne c}A_{cd}
+  \qquad\text{（无Dirichlet边界贡献的内部行）}.
+  \end{aligned}}
+  \label{eq:matrix_key}
+\end{equation}
+最后一项是参考书所述的zero-sum rule；中心系数与相邻系数异号对应opposite-signs rule。Dirichlet边界使系统具有唯一解，并消除纯Neumann Poisson问题会出现的常数零空间。
+
+需要注意，式\eqref{eq:matrix_key}是便于理解的正对角矩阵形式。实际OpenFOAM求解器推荐直接写题目原方程
+\begin{equation}
+  \texttt{fvm::laplacian(phi) == omega}.
+  \label{eq:matrix_to_foam_sign}
+\end{equation}
+若为了与式\eqref{eq:matrix_key}逐项对应，也可以写成等价的\texttt{-fvm::laplacian(phi) == -omega}。两者数学上相同；本文后续求解器实现以式\eqref{eq:matrix_to_foam_sign}为主，避免在第四题代码中人为引入额外负号。
+
+\source{\Rone，第8.1节式(8.18)--(8.21)：扩散方程代数系数；第8.2.1节式(8.25)--(8.27)：zero-sum rule；第8.2.2节：opposite-signs rule；第8.3.1节：Dirichlet边界系数。}
+
+\subsection{离散守恒性}
+
+对全部控制体的$Q_c$求和。由式\eqref{eq:assembly}，所有内部面贡献成对抵消，只剩边界物理扩散通量：
+\begin{equation}
+  \sum_cQ_c
+  =\sum_{b\subset\partial\Omega}H_{cb}
+  =-\sum_cV_c\omega_c.
+  \label{eq:global_conservation}
+\end{equation}
+这就是连续关系
+\begin{equation}
+  -\oint_{\partial\Omega}\nabla\phi\cdot\bm n\dd S
+  =-\int_\Omega\omega\dd V
+\end{equation}
+的离散对应，也是使用owner--neighbour反号装配的根本原因。
+
+\source{\Rone，第8.1节的面通量守恒形式；\Rtwo，第1.3.1节式(1.26)：内部面反号装配。}
+
+\newpage
+\section{OpenFOAM空间离散与求解器实现}
+
+\subsection{数学算子与OpenFOAM算子的对应}
+
+参考书明确区分两类Laplacian算子：
+\begin{itemize}
+  \item \texttt{fvc::laplacian(phi)}：显式计算当前已知场的离散Laplacian，返回一个体场；
+  \item \texttt{fvm::laplacian(phi)}：组装Laplacian的\texttt{fvMatrix}，包含对角、上三角、下三角、边界系数及非正交源项。
+\end{itemize}
+本题是稳态Poisson边值问题，需要从$\omega$求解未知场$\phi$，所以应使用\texttt{fvm::laplacian}构造线性系统，而不是只调用\texttt{fvc::laplacian}计算一个已知场的Laplacian。
+
+OpenFOAM中的核心方程应直接按题目符号写成
+\keytitle{控制方程的OpenFOAM核心实现}
+\begin{equation}
+  \boxed{
+  \texttt{fvm::laplacian(phi)}
+  =\texttt{omega}.}
+  \label{eq:foam_core_math}
+\end{equation}
+若想从参考书的正对角扩散矩阵理解它，可等价地把方程整体乘以$-1$，写成\texttt{-fvm::laplacian(phi) == -omega}。但是求解器代码、算例配置和报告中的主表达式均建议采用式\eqref{eq:foam_core_math}，因为它与题面$\nabla^2\phi=\omega$逐字一致。
+
+\source{\Rone，第8.10.2节，第260--265页，Listing 8.5--8.10：\texttt{fvc::laplacian}、\texttt{fvm::laplacian}、矩阵系数、非正交修正和\texttt{fvSchemes}配置。}
+
+\subsection{空间格式配置}
+
+根据参考书对OpenFOAM Laplacian格式的解释，案例的\texttt{system/fvSchemes}应采用
+\begin{lstlisting}[style=foam]
+gradSchemes
+{
+    default         Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         none;
+    laplacian(phi)  Gauss linear corrected;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+\end{lstlisting}
+其中：
+\begin{itemize}
+  \item \texttt{Gauss}对应式\eqref{eq:face_gauss}的面通量Gauss离散；
+  \item \texttt{linear}对应参考书的线性插值；本题系数为1，因此不存在复杂的面扩散系数插值；
+  \item \texttt{corrected}对应式\eqref{eq:decomposition}--\eqref{eq:lap_corrected_key}的非正交修正。
+\end{itemize}
+
+\source{\Rone，第8.10.2节Listing 8.10：\texttt{laplacian(gamma,phi) Gauss linear corrected}及三个关键词的含义；\Rthree，关于\texttt{system/fvSchemes}和\texttt{fvSolution}的算例配置说明。}
+
+\subsection{求解器数学核心}
+
+下面代码只保留与数学离散直接对应的核心。$\phi$使用\texttt{fixedValue}边界，$\omega$按式\eqref{eq:source_given}在单元中赋值；Laplacian格式由\texttt{system/fvSchemes}读取，线性求解器类型和停止准则由\texttt{system/fvSolution}读取，题面未给出，因此不在代码中硬编码。
+
+\begin{lstlisting}[style=foam,language=C++]
+// phi: unknown volScalarField with fixedValue boundaries
+// omega: cell source from -2*pi^2*cos(pi*x)*cos(pi*y)
+
+for (label nonOrth = 0;
+     nonOrth <= nNonOrthogonalCorrectors;
+     ++nonOrth)
+{
+    fvScalarMatrix phiEqn
+    (
+        fvm::laplacian(phi) == omega
+    );
+
+    phiEqn.solve();
+    phi.correctBoundaryConditions();
+}
+
+phi.write();
+\end{lstlisting}
+
+每次进入循环时，OpenFOAM的隐式Laplacian算子都会重新组装正交主矩阵，并根据当前$\phi$计算非正交修正源项。因此该循环就是参考书第8.6.5节所述延迟修正的程序化实现。非正交修正次数可由求解器自己的控制字典或\texttt{system/fvSolution}中的SIMPLE/PISO类控制参数给出；正交网格上修正项为零，一次线性求解即可得到该离散系统的解。
+
+\source{\Rone，第8.6.5节：deferred correction；第8.10.2节Listing 8.5--8.9：\texttt{fvm::laplacian}矩阵、\texttt{source()}中的非正交项及\texttt{correctedSnGrad}。}
+
+\subsection{公式--cases文件--代码对应关系}
+
+\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.32\linewidth}}
+\toprule
+数学公式或物理量 & cases中的入口 & OpenFOAM代码对应\\
+\midrule
+$\sum_f(\nabla\phi)_f\cdot\bm S_{cf}=V_c\omega_c$
+& \texttt{system/fvSchemes}中的\texttt{laplacian(phi)}
+& \texttt{fvm::laplacian(phi)}\\
+$D_f(\phi_{N_f}-\phi_{O_f})$
+& 网格来自\texttt{system/blockMeshDict}或Gmsh脚本，生成到\texttt{constant/polyMesh}
+& \texttt{magSf*deltaCoeffs}及LDU矩阵系数\\
+$C_f=(\nabla\phi)_f\cdot\bm T_f$
+& \texttt{system/fvSchemes}中的\texttt{snGradSchemes default corrected}
+& \texttt{correctedSnGrad}的\texttt{correction}及\texttt{fvMatrix::source()}\\
+$Q_{O_f}{+}{=}H_f,\ Q_{N_f}{-}{=}H_f$
+& \texttt{constant/polyMesh/owner}和\texttt{constant/polyMesh/neighbour}
+& owner--neighbour LDU寻址\\
+$\phi|_{\partial\Omega}=\phi_{\mathrm{exact}}$
+& \texttt{0.orig/phi}或\texttt{0/phi}的\texttt{boundaryField}，类型为\texttt{fixedValue}
+& \texttt{fixedValue}的内部系数与边界系数\\
+$\omega=-2\pi^2\cos(\pi x)\cos(\pi y)$
+& \texttt{0.orig/omega}、\texttt{0/omega}，或求解器按单元中心生成的\texttt{volScalarField omega}
+& 方程右端\texttt{omega}乘控制体体积后进入矩阵源项\\
+$\phi$的线性求解容差
+& \texttt{system/fvSolution}中\texttt{solvers { phi ... }}
+& \texttt{phiEqn.solve()}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\source{\Rone，第8.10.2节Listing 8.5--8.10；\Rtwo，第1.3.1节关于owner--neighbour LDU装配。}
+
+\newpage
+\section{题目第4.2节数值算例与验证}
+
+\subsection{解析解与源项自洽性}
+
+对题目解析解分别求二阶偏导：
+\begin{align}
+  \frac{\partial^2\phi_{\mathrm{exact}}}{\partial x^2}
+  &=-\pi^2\cos(\pi x)\cos(\pi y),
+  \label{eq:exact_xx}\\
+  \frac{\partial^2\phi_{\mathrm{exact}}}{\partial y^2}
+  &=-\pi^2\cos(\pi x)\cos(\pi y).
+  \label{eq:exact_yy}
+\end{align}
+因此
+\begin{equation}
+  \boxed{
+  \nabla^2\phi_{\mathrm{exact}}
+  =-2\pi^2\cos(\pi x)\cos(\pi y)
+  =\omega(x,y).}
+  \label{eq:manufactured_check}
+\end{equation}
+故题目的解析解、源项和Dirichlet边界彼此相容。
+
+四条边上的边界值可明确写成
+\begin{align}
+  \phi(0,y)&=\cos(\pi y),
+  &\phi(1,y)&=-\cos(\pi y),
+  \label{eq:x_boundaries}\\
+  \phi(x,0)&=\cos(\pi x),
+  &\phi(x,1)&=-\cos(\pi x).
+  \label{eq:y_boundaries}
+\end{align}
+
+\source{\Task，第4.2节：计算域、解析解、Dirichlet边界和源项；题目参考文献[7]为该测试的原始引用。式\eqref{eq:manufactured_check}由题面解析解直接微分得到。}
+
+\subsection{三角形与四边形网格上的计算流程}
+
+对两类网格分别执行以下流程：
+\begin{enumerate}
+  \item 在$[0,1]^2$上生成一组逐步加密的四边形网格；另生成一组逐步加密的三角形网格。两类网格的误差和收敛阶分别统计。
+  \item 读取$V_c,\bm x_c,\bm x_f,O_f,N_f,\bm S_f$，计算$\bm d_f,D_f$以及非正交修正几何量。
+  \item 按式\eqref{eq:source_given}在单元中心设置$\omega_c$，按式\eqref{eq:x_boundaries}--\eqref{eq:y_boundaries}在边界面设置\texttt{fixedValue}。
+  \item 使用\texttt{Gauss linear corrected}组装并求解式\eqref{eq:foam_core_math}；在需要时迭代非正交修正。
+  \item 在每个单元中心计算$\phi_{\mathrm{exact},c}$和误差$e_c=\phi_c-\phi_{\mathrm{exact},c}$。
+  \item 按题目附录A计算$E(L_1),E(L_2),E(L_\infty)$及相邻网格的收敛阶。
+\end{enumerate}
+这里“逐步加密”是完成收敛分析所必需的实验结构；具体单元数应由实际网格序列给出，不能在没有题面依据时虚构。
+
+\subsection{严格采用题目附录A的误差定义}
+
+设网格共有$N_e$个控制体，$|\Omega_c|=V_c$，数值解和解析解分别为$\phi_{n,c}$、$\phi_{e,c}$。题目附录A规定的归一化误差为
+\begin{align}
+  E(L_1)
+  &=\frac{\displaystyle\sum_{c=1}^{N_e}
+  |\phi_{n,c}-\phi_{e,c}|V_c}
+  {\displaystyle\sum_{c=1}^{N_e}|\phi_{e,c}|V_c},
+  \label{eq:L1}\\
+  E(L_2)
+  &=\left[
+  \frac{\displaystyle\sum_{c=1}^{N_e}
+  (\phi_{n,c}-\phi_{e,c})^2V_c}
+  {\displaystyle\sum_{c=1}^{N_e}\phi_{e,c}^2V_c}
+  \right]^{1/2},
+  \label{eq:L2}\\
+  E(L_\infty)
+  &=\frac{\displaystyle\max_c
+  |\phi_{n,c}-\phi_{e,c}|}
+  {\displaystyle\max_c|\phi_{e,c}|}.
+  \label{eq:Linf}
+\end{align}
+
+\keytitle{题目规定的三种归一化误差}
+\begin{equation}
+  \boxed{
+  E(L_1),\quad E(L_2),\quad E(L_\infty)
+  \ \text{必须分别按式\eqref{eq:L1}--\eqref{eq:Linf}计算}.}
+  \label{eq:error_key}
+\end{equation}
+它们不是未归一化的绝对$L_1,L_2,L_\infty$误差，分母不可省略。
+
+\source{\Task，附录A式(3)--(5)。}
+
+\subsection{收敛阶}
+
+题目附录A使用网格总单元数表示有效网格尺度。对于两组二维网格，若粗、细网格单元数分别为$N_{e,1}$、$N_{e,2}$，且$N_{e,2}>N_{e,1}$，则相邻网格的观测收敛阶为
+\keytitle{二维网格的观测收敛阶}
+\begin{equation}
+  \boxed{
+  p=
+  \frac{\log(E_1/E_2)}
+  {\log\!\left[\left(N_{e,2}/N_{e,1}\right)^{1/2}\right]}.}
+  \label{eq:rate}
+\end{equation}
+其中$E_1,E_2$必须是同一种误差范数在相邻两层网格上的结果。三角形网格和四边形网格应分别计算$p$，不能把不同网格类型的误差交叉配对。参考书的线性正交扩散离散在规则网格上具有中心差分类性质；对非正交网格，\texttt{corrected}项用于恢复一致性。最终收敛阶应由实际计算结果给出，本文不在没有网格和数值结果的情况下预填误差或阶数。
+
+\source{\Task，附录A的收敛率定义，其中本题维数$n=2$；\Rone，第8.1节的线性扩散离散及第8.6节的非正交修正。}
+
+\newpage
+\section{重要公式汇总}
+
+为便于检查，第四题的关键链条集中列为：
+
+\begin{enumerate}
+  \item 参考书方程与题目方程的对应：
+  \begin{equation*}
+    \boxed{
+    -\nabla\cdot(\Gamma^\phi\nabla\phi)=Q^\phi,
+    \qquad
+    \Gamma^\phi=1,
+    \quad Q^\phi=-\omega.}
+  \end{equation*}
+
+  \item 统一面方向：
+  \begin{equation*}
+    \boxed{
+    \bm S_f=|S_f|\bm n_f,
+    \quad O_f\to N_f,
+    \quad \bm S_{cf}=\sigma_{cf}\bm S_f.}
+  \end{equation*}
+
+  \item 有限体积半离散守恒式：
+  \begin{equation*}
+    \boxed{
+    \sum_{f\in\mathcal F_c}
+    (\nabla\phi)_f\cdot\bm S_{cf}
+    =V_c\omega_c.}
+  \end{equation*}
+
+  \item OpenFOAM corrected内部面Laplacian通量：
+  \begin{equation*}
+    \boxed{
+    (\nabla\phi)_f\cdot\bm S_f
+    \approx
+    D_f(\phi_{N_f}-\phi_{O_f})+C_f,
+    \quad C_f=(\nabla\phi)_f\cdot\bm T_f.}
+  \end{equation*}
+
+  \item 与参考书物理扩散通量一致的等价写法：
+  \begin{equation*}
+    \boxed{
+    H_f=D_f(\phi_{O_f}-\phi_{N_f})-C_f,
+    \quad C_f=(\nabla\phi)_f\cdot\bm T_f.}
+  \end{equation*}
+
+  \item 内部面守恒装配：
+  \begin{equation*}
+    \boxed{
+    Q_{O_f}\mathrel{+}=H_f,
+    \qquad Q_{N_f}\mathrel{-}=H_f.}
+  \end{equation*}
+
+  \item 代数系统与OpenFOAM方程：
+  \begin{equation*}
+    \boxed{
+    \bm A\bm\phi=\bm b,
+    \qquad
+    \texttt{fvm::laplacian(phi)}=\texttt{omega}.}
+  \end{equation*}
+
+  \item cases文件入口：
+  \begin{equation*}
+    \boxed{
+    \texttt{0.orig/phi}\to \phi|_{\partial\Omega},
+    \quad
+    \texttt{0.orig/omega}\to \omega,
+    \quad
+    \texttt{system/fvSchemes}\to L_h,
+    \quad
+    \texttt{system/fvSolution}\to \phi\text{的线性求解}.}
+  \end{equation*}
+
+  \item 解析解自洽性：
+  \begin{equation*}
+    \boxed{
+    \nabla^2[\cos(\pi x)\cos(\pi y)]
+    =-2\pi^2\cos(\pi x)\cos(\pi y)=\omega.}
+  \end{equation*}
+\end{enumerate}
+
+\addcontentsline{toc}{section}{参考文献}
+
+\begin{thebibliography}{9}
+
+\bibitem{R1}
+F.~Moukalled, L.~Mangani, and M.~Darwish,
+\textit{The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM and Matlab},
+Springer, 2016.
+
+本文主要使用：第5.2节（控制体积分、Gauss定理和面通量离散）；第8.1节式(8.1)--(8.21)（稳态扩散--源项方程、线性扩散通量和代数系数）；第8.2节（系数规则）；第8.3.1节（Dirichlet边界）；第8.6节式(8.63)--(8.79)（非正交分解、梯度和延迟修正）；第8.10.2节Listing 8.5--8.10（OpenFOAM Laplacian矩阵与\texttt{Gauss linear corrected}）。
+
+\bibitem{R2}
+T.~Mari\'{c}, J.~H\"opken, and K.~G.~Mooney,
+\textit{The OpenFOAM Technology Primer},
+Version OpenFOAM-v2012.
+
+本文主要使用第1章，特别是第1.3.1节式(1.22)--(1.26)关于面面积向量、面通量、owner--neighbour寻址及守恒装配的说明。
+
+\bibitem{R3}
+G.~Holzinger,
+\textit{OpenFOAM: A Little User-Manual},
+23 March 2020.
+
+本文仅将其作为OpenFOAM算例目录、\texttt{fvSchemes}、\texttt{fvSolution}和运行方式的操作性补充；核心数学推导及Laplacian源码对应以\Rone 为准。
+
+\bibitem{Task}
+\textit{Numerical TESTs for Partial Differential Equations (PDEs)},
+26 September 2023，第4题及附录A。
+
+\bibitem{Ferrer}
+E.~Ferrer and R.~Willden,
+``A high order discontinuous Galerkin finite element solver for the incompressible Navier--Stokes equations,''
+\textit{Computers \& Fluids}, Vol.~46, 2011, pp.~224--230.
+
+该文献为题目第4.2节标注的参考文献[7]；本解答的算例方程、解析解、源项和边界条件严格采用题面给出的内容。
+
+\end{thebibliography}
+
+\end{document}
