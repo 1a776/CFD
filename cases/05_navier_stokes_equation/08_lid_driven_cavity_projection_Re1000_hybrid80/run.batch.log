@@ -1,0 +1,9 @@
+[DELL:00232] opal_ifinit: socket() failed with errno=1
+/opt/openfoam14/etc/config.sh/paraview: 第 95 行： [: !=: 需要一元运算符
+Running /home/a776/vibeflow/python-env/bin/python on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running gmshToFoam on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running createPatch on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running checkMesh on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running /home/a776/workdocuments/上交船舶/slover/student_project/build/05_navier_stokes_equation/bin/projectionFoamStudent on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running foamPostProcess on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+Running foamPostProcess on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80

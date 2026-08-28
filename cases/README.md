@@ -1,50 +1,22 @@
-# `cases/` 案例目录说明
+## `cases/` 案例目录说明
+- `cases/` 是 OpenFOAM 原始案例目录；真正用于报告分析的数据和图片放在`data/`、`figures/` 和 `report/` 中。
 
-`cases/` 存放本项目每一个题目的 OpenFOAM 运行具体案例。
-## 1. 目录树
+## 具体题目的相关设计的的实验案例以及实验配置
 
-```text
-cases/
-├── README.md
-│
-└── 01_advection_equation/
-    ├── 01_sine_wave_quad/
-    │   ├── N10/
-    │   ├── N20/
-    │   ├── N40/
-    │   └── N80/
-    ├── 02_sine_wave_quad_linearUpwind/
-    │   ├── N10/
-    │   ├── N20/
-    │   ├── N40/
-    │   └── N80/
-    ├── 03_sine_wave_tri_upwind/
-    │   ├── N10/
-    │   ├── N20/
-    │   ├── N40/
-    │   └── N80/
-    ├── 03_sine_wave_tri_linearUpwind/
-    │   ├── N10/
-    │   ├── N20/
-    │   ├── N40/
-    │   └── N80/
-    ├── 04_solid_rotation_quad_upwind/
-    │   ├── N50/
-    │   ├── N100/
-    │   └── N200/
-    └── 04_solid_rotation_tri_upwind/
-        ├── N50/
-        ├── N100/
-        └── N200/
-```
+### 1.对流方程
+  ### 案例一：正弦波平移
+  ####  相关的实验设计及其配置
+  - 在三角形网格和四边形网格上分别采用一阶迎风和线性插值配置N=10,20,40,80,Conmax=0.2,并分析L1 L2 误差及收敛阶，图像包括...
+  - 相关实验配置具体说明
+    （用表格说明）
+  - 相关实验的数据
+    用表格说明 OpenFOAM的cases目录，后处理数据，表格，report报告，证据索引
 
 
 
-## 2. 案例族、配置和结果索引
 
-`cases/` 是 OpenFOAM 原始案例目录；真正用于报告分析的数据和图片放在 `data/`、`figures/` 和 `report/` 中。
-
-- 第一题总报告和证据索引
+  
+  - 第一题总报告和证据索引
   - 第一题报告系统分析二维线性对流方程中正弦波平移和复杂轮廓固体旋转两个算例在不同网格与格式下的数值表现。
   - 汇总报告：[`report/01_advection_equation/report.md`](../report/01_advection_equation/report.md)，分析各案例的题目定义、网格设置、格式选择、运行结果和主要结论。
   - 证据索引：[`report/01_advection_equation/evidence_index.md`](../report/01_advection_equation/evidence_index.md)，把报告结论对应到 JSON 配置、OpenFOAM 运行目录、日志文件、数据表和图片。

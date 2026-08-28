@@ -1,0 +1,3 @@
+codedFixedValueFvPatchFieldTemplate.C
+
+LIB = $(PWD)/../platforms/$(WM_OPTIONS)/lib/libxMaxPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc

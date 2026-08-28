@@ -1,0 +1,59 @@
+/*--------------------------------*- C++ -*----------------------------------*  =========                 |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration     |
+    \  /    A nd           |
+     \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+PISO
+{
+    // 投影法使用 OpenFOAM 的循环控制接口。
+    nCorrectors 2;
+    nNonOrthogonalCorrectors 1;
+    pRefCell 0;
+    pRefValue 0;
+}
+
+solvers
+{
+    U
+    {
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance 1e-08;
+        relTol 0;
+    }
+
+    // projectionFoamStudent 在预测步骤中组装并求解 UStarEqn，
+    // 因此线性求解器名称必须与矩阵字段 UStar 对应。
+    UStar
+    {
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance 1e-08;
+        relTol 0;
+    }
+
+    p
+    {
+        solver GAMG;
+        tolerance 1e-08;
+        relTol 0;
+        smoother GaussSeidel;
+    }
+
+    // pisoControl 在最后一次压力校正中使用 pFinal。
+    // 这里与 p 保持相同的线性求解设置，避免末次校正缺少入口。
+    pFinal
+    {
+        $p;
+        relTol 0;
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "meshType": "hybrid",
+  "resolution": 80,
+  "targetSize": 0.0125,
+  "boundaryLayerThickness": 0.12,
+  "boundaryLayerCount": 10,
+  "coreTargetSize": 0.0125,
+  "thickness": 0.1,
+  "elementCounts": {
+    "triangle": 9154,
+    "quadrilateral": 128
+  }
+}

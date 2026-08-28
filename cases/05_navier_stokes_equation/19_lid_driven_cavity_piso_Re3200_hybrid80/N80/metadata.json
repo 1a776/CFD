@@ -1,0 +1,42 @@
+{
+  "solverFamily": "05_navier_stokes_equation",
+  "caseName": "19_lid_driven_cavity_piso_Re3200_hybrid80",
+  "config": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/scripts/configs/05_navier_stokes_equation/19_lid_driven_cavity_piso_Re3200_hybrid80.json",
+  "equation": "cavity",
+  "problem": "lid_driven_cavity",
+  "meshType": "hybrid",
+  "meshBackend": "",
+  "schemeName": "",
+  "divScheme": "Gauss linearUpwind grad(U)",
+  "resolution": 80,
+  "solver": "pisoFoamStudent",
+  "velocity": [
+    1.0,
+    1.0,
+    0.0
+  ],
+  "domain": [
+    0.0,
+    1.0,
+    0.0,
+    1.0
+  ],
+  "velocityModel": {},
+  "initialProfile": {},
+  "boundaryCondition": "periodicXY",
+  "postprocess": {},
+  "scalarField": "T",
+  "sourceField": "omega",
+  "linearSolver": "GAMG",
+  "linearTolerance": 1e-08,
+  "nNonOrthogonalCorrectors": 1,
+  "mu": 0.0003125,
+  "diffusionCo": 0.2,
+  "advectionDiffusionCo": 0.2,
+  "laplacianScheme": "Gauss linear corrected",
+  "snGradScheme": "corrected",
+  "endTime": 150.0,
+  "maxCo": 0.2,
+  "maxDeltaT": 0.01,
+  "initialField": "/home/a776/workdocuments/\u4e0a\u4ea4\u8239\u8236/slover/student_project/cases/05_navier_stokes_equation/19_lid_driven_cavity_piso_Re3200_hybrid80/N80/0.orig/p"
+}

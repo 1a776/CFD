@@ -2014,6 +2014,9 @@ def _postprocess_tri_rotating_peak_advection_diffusion_case(
     exact = np.asarray(exact_values_at_final, dtype=float)
     volumes_array = np.asarray(volumes, dtype=float)
     l1, l2, linf = normalized_errors(numerical_values, exact_values_at_final, volumes)
+    metrics = error_metrics(
+        numerical_values, exact_values_at_final, initial_values, volumes
+    )
     initial_mass = float(np.dot(initial, volumes_array))
     final_mass = float(np.dot(numerical, volumes_array))
     mass_scale = float(np.dot(np.abs(initial), volumes_array))
@@ -2061,6 +2064,7 @@ def _postprocess_tri_rotating_peak_advection_diffusion_case(
         "normalizedL1": l1,
         "normalizedL2": l2,
         "normalizedLinf": linf,
+        **metrics,
         "initialMass": initial_mass,
         "finalMass": final_mass,
         "massChange": mass_change,
@@ -2510,6 +2514,9 @@ def _postprocess_quad_rotating_peak_advection_diffusion_case(
     l1, l2, linf = normalized_errors(
         numerical_values, exact_values_at_final, cell_volume
     )
+    metrics = error_metrics(
+        numerical_values, exact_values_at_final, initial_values, cell_volume
+    )
     initial_mass = float(np.sum(initial) * cell_volume)
     final_mass = float(np.sum(numerical) * cell_volume)
     mass_scale = float(np.sum(np.abs(initial)) * cell_volume)
@@ -2556,6 +2563,7 @@ def _postprocess_quad_rotating_peak_advection_diffusion_case(
         "normalizedL1": l1,
         "normalizedL2": l2,
         "normalizedLinf": linf,
+        **metrics,
         "initialMass": initial_mass,
         "finalMass": final_mass,
         "massChange": mass_change,

@@ -21,7 +21,15 @@
   "postprocess": {
     "type": "exactError",
     "exactSolution": "sineWaveAdvectionDiffusion",
-    "reportTime": 1.0
+    "reportTime": 1.0,
+    "errorDefinition": {
+      "primaryMetric": "initialFieldNormalized",
+      "secondaryMetrics": ["absolute"],
+      "legacyMetric": "exactFieldNormalized",
+      "legacyValidThreshold": "exactNorm > initialNorm * 1e-12",
+      "convergenceOrderMetric": "initialFieldNormalized",
+      "reason": "At mu=1 and t=1 the exact amplitude is exp(-8*pi^2)=5.1225e-35."
+    }
   },
   "endTime": 1.0,
   "advectionDiffusionCo": 0.45,

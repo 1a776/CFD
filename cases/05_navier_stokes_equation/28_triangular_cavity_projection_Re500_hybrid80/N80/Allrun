@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+solverPath="$projectRoot/build/05_navier_stokes_equation/bin/projectionFoamStudent"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+
+sh "$caseDir/Allrun.pre"
+runApplication -overwrite "$solverPath"

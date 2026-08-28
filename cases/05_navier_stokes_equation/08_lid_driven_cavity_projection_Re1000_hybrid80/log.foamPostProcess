@@ -1,0 +1,37 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : foamPostProcess -latestTime -func writeCellVolumes
+Date   : Aug 28 2026
+Time   : 09:27:02
+Host   : "DELL"
+PID    : 537
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 26.695999999983
+
+
+Constructing functionObjects from system/functions
+    Selecting writeCellVolumes with name writeCellVolumes
+Time = 26.696s
+
+Reading fields:
+
+Executing functionObjects
+    Writing cell-volumes field Vc to 26.695999999983
+
+End
+

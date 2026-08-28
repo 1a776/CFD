@@ -1,0 +1,26 @@
+FoamFile
+{
+    format ascii;
+    class dictionary;
+    location "system";
+    object controlDict;
+}
+application projectionFoamStudent;
+startFrom startTime;
+startTime 0;
+stopAt endTime;
+endTime 140;
+deltaT 1e-4;
+writeControl runTime;
+writeInterval 0.1;
+purgeWrite 0;
+writeFormat ascii;
+writePrecision 12;
+timePrecision 20;
+writeCompression off;
+runTimeModifiable no;
+maxCo 0.2;
+scalarField T;
+velocityField U;
+adjustTimeStep   true;
+maxDeltaT        0.01;

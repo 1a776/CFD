@@ -1,0 +1,55 @@
+{
+  "caseName": "31_triangular_cavity_piso_Re500_hybrid80",
+  "solver": "pisoFoamStudent",
+  "reynolds": 500,
+  "viscosity": 0.002,
+  "resolution": 80,
+  "cells": 7308,
+  "finalTime": "129.78410590036048688",
+  "mainVortex": {
+    "x": 0.5145422901146035,
+    "y": -0.5907335907335907,
+    "psi": -0.17188348018644467,
+    "omega": -1.440149335566188
+  },
+  "vortices": [
+    {
+      "type": "minimum",
+      "x": 0.5145422901146035,
+      "y": -0.5907335907335907,
+      "psi": -0.17188348018644467
+    },
+    {
+      "type": "minimum",
+      "x": -0.9058843135820488,
+      "y": -0.16216216216216228,
+      "psi": -0.029676223225829124
+    },
+    {
+      "type": "maximum",
+      "x": -0.7174603763569827,
+      "y": -0.7876447876447878,
+      "psi": 0.021117528404807306
+    }
+  ],
+  "referencePrimary": {
+    "psi": -0.2774,
+    "omega": -1.1791,
+    "x": 0.1319,
+    "y": -0.7793
+  },
+  "uMin": -0.414967904962,
+  "uMax": 0.795886904196,
+  "vMin": -0.46452527826,
+  "vMax": 0.296001067195,
+  "dataFiles": [
+    "u_centerline.csv",
+    "v_horizontal.csv",
+    "summary.json"
+  ],
+  "figureFiles": [
+    "field_streamlines.png",
+    "centerline_comparison.png",
+    "streamfunction_vortices.png"
+  ]
+}

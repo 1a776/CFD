@@ -43,3 +43,20 @@ wmake UDF/solver/03_advection_diffusion_equation/explicitAdvectionDiffusionFoamS
 export FOAM_USER_APPBIN="$projectRoot/build/04_poisson_equation/bin"
 mkdir -p "$FOAM_USER_APPBIN"
 wmake UDF/solver/04_poisson_equation/poissonFoamStudent
+
+# 第五题：不可压 Navier-Stokes 传统压力投影法求解器。
+export FOAM_USER_APPBIN="$projectRoot/build/05_navier_stokes_equation/bin"
+mkdir -p "$FOAM_USER_APPBIN"
+wmake UDF/solver/05_navier_stokes_equation/projectionFoamStudent
+
+# 第六个求解器：第五题 PISO 方法求解器。
+export FOAM_USER_APPBIN="$projectRoot/build/06_piso_navier_stokes_equation/bin"
+mkdir -p "$FOAM_USER_APPBIN"
+wmake UDF/solver/06_piso_navier_stokes_equation/pisoFoamStudent
+
+# 第五题的案例脚本仍从 build/05_navier_stokes_equation/bin 读取求解器，
+# 因此这里同步放一份 PISO 可执行文件，避免只改 solverFamily 就破坏
+# 现有案例入口。
+mkdir -p "$projectRoot/build/05_navier_stokes_equation/bin"
+ln -sf "$projectRoot/build/06_piso_navier_stokes_equation/bin/pisoFoamStudent" \
+    "$projectRoot/build/05_navier_stokes_equation/bin/pisoFoamStudent"

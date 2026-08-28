@@ -45,7 +45,15 @@ class CaseConfig:
     solver: str
     resolutions: tuple[int, ...]
     end_time: float
+    delta_t: float
+    adjust_time_step: bool
+    write_interval: float
     max_co: float
+    steady_state_control: bool
+    steady_velocity_tol: float
+    steady_mass_tol: float
+    minimum_steady_steps: int
+    required_steady_steps: int
     velocity: tuple[float, float, float]
     domain: tuple[float, float, float, float]
     velocity_model: dict[str, Any]
@@ -53,6 +61,8 @@ class CaseConfig:
     boundary_condition: str
     postprocess: dict[str, Any]
     thickness: float
+    boundary_layer_thickness: float | None
+    boundary_layer_count: int | None
     implemented: bool
     grad_t_scheme: str | None
 
@@ -153,7 +163,7 @@ def load_config(value: str | Path) -> CaseConfig:
         ),
         linear_solver=str(data.get("linearSolver", "GAMG")),
         linear_tolerance=float(data.get("linearTolerance", 1e-12)),
-        diffusivity=float(data.get("mu", 1.0)),
+        diffusivity=float(data.get("mu", data.get("viscosity", 1.0))),
         diffusion_co=float(data.get("diffusionCo", data.get("maxCo", 0.5))),
         advection_diffusion_co=float(
             data.get("advectionDiffusionCo", data.get("diffusionCo", data.get("maxCo", 0.5)))
@@ -166,7 +176,15 @@ def load_config(value: str | Path) -> CaseConfig:
         solver=str(data.get("solver", "explicitAdvectionFoamStudent")),
         resolutions=resolutions,
         end_time=float(data.get("endTime", 1.0)),
+        delta_t=float(data.get("deltaT", 1.0e-4)),
+        adjust_time_step=bool(data.get("adjustTimeStep", False)),
+        write_interval=float(data.get("writeInterval", 0.1)),
         max_co=float(data.get("maxCo", 0.2)),
+        steady_state_control=bool(data.get("steadyStateControl", True)),
+        steady_velocity_tol=float(data.get("steadyVelocityTol", 1.0e-6)),
+        steady_mass_tol=float(data.get("steadyMassTol", 1.0e-8)),
+        minimum_steady_steps=int(data.get("minimumSteadySteps", 1000)),
+        required_steady_steps=int(data.get("requiredSteadySteps", 20)),
         velocity=_tuple3(data.get("velocity", [1.0, 1.0, 0.0]), "velocity"),
         domain=_tuple4(data.get("domain", [0.0, 1.0, 0.0, 1.0]), "domain"),
         velocity_model=_dict_value(data.get("velocityModel"), "velocityModel"),
@@ -174,6 +192,16 @@ def load_config(value: str | Path) -> CaseConfig:
         boundary_condition=str(data.get("boundaryCondition", "periodicXY")),
         postprocess=_dict_value(data.get("postprocess"), "postprocess"),
         thickness=float(data.get("thickness", 0.1)),
+        boundary_layer_thickness=(
+            float(data["boundaryLayerThickness"])
+            if data.get("boundaryLayerThickness") is not None
+            else None
+        ),
+        boundary_layer_count=(
+            int(data["boundaryLayerCount"])
+            if data.get("boundaryLayerCount") is not None
+            else None
+        ),
         implemented=bool(data.get("implemented", True)),
         grad_t_scheme=data.get("gradTScheme"),
     )

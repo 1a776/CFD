@@ -86,6 +86,11 @@ POISSON_PROBLEMS = {
     "poisson_manufactured",
 }
 
+LID_CAVITY_PROBLEMS = {
+    "lid_driven_cavity",
+    "tri_lid_driven_cavity",
+}
+
 
 def _structured_centres(
     nx: int,
@@ -278,6 +283,93 @@ solvers
 
 def _write_base_velocity_field(case: Path, config: CaseConfig) -> None:
     """Create the basic advection velocity before patching its values."""
+    if config.problem in LID_CAVITY_PROBLEMS:
+        mesh_type = str(config.mesh_type).lower()
+        empty_patches = (
+            """    front
+    {
+        type empty;
+    }
+    back
+    {
+        type empty;
+    }"""
+            if mesh_type == "hybrid"
+            else """    frontAndBack
+    {
+        type empty;
+    }"""
+        )
+        if config.problem == "tri_lid_driven_cavity":
+            wall_patches = """    leftWall
+    {
+        type noSlip;
+    }
+    rightWall
+    {
+        type noSlip;
+    }
+    movingTop
+    {
+        type fixedValue;
+        value uniform (1 0 0);
+    }"""
+        else:
+            wall_patches = """    leftWall
+    {
+        type noSlip;
+    }
+    rightWall
+    {
+        type noSlip;
+    }
+    bottomWall
+    {
+        type noSlip;
+    }
+    movingTop
+    {
+        type fixedValue;
+        value uniform (1 0 0);
+    }"""
+        (case / "0.orig" / "U").write_text(
+            f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration     |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       volVectorField;
+    location    "0";
+    object      U;
+}}
+
+// 第五题顶盖驱动腔流的速度初值。
+//
+//     U(x,y,0) = (0,0,0)
+//
+// movingTop 顶盖边界：
+//
+//     U = (1,0,0)
+//
+// 其余固壁边界：
+//
+//     U = (0,0,0)
+dimensions [0 1 -1 0 0 0 0];
+internalField uniform (0 0 0);
+boundaryField
+{{
+{wall_patches}
+{empty_patches}
+}}
+""",
+            encoding="utf-8",
+        )
+        return
     if config.problem not in {"sine_wave_advection", "solid_rotation_advection"}:
         return
     boundary = {
@@ -320,6 +412,70 @@ def _replace_or_append_dictionary_entry(path: Path, name: str, value: str) -> No
 
 def _patch_fv_schemes(case: Path, config: CaseConfig) -> None:
     path = case / "system" / "fvSchemes"
+    if config.problem in LID_CAVITY_PROBLEMS:
+        is_projection = config.solver == "projectionFoamStudent"
+        pressure_laplacian_entries = (
+            f"    laplacian(dtCoeff,p) {config.laplacian_scheme};"
+            if is_projection
+            else (
+                f"    laplacian((1|A(U)),p) {config.laplacian_scheme};\n"
+                f"    laplacian(rAU,p) {config.laplacian_scheme};"
+            )
+        )
+        path.write_text(
+            f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}}
+
+ddtSchemes
+{{
+    default Euler;
+}}
+
+gradSchemes
+{{
+    default Gauss linear;
+}}
+
+divSchemes
+{{
+    default none;
+    div(phi,U) {config.div_scheme};
+    div(phi,UStar) {config.div_scheme};
+}}
+
+laplacianSchemes
+{{
+    default none;
+    laplacian(nu,U) {config.laplacian_scheme};
+    laplacian(nu,UStar) {config.laplacian_scheme};
+{pressure_laplacian_entries}
+}}
+
+interpolationSchemes
+{{
+    default linear;
+}}
+
+snGradSchemes
+{{
+    default corrected;
+}}
+""",
+            encoding="utf-8",
+        )
+        return
     if config.problem in POISSON_PROBLEMS:
         path.write_text(
             f"""/*--------------------------------*- C++ -*----------------------------------*\\
@@ -702,6 +858,49 @@ maxDeltaT       {config.max_delta_t:.16g};
         format(config.end_time, ".17g"),
     )
     _replace_or_append_dictionary_entry(path, "maxCo", f"{config.max_co:g}")
+    if config.problem in LID_CAVITY_PROBLEMS:
+        _replace_or_append_dictionary_entry(path, "deltaT", f"{config.delta_t:.16g}")
+        _replace_or_append_dictionary_entry(
+            path,
+            "adjustTimeStep",
+            "true" if config.adjust_time_step else "false",
+        )
+        _replace_or_append_dictionary_entry(
+            path,
+            "writeInterval",
+            f"{config.write_interval:.16g}",
+        )
+        if config.max_delta_t is not None:
+            _replace_or_append_dictionary_entry(
+                path,
+                "maxDeltaT",
+                f"{config.max_delta_t:g}",
+            )
+        _replace_or_append_dictionary_entry(
+            path,
+            "steadyStateControl",
+            "true" if config.steady_state_control else "false",
+        )
+        _replace_or_append_dictionary_entry(
+            path,
+            "steadyVelocityTol",
+            f"{config.steady_velocity_tol:.16g}",
+        )
+        _replace_or_append_dictionary_entry(
+            path,
+            "steadyMassTol",
+            f"{config.steady_mass_tol:.16g}",
+        )
+        _replace_or_append_dictionary_entry(
+            path,
+            "minimumSteadySteps",
+            str(config.minimum_steady_steps),
+        )
+        _replace_or_append_dictionary_entry(
+            path,
+            "requiredSteadySteps",
+            str(config.required_steady_steps),
+        )
     _replace_or_append_dictionary_entry(path, "scalarField", config.scalar_field)
     if config.problem.startswith("diffusion_"):
         _replace_or_append_dictionary_entry(path, "diffusionCo", f"{config.diffusion_co:g}")
@@ -709,7 +908,7 @@ maxDeltaT       {config.max_delta_t:.16g};
             _replace_or_append_dictionary_entry(path, "maxDeltaT", f"{config.max_delta_t:g}")
     # Keep the final time directory name consistent with the configured
     # terminal time, including values such as 2*pi.
-    _replace_or_append_dictionary_entry(path, "timePrecision", "17")
+    _replace_or_append_dictionary_entry(path, "timePrecision", "20")
 
 
 def _write_transport_properties(case: Path, config: CaseConfig) -> Path:
@@ -753,6 +952,8 @@ def _patch_block_mesh_outer_boundaries(case: Path) -> None:
 
 def _patch_velocity_field(case: Path, config: CaseConfig) -> Path:
     """Apply the configured velocity to the generated case field."""
+    if config.problem in LID_CAVITY_PROBLEMS:
+        return case / "0.orig" / "U"
     if config.problem in POISSON_PROBLEMS:
         # Poisson 方程没有速度场 U；这里只是让统一的 case
         # preparation 流程跳过前三题的速度字段处理。
@@ -925,6 +1126,118 @@ patches
 
 
 def _write_initial_field(case: Path, config: CaseConfig) -> Path:
+    if config.problem in LID_CAVITY_PROBLEMS:
+        mesh_type = str(config.mesh_type).lower()
+        empty_patches = (
+            """    front
+    {
+        type empty;
+    }
+    back
+    {
+        type empty;
+    }"""
+            if mesh_type == "hybrid"
+            else """    frontAndBack
+    {
+        type empty;
+    }"""
+        )
+        if config.problem == "tri_lid_driven_cavity":
+            wall_patches = """    leftWall
+    {
+        type noSlip;
+    }
+    rightWall
+    {
+        type noSlip;
+    }
+    movingTop
+    {
+        type fixedValue;
+        value uniform (1 0 0);
+    }"""
+            pressure_patches = """    leftWall
+    {
+        type zeroGradient;
+    }
+    rightWall
+    {
+        type zeroGradient;
+    }
+    movingTop
+    {
+        type zeroGradient;
+    }"""
+        else:
+            wall_patches = """    leftWall
+    {
+        type noSlip;
+    }
+    rightWall
+    {
+        type noSlip;
+    }
+    bottomWall
+    {
+        type noSlip;
+    }
+    movingTop
+    {
+        type fixedValue;
+        value uniform (1 0 0);
+    }"""
+            pressure_patches = """    leftWall
+    {
+        type zeroGradient;
+    }
+    rightWall
+    {
+        type zeroGradient;
+    }
+    bottomWall
+    {
+        type zeroGradient;
+    }
+    movingTop
+    {
+        type zeroGradient;
+    }"""
+        path = case / "0.orig" / "p"
+        path.write_text(
+            f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration     |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      p;
+}}
+
+// 顶盖驱动腔流使用运动学压力 p = p_phys / rho。
+//
+// 初始压力：
+//
+//     p(x,y,0) = 0
+//
+// 固壁上采用零法向梯度作为压力边界初值。
+dimensions [0 2 -2 0 0 0 0];
+internalField uniform 0;
+boundaryField
+{{
+{pressure_patches}
+{empty_patches}
+}}
+""",
+            encoding="utf-8",
+        )
+        return path
     if config.problem in POISSON_PROBLEMS:
         if config.mesh_type == "tri":
             centres, _ = read_cell_geometry(case)
@@ -1082,6 +1395,99 @@ solvers
     )
 
 
+def _write_lid_cavity_fv_solution(case: Path, config: CaseConfig) -> None:
+    (case / "system" / "fvSolution").write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}}
+
+PISO
+{{
+    // 第五题 PISO 参数入口。
+    nCorrectors 2;
+    nNonOrthogonalCorrectors {config.n_non_orthogonal_correctors};
+    pRefCell 0;
+    pRefValue 0;
+    momentumPredictor yes;
+}}
+
+solvers
+{{
+    U
+    {{
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance {config.linear_tolerance:.16g};
+        relTol 0;
+    }}
+
+    UStar
+    {{
+        $U;
+    }}
+
+    p
+    {{
+        solver GAMG;
+        tolerance {config.linear_tolerance:.16g};
+        relTol 0;
+        smoother GaussSeidel;
+    }}
+
+    pFinal
+    {{
+        $p;
+        relTol 0;
+    }}
+}}
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_lid_cavity_physical_properties(case: Path, config: CaseConfig) -> None:
+    (case / "constant" / "physicalProperties").write_text(
+        f"""/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\\\    /    O  peration   |
+    \\\\  /    A nd           |
+     \\\\/     M anipulation  |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}}
+
+// 第五题顶盖驱动腔流的运动黏度。
+//
+// Reynolds 数定义为：
+//
+//     Re = U L / nu
+//
+// 这里取 U = 1, L = 1，因此：
+//
+//     Re = 1 / nu
+nu {config.diffusivity:.16g};
+""",
+        encoding="utf-8",
+    )
+
+
 def _write_poisson_fv_solution(case: Path, config: CaseConfig) -> None:
     """Write linear-solver controls for the steady Poisson matrix."""
     (case / "system" / "fvSolution").write_text(
@@ -1135,6 +1541,147 @@ def _write_case_scripts(case: Path, config: CaseConfig, resolution: int) -> None
     solver_path = (
         f"$projectRoot/build/{config.solver_family}/bin/{config.solver}"
     )
+    hybrid_allrun_pre = None
+    hybrid_create_patch = None
+    if config.mesh_type == "hybrid":
+        gmsh_python = config.gmsh_python or "/home/a776/vibeflow/python-env/bin/python"
+        boundary_layer_thickness = (
+            config.boundary_layer_thickness
+            if config.boundary_layer_thickness is not None
+            else 0.12
+        )
+        boundary_layer_count = (
+            config.boundary_layer_count
+            if config.boundary_layer_count is not None
+            else max(2, round(resolution * boundary_layer_thickness))
+        )
+        hybrid_allrun_pre = f"""#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 混合网格方腔流：
+# 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
+# 该预处理与第一题混合网格一致，只是求解器换成了第五题的
+# pisoFoamStudent。
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+"""
+        if config.problem == "tri_lid_driven_cavity":
+            hybrid_allrun_pre = f"""#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 第五题第二个算例：等边三角形顶盖驱动腔流。
+# 外圈三条边生成边界层四边形带，中心保留三角形核心区。
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_triangular_cavity_hybrid_mesh.py" \
+    --case "$caseDir" \
+    --resolution {resolution} \
+    --boundary-layer-thickness {boundary_layer_thickness:.16g} \
+    --boundary-layer-count {boundary_layer_count} \
+    --thickness {float(config.thickness):.16g}
+"""
+        else:
+            hybrid_allrun_pre = f"""#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 第五题第一个算例：方腔混合网格。
+# 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_hybrid_cavity_mesh.py" \
+    --case "$caseDir" \
+    --resolution {resolution} \
+    --boundary-layer-thickness {boundary_layer_thickness:.16g} \
+    --boundary-layer-count {boundary_layer_count} \
+    --thickness {float(config.thickness):.16g}
+"""
+        hybrid_allrun_pre += f"""
+runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
+runApplication -overwrite createPatch
+runApplication -overwrite checkMesh
+runApplication -suffix centres foamPostProcess -constant -func writeCellCentres
+runApplication -suffix volumes foamPostProcess -constant -func writeCellVolumes
+python3 "$projectRoot/scripts/prepare_case.py" \
+    --config "{config_reference}" \
+    --N {resolution} \
+    --refresh-initial-only
+rm -rf "$caseDir/0"
+cp -R "$caseDir/0.orig" "$caseDir/0"
+"""
+        hybrid_create_patch = """/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration     | Mesh patch construction
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createPatchDict;
+}
+
+pointSync false;
+writeCyclicMatch false;
+
+patches
+{
+    front
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (frontSource);
+    }
+    back
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (backSource);
+    }
+}
+"""
     poisson_run_comments = ""
     if config.problem in POISSON_PROBLEMS:
         poisson_run_comments = """# 第四题 Poisson 案例的执行顺序：
@@ -1259,6 +1806,29 @@ fi
 sh "$caseDir/Allrun.pre"
 runApplication -overwrite "$solverPath"
 """
+    elif config.mesh_type == "hybrid":
+        allrun_pre = hybrid_allrun_pre
+        allrun = f"""#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${{WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+solverPath="{solver_path}"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh $projectRoot/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+
+sh "$caseDir/Allrun.pre"
+runApplication -overwrite "$solverPath"
+"""
     else:
         raise NotImplementedError(f"Unsupported mesh type: {config.mesh_type}")
     (case / "Allclean").write_text(allclean, encoding="utf-8")
@@ -1279,7 +1849,7 @@ def prepare_case(
 ) -> Path:
     """Prepare one configured OpenFOAM case directory."""
     config.require_implemented()
-    if config.mesh_type not in {"quad", "tri"}:
+    if config.mesh_type not in {"quad", "tri", "hybrid"}:
         raise NotImplementedError(f"Unsupported mesh type: {config.mesh_type}")
 
     target = config.case_dir(resolution)
@@ -1330,15 +1900,57 @@ def prepare_case(
             block_mesh_path.write_text(block_mesh_text, encoding="utf-8")
         if config.boundary_condition != "periodicXY":
             _patch_block_mesh_outer_boundaries(target)
-    else:
+    elif config.mesh_type == "tri":
         _write_create_patch_dict(target, config)
         (target / "mesh").mkdir(parents=True, exist_ok=True)
+    else:
+        # 混合网格方腔流的网格与 patch 由 Allrun.pre / gmsh 生成，
+        # 这里仅保留 system 目录和后续写初值所需的结构。
+        (target / "mesh").mkdir(parents=True, exist_ok=True)
+        (target / "system" / "createPatchDict").write_text(
+            """/*--------------------------------*- C++ -*----------------------------------*\\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration     | Mesh patch construction
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createPatchDict;
+}
+
+pointSync false;
+writeCyclicMatch false;
+
+patches
+{
+    front
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (frontSource);
+    }
+    back
+    {
+        patchInfo { type empty; }
+        constructFrom patches;
+        patches (backSource);
+    }
+}
+""",
+            encoding="utf-8",
+        )
     if config.problem in POISSON_PROBLEMS:
         transport_path = target / "constant" / "transportProperties"
         if transport_path.exists():
             transport_path.unlink()
     _patch_fv_schemes(target, config)
     _patch_control_dict(target, config)
+    if config.problem in LID_CAVITY_PROBLEMS:
+        _write_lid_cavity_physical_properties(target, config)
+        _write_lid_cavity_fv_solution(target, config)
     if config.problem.startswith("diffusion_") or config.problem in ADVECTION_DIFFUSION_PROBLEMS:
         _write_transport_properties(target, config)
     _write_base_velocity_field(target, config)
@@ -1351,7 +1963,7 @@ def prepare_case(
     if config.problem in POISSON_PROBLEMS:
         _write_poisson_fv_solution(target, config)
     initial_field: Path | None = None
-    if config.mesh_type == "quad":
+    if config.mesh_type == "quad" or config.problem in LID_CAVITY_PROBLEMS:
         initial_field = _write_initial_field(target, config)
     _write_case_scripts(target, config, resolution)
 
@@ -1384,10 +1996,38 @@ def prepare_case(
         "laplacianScheme": config.laplacian_scheme,
         "snGradScheme": config.sn_grad_scheme,
         "endTime": config.end_time,
+        "deltaT": config.delta_t,
+        "adjustTimeStep": config.adjust_time_step,
+        "writeInterval": config.write_interval,
         "maxCo": config.max_co,
         "maxDeltaT": config.max_delta_t,
+        "steadyStateControl": config.steady_state_control,
+        "steadyVelocityTol": config.steady_velocity_tol,
+        "steadyMassTol": config.steady_mass_tol,
+        "minimumSteadySteps": config.minimum_steady_steps,
+        "requiredSteadySteps": config.required_steady_steps,
         "initialField": str(initial_field) if initial_field else "generated-after-mesh",
     }
+    if config.problem == "lid_driven_cavity":
+        metadata.update(
+            {
+                "reynolds": round(1.0 / config.diffusivity),
+                "viscosity": config.diffusivity,
+                "cellsPerEdge": resolution,
+                "boundaryLayerThickness": config.boundary_layer_thickness,
+                "boundaryLayerCount": config.boundary_layer_count,
+            }
+        )
+    if config.problem == "tri_lid_driven_cavity":
+        metadata.update(
+            {
+                "reynolds": round(1.0 / config.diffusivity),
+                "viscosity": config.diffusivity,
+                "cellsPerEdge": resolution,
+                "boundaryLayerThickness": config.boundary_layer_thickness,
+                "boundaryLayerCount": config.boundary_layer_count,
+            }
+        )
     (target / "metadata.json").write_text(
         json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
@@ -1417,6 +2057,17 @@ def run_case(case: Path, bashrc: Path) -> None:
 
 def postprocess_configured_case(config: CaseConfig, resolution: int) -> None:
     """Post-process one configured case after it has run."""
+    if config.problem == "tri_lid_driven_cavity":
+        from postprocess_triangular_cavity import postprocess
+
+        postprocess(config.case_dir(resolution))
+        return
+    if config.problem == "lid_driven_cavity":
+        from postprocess_lid_cavity import postprocess as postprocess_lid_cavity_case
+
+        postprocess_lid_cavity_case(config.case_dir(resolution))
+        return
+
     if config.problem not in {
         "sine_wave_advection",
         "solid_rotation_advection",

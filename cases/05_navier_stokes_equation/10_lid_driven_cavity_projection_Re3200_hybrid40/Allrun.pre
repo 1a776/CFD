@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 第五题第一案例的 Figure 2 混合网格：
+# 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
+# 网格参数来自当前案例 JSON，不改变求解器和物理边界接口。
+gmshPython="${VIBEFLOW_PYTHON:-/home/a776/vibeflow/python-env/bin/python}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_hybrid_cavity_mesh.py"     --case "$caseDir"     --resolution 40     --boundary-layer-thickness 0.12     --boundary-layer-count 5     --thickness 0.1
+runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
+runApplication -overwrite createPatch
+runApplication -overwrite checkMesh
