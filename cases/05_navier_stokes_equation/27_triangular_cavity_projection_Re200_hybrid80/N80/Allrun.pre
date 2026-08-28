@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+projectRoot=$(CDPATH= cd -- "$caseDir/../../../.." && pwd)
+cd "$caseDir"
+
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+
+# 第五题第二个算例：等边三角形顶盖驱动腔流。
+# 外圈三条边生成边界层四边形带，中心保留三角形核心区。
+gmshPython="${VIBEFLOW_PYTHON:-/home/a776/vibeflow/python-env/bin/python}"
+if [ ! -x "$gmshPython" ]; then
+    echo "Missing Gmsh Python interpreter: $gmshPython" >&2
+    echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
+    exit 1
+fi
+
+sh "$caseDir/Allclean"
+runApplication "$gmshPython" "$projectRoot/scripts/common/gmsh_triangular_cavity_hybrid_mesh.py"     --case "$caseDir"     --resolution 80     --boundary-layer-thickness 0.1     --boundary-layer-count 8     --thickness 0.1
+
+runApplication -overwrite gmshToFoam "$caseDir/mesh/mesh.msh"
+runApplication -overwrite createPatch
+runApplication -overwrite checkMesh
+runApplication -suffix centres foamPostProcess -constant -func writeCellCentres
+runApplication -suffix volumes foamPostProcess -constant -func writeCellVolumes
+python3 "$projectRoot/scripts/prepare_case.py"     --config "$projectRoot/scripts/configs/05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80.json"     --N 80     --refresh-initial-only
+rm -rf "$caseDir/0"
+cp -R "$caseDir/0.orig" "$caseDir/0"

@@ -1,0 +1,671 @@
+// VibeFlow unified source of truth for training_examples_incomp.pdf.
+// The five entries under extensions.caseStudies preserve the original
+// problem definitions while documenting project assumptions and evidence.
+// A: geometry; B: mesh; C: run; D: post; E: report; V: development.
+workflowState E;
+
+caseMeta
+{
+    caseName           training_examples_incomp_suite;
+    displayName        "Numerical PDE tests from training_examples_incomp.pdf";
+    description        "Unified solver-neutral definition for the five PDE test problems and their numerical subcases.";
+    owner              a776;
+    project            student_project;
+    revision           1.0;
+    status             readyForReport;
+    discipline         fluid;
+    analysisType       parametric;
+    dimensions         2D;
+    fidelity           validation;
+    executionProfile   local;
+    tags               (PDE finiteVolume OpenFOAM trainingExamples incompressible);
+    notes              "The project is a suite of scalar PDE and incompressible-flow benchmarks; solver-specific files remain under cases/ and UDF/.";
+
+    units
+    {
+        length           m;
+        mass             kg;
+        time             s;
+        temperature      K;
+        angle            rad;
+        force            N;
+        pressure         Pa;
+        energy           J;
+    }
+}
+
+intent
+{
+    userIntent         "Implement, verify, and document the five numerical PDE problems in training_examples_incomp.pdf.";
+    targetOutputs      (solverCapability numericalErrors convergenceRates finalFields contours streamlines centerlineProfiles meshQuality runtimeLogs formalReports);
+    acceptanceCriteria (equationsAndParametersTraceable stableTimeIntegration meshOK solverEndsWithoutFatalError errorDefinitionTraceable errorsDecreaseWhenMeaningful requiredFiguresAndTablesReportable);
+    primaryAssumptions (twoDimensionalLaminarIncompressibleConstantProperties finiteVolumeOpenFOAM14 thinExtrusionForOpenFOAM);
+    knownLimitations (thirdProblemSineWaveAtMu1T1HasNearZeroExactNorm fifthProblemMatrixIsNotComplete firstProblemComplexProfileIsFigureReconstructed);
+    openQuestions (exactSolidRotationProfileParameters exactInterpretationOfPdfVertexCount completeFifthProblemParameterMatrix);
+    decisionLog
+    (
+        "Use the PDF as the original problem source and retain existing project JSON configurations as generated-case records."
+        "Use solver-neutral definitions here; OpenFOAM dictionaries are derived artifacts."
+        "For third-problem sine-wave diffusion, use absolute error and initial-field-normalized error as primary metrics because the exact final norm is approximately 5.12e-35."
+        "Interpret the second diffusion problem as the standard Gaussian solution with r2=x2+y2."
+        "Interpret the first diffusion Neumann boundary as homogeneous Neumann."
+        "Treat the first-problem solid-rotation profile as a parameterized reconstruction because the PDF provides the profile mainly by figure."
+    );
+}
+
+physicalProblem
+{
+    problemClass       mixedBenchmarkSuite;
+    timeBehavior       mixedSteadyAndTransient;
+    coordinateFrame    inertial;
+    gravityEnabled     false;
+    referenceLength    "case dependent; see extensions.caseStudies";
+    referenceVelocity  "case dependent; see extensions.caseStudies";
+
+    coupledPhysics
+    {
+        fluid             true;
+        solidMechanics    false;
+        heatTransfer      false;
+        electromagnetics  false;
+        acoustics         false;
+        particles         false;
+        chemistry         false;
+        phaseChange       false;
+        porousMedia       false;
+        radiation         false;
+        meshMotion        false;
+    }
+
+    governingModels
+    {
+        continuum
+        {
+            model             continuum;
+            conservation      (scalarTransport mass momentum);
+        }
+
+        fluid
+        {
+            enabled           true;
+            flowRegime        laminar;
+            compressibility   incompressible;
+            turbulence        none;
+            multiphase        none;
+            freeSurface       false;
+            cavitation        false;
+            nonNewtonian      false;
+        }
+    }
+}
+
+geometry
+{
+    sourceType          primitiveAndImportedMesh;
+    generator           blockMeshAndGmsh;
+    topology            singleRegionPeriodicOrClosed;
+    scaleToMeters       1;
+    symmetryUsed        false;
+    periodicUsed        true;
+    watertightRequired  false;
+    manifoldRequired    false;
+
+    coordinateSystem
+    {
+        origin            (0 0 0);
+        xAxis             (1 0 0);
+        yAxis             (0 1 0);
+        zAxis             (0 0 1);
+        handedness        rightHanded;
+        angleUnit         rad;
+        lengthUnit        m;
+    }
+
+    parameters
+    {
+        openfoamThickness 0.1;
+        note               "The 2D cases are represented as thin 3D prism meshes with empty front and back patches.";
+    }
+
+    entities
+    {
+        domains            (unitSquare squareMinus5To5 squareMinus1To1 squareLidCavity triangularLidCavity);
+        boundaries         (periodicX periodicY xMin xMax yMin yMax movingTop noSlipWalls);
+        features           (slottedDisk cone smoothHump rotatingPeak lidBoundary triangleCorners);
+        sensors            (uCenterline vCenterline triangularCenterline);
+    }
+
+    artifacts
+    {
+        generatedCaseScripts (scripts/common/foam_case.py scripts/common/gmsh_tri_mesh.py scripts/common/gmsh_hybrid_cavity_mesh.py);
+        existingCaseTrees    (cases/01_advection_equation cases/02_diffusion_equation cases/03_advection_diffusion_equation cases/04_poisson_equation cases/05_navier_stokes_equation);
+    }
+}
+
+materials
+{
+    entries
+    {
+        benchmarkFluid
+        {
+            role              fluid;
+            phase             liquid;
+            density           1;
+            viscosity         "case dependent: mu=1 for scalar diffusion; nu=1/Re for cavity flow";
+            source            assumption;
+            confirmed         true;
+        }
+    }
+}
+
+regions
+{
+    scalarDomain
+    {
+        role              fluidDomain;
+        material          benchmarkFluid;
+        geometryEntity    domains;
+        moving            false;
+        porous            false;
+    }
+}
+
+interfaces
+{
+    periodicScalarInterfaces
+    {
+        regions           (scalarDomain scalarDomain);
+        type              periodic;
+        coupling          none;
+    }
+}
+
+boundariesLoadsInitials
+{
+    boundarySets
+    {
+        periodicX
+        {
+            role              periodic;
+            geometryEntity    periodicX;
+            physicalType      scalarPeriodic;
+            value             "match opposite x boundary";
+            unit              none;
+            timeProfile       constant;
+            confirmed         true;
+        }
+        periodicY
+        {
+            role              periodic;
+            geometryEntity    periodicY;
+            physicalType      scalarPeriodic;
+            value             "match opposite y boundary";
+            unit              none;
+            timeProfile       constant;
+            confirmed         true;
+        }
+        noSlipWalls
+        {
+            role              wall;
+            geometryEntity    noSlipWalls;
+            physicalType      velocity;
+            value             "U=(0,0,0)";
+            unit              m/s;
+            timeProfile       constant;
+            confirmed         true;
+        }
+        movingTop
+        {
+            role              wall;
+            geometryEntity    movingTop;
+            physicalType      velocity;
+            value             "U=(1,0,0)";
+            unit              m/s;
+            timeProfile       constant;
+            confirmed         true;
+        }
+    }
+
+    initialConditions
+    {
+        fields              (phi T U p omega);
+        initialization     analytical;
+        note                "The active field and analytical initialization are selected by each case study.";
+    }
+
+    loadCases
+    {
+        allTrainingExamples
+        {
+            description       "All five benchmark problems from the source PDF.";
+            activeBoundaries  (periodicX periodicY noSlipWalls movingTop);
+            activeMaterials   (benchmarkFluid);
+            activePhysics     (scalarTransport incompressibleNavierStokes);
+        }
+    }
+}
+
+mesh
+{
+    meshSource          generated;
+    meshIntent          validation;
+    dimension           2;
+    topology            mixedStructuredUnstructuredHybrid;
+    elementFamilies    (quad tri prism hex);
+    characteristicSize  "case dependent; N=10,20,40,80 or N=50,100,200 as recorded below";
+    boundaryLayerRequired true;
+    adaptivity          none;
+
+    qualityTargets
+    {
+        qualityPolicy    fail;
+        meshCheck         "checkMesh must complete without fatal errors and report Mesh OK";
+    }
+
+    artifacts
+    {
+        meshScripts       (scripts/common/gmsh_tri_mesh.py scripts/common/gmsh_hybrid_cavity_mesh.py);
+        meshFiles         "case-local constant/polyMesh or mesh/mesh.msh";
+        qualityReports    "case-local log.checkMesh";
+    }
+}
+
+numericalMethod
+{
+    formulation         finiteVolume;
+    spatialOrder        mixedFirstAndSecondOrder;
+    temporalOrder       firstOrderExplicitOrSteadyLinearSolve;
+    linearization       mixedExplicitAndSegregated;
+    stabilization       upwindAndNonOrthogonalCorrection;
+    nonlinearSolver     fixedPoint;
+    linearSolver        iterativeMultigridOrKrylov;
+    preconditioner      GAMGOrOpenFOAMDefault;
+    convergenceCriteria "case-specific residual, steady-state, error, and conservation checks";
+    conservationChecks  (massOrScalarBalance divergenceAndBoundedness meshQuality);
+
+    timeControl
+    {
+        startTime          0;
+        endTime            "case dependent";
+        timeStep           "case dependent";
+        adaptiveTimeStep   true;
+        maxCourant         "0.2 for advection; 0.45 for diffusion/advection-diffusion; 0.2 for cavity cases";
+        outputInterval     "case dependent";
+    }
+
+    parallel
+    {
+        enabled            false;
+        subdomains         1;
+        decomposition      automatic;
+    }
+}
+
+execution
+{
+    runMode              serial;
+    preprocessingSteps   (generateOrImportMesh initializeFields checkMesh);
+    solveSteps           (runConfiguredStudentSolver collectLogs);
+    restartPolicy        none;
+    monitoring           (residuals CFL divergence finalTime solverFatal meshQuality);
+    generatedInputs      (scripts/configs cases/*/Allrun cases/*/Allclean);
+    logs                 "case-local log.* and run.batch.log";
+    artifacts            (data figures report);
+}
+
+postProcessing
+{
+    objectives
+    {
+        primaryMetrics    (L1 L2 Linf observedOrder absoluteError initialNormalizedError scalarMassError velocityRMSE vortexLocation);
+        secondaryMetrics  (finalAmplitude finalFieldRange CFL timeSteps residualIntegral);
+        comparisonTargets (analyticalSolution GhiaCenterline triangularCavityReferences requirement);
+    }
+
+    dataExtraction
+    {
+        lineSamples        (uCenterline vCenterline triangularCenterline);
+        volumeAverages     (scalarMass errorNorms);
+        formulas           "p=log(E_N/E_2N)/log(2) for N doubling";
+    }
+
+    visualization
+    {
+        fieldScenes        (fieldComparison contourFinal streamlines vorticity streamfunction);
+        meshViews           (meshQuality boundaryLayers);
+        animations          none;
+    }
+
+    derivedQuantities
+    {
+        formulas           (absoluteNorms initialFieldNormalizedNorms exactFieldNormalizedNorms velocityRMSE vortexPositionError);
+        referenceValues    (analyticalSolutions Ghia1992 Ghia1982 triangularCavityLiterature);
+        uncertainty        "Use explicit limitations when the exact/reference normalization or post-processing reconstruction is not valid.";
+    }
+
+    artifacts
+    {
+        csv                (data/01_advection_equation data/02_diffusion_equation data/03_advection_diffusion_equation data/04_poisson_equation data/05_navier_stokes_equation);
+        images             (figures/01_advection_equation figures/02_diffusion_equation figures/03_advection_diffusion_equation figures/04_poisson_equation figures/05_navier_stokes_equation);
+        reportData         (report/01_advection_equation report/02_diffusion_equation report/04_poisson_equation);
+    }
+}
+
+report
+{
+    title                "Training PDE numerical tests: unified case definition and verification record";
+    language             zh-CN;
+    outputFile           report/04_poisson_equation/report.md;
+    includeGeometry      true;
+    includeMesh          true;
+    includePhysics       true;
+    includeNumerics      true;
+    includeResults       true;
+    includeLimitations   true;
+
+    sections
+    {
+        problemDefinition  true;
+        assumptions        true;
+        modelDescription   true;
+        geometry           true;
+        mesh               true;
+        materials          true;
+        boundaryConditions true;
+        numericalMethod    true;
+        verification       true;
+        validation         true;
+        results             true;
+        uncertainty         true;
+        conclusions         true;
+    }
+}
+
+provenance
+{
+    createdBy            codex;
+    createdAt            "2026-08-28";
+    updatedAt            "2026-08-28";
+    sources              (pdf/training_examples_incomp.pdf pdf/01 pdf/02 pdf/03 pdf/04 existingScripts existingCases existingReports);
+    assumptions          (homogeneousNeumannForDiscontinuousDiffusion standardGaussianInterpretation twoDimensionalThinPrismRepresentation solidRotationProfileParameterization);
+    decisions            (thirdProblemPrimaryErrorScaleIsInitialField fourthProblemArtifactsRegeneratedFromExistingAllrun);
+    artifactTrace        (scripts/configs data figures cases report);
+}
+
+errors
+{
+    summary
+    {
+        total              6;
+        open               1;
+        blocking           0;
+        resolved           5;
+        lastErrorId        error_0006;
+    }
+
+    entries
+    {
+        error_0001
+        {
+            title            "Third-problem sine-wave exact-relative error is ill-conditioned";
+            stage            post;
+            category         postprocess;
+            severity         warning;
+            status           verified;
+            blocking         false;
+            message          "At mu=1 and t=1 the exact amplitude is approximately 5.12e-35, so exact-norm relative errors are dominated by floating-point and time-integration residuals.";
+            relatedPaths     (scripts/common/advection_tools.py scripts/common/study_analysis.py data/03_advection_diffusion_equation/pathological_relative_error data/03_advection_diffusion_equation/analysis);
+            fixOptions       (useAbsoluteError useInitialFieldNormalizedError changeMuOrReportTime);
+            resolution       "Use absolute errors and initial-field-normalized errors as primary metrics; retain exact-relative values only as legacy diagnostics.";
+            verification     "relativeErrorValid=false for the third-problem sine-wave cases and analysis summaries use initialNormalizedL1/L2/Linf.";
+        }
+
+        error_0002
+        {
+            title            "Fourth-problem runtime mesh and logs were absent from the repository snapshot";
+            stage            run;
+            category         missingInput;
+            severity         warning;
+            status           verified;
+            blocking         false;
+            message          "The Poisson cases had dictionaries and result summaries but no current constant/polyMesh or solver logs.";
+            relatedPaths     (cases/04_poisson_equation data/04_poisson_equation);
+            fixOptions       (regenerateMesh rerunSolver);
+            resolution       "Regenerate all eight quadrilateral/triangular cases at N=10,20,40,80 and preserve checkMesh and solver logs.";
+            verification     "Each fourth-problem case contains constant/polyMesh, log.checkMesh, and log.poissonFoamStudent after the rerun.";
+        }
+
+        error_0003
+        {
+            title            "First-problem solid-rotation profile is reconstructed from the source figure";
+            stage            elicitation;
+            category         missingInput;
+            severity         warning;
+            status           wontFix;
+            blocking         false;
+            message          "The PDF does not provide a complete numerical table for the slotted disk, cone, and smooth hump geometry.";
+            relatedPaths     (pdf/training_examples_incomp.pdf scripts/configs/01_advection_equation);
+            fixOptions       (obtainOriginalProfileParameters retainParameterizedReconstruction);
+            resolution       "Retain the existing parameterized reconstruction and state this limitation in reports.";
+            verification     "The case configuration records the chosen profile parameters and the report states that it is not a pointwise reconstruction.";
+        }
+
+        error_0004
+        {
+            title            "Fifth-problem full algorithm and mesh matrix remains incomplete";
+            stage            report;
+            category         report;
+            severity         warning;
+            status           open;
+            blocking         false;
+            message          "The six triangular-cavity hybrid80 cases were checked and repaired, but the complete fifth-problem PDF matrix still contains additional planned Reynolds-number and mesh-resolution combinations.";
+            relatedPaths     (scripts/configs/05_navier_stokes_equation cases/05_navier_stokes_equation report);
+            fixOptions       (completeMissingReynoldsAndResolutions deferToLaterTask);
+            resolution       "Keep the verified triangular-cavity hybrid80 subset as usable evidence and retain the remaining matrix as an explicit report limitation.";
+            verification     "Cases 26-31 were checked after the targeted fixes; the complete matrix remains open by design.";
+        }
+
+        error_0005
+        {
+            title            "Fifth-problem projection Re=100 result was an incomplete transient";
+            stage            run;
+            category         runtime;
+            severity         warning;
+            status           resolved;
+            blocking         false;
+            message          "The previous case-26 summary used a field at t approximately 0.6 although the configured endTime was 80, so its vortex location could not support a steady-state conclusion.";
+            relatedPaths     (scripts/configs/05_navier_stokes_equation/26_triangular_cavity_projection_Re100_hybrid80.json cases/05_navier_stokes_equation/26_triangular_cavity_projection_Re100_hybrid80 data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80);
+            fixOptions       (rerunWithConfiguredSteadyControl retainTransientResult);
+            resolution       "Regenerate case 26 from its JSON configuration, run the projection solver to a valid steady state or configured endTime, and regenerate the triangular-cavity post-processing.";
+            verification     "The repaired case-26 log ends with Steady state reached or the configured endTime, contains no FOAM FATAL ERROR, and its summary finalTime is no longer 0.6.";
+        }
+
+        error_0006
+        {
+            title            "Fifth-problem v(x,-1) sampling extended outside the triangle";
+            stage            post;
+            category         postprocess;
+            severity         warning;
+            status           resolved;
+            blocking         false;
+            message          "At y=-1 the physical triangular cavity permits only -2/sqrt(3) <= x <= 2/sqrt(3), but the old sampler used the enclosing-square interval.";
+            relatedPaths     (scripts/postprocess_triangular_cavity.py data/05_navier_stokes_equation/cases);
+            fixOptions       (restrictSamplingToPhysicalLine retainNearestFallbackOutsideDomain);
+            resolution       "Restrict the horizontal sample to the exact cross-section of the equilateral triangle and record the interval in summary.json.";
+            verification     "All regenerated v_horizontal.csv files have x strictly inside [-2/sqrt(3), 2/sqrt(3)] and summary.json records horizontalSampleRange.";
+        }
+    }
+}
+
+extensions
+{
+    sourceDocument       pdf/training_examples_incomp.pdf;
+    projectParameterSource "scripts/configs/*.json";
+    caseStudies
+    {
+        problem01_advection
+        {
+            equation          "dphi/dt + div(U*phi) = 0";
+            objectives        (explicitFiniteVolumeSolver L1Error convergenceRate finalContour);
+            sineWave
+            {
+                domain          "[0,1] x [0,1]";
+                initial         "phi0=sin(2*pi*(x+y))";
+                velocity        "U=(1,1,0)";
+                boundary        periodicXY;
+                resolutions     (10 20 40 80);
+                time            "t=1";
+                maxCo           0.2;
+                meshTypes       (quad tri);
+                acceptance      (finiteL1AtT1 observedOrder meshOK solverEnded solverFatalFalse);
+            }
+            solidRotation
+            {
+                domain          "[0,1] x [0,1]";
+                velocity        "U=(0.5-y,x-0.5,0)";
+                boundary        zeroScalarAtOuterBoundary;
+                nominalResolution "100 vertices per edge in PDF; project uses N=100 cellsPerEdge and extends to N=50,100,200";
+                resolutions     (50 100 200);
+                time            "t=2*pi";
+                maxCo           0.2;
+                profile         "parameterized slotted disk + cone + smooth hump";
+                acceptance      (finalContourAfterOneRevolution meshOK solverEnded solverFatalFalse);
+            }
+            assumptions       (explicitForwardEuler firstOrderUpwind optionalLinearUpwind thinPrism);
+            artifacts         (scripts/configs/01_advection_equation cases/01_advection_equation data/01_advection_equation figures/01_advection_equation report/01_advection_equation);
+        }
+
+        problem02_diffusion
+        {
+            equation          "dphi/dt - div(mu*grad(phi)) = 0";
+            objectives        (explicitFiniteVolumeSolver L1Error L2Error LinfError convergenceRate scalarMass);
+            common
+            {
+                domain          "[-5,5] x [-5,5]";
+                mu              1;
+                resolutions     (10 20 40 80);
+                time            "t=0.2";
+                meshTypes       (quad tri);
+                acceptance      (finiteNorms decreasingTrend meshOK solverEnded solverFatalFalse);
+            }
+            discontinuity
+            {
+                initial         "phi=1 for |x|<=1 and |y|<=1; otherwise 0";
+                exactSolution   "product of one-dimensional error-function solutions";
+                boundary        homogeneousNeumann;
+            }
+            gaussian
+            {
+                initial         "phi=exp(-mu*(x^2+y^2))";
+                exactSolution   "phi=(1+4*mu*t)^(-1)*exp(-mu*(x^2+y^2)/(1+4*mu*t))";
+                boundary        analyticDirichlet;
+                assumption      "Interpret PDF radial variable as r2=x2+y2.";
+            }
+            numerical         (explicitForwardEuler GaussLinearCorrected diffusionCo0.45 maxDeltaT0.001);
+            artifacts         (scripts/configs/02_diffusion_equation cases/02_diffusion_equation data/02_diffusion_equation figures/02_diffusion_equation report/02_diffusion_equation);
+        }
+
+        problem03_advectionDiffusion
+        {
+            equation          "dphi/dt + div(U*phi) - div(mu*grad(phi)) = 0";
+            objectives        (explicitFiniteVolumeSolver absoluteError normalizedError convergenceRate finalContour);
+            sineWave
+            {
+                domain          "[0,1] x [0,1]";
+                initial         "phi0=sin(2*pi*(x+y))";
+                velocity        "U=(a,a,0), project a=1";
+                mu              1;
+                boundary        periodicXY;
+                time            "t=1";
+                resolutions     (10 20 40 80);
+                exactSolution   "exp(-8*pi^2*mu*t)*sin(2*pi*(x+y-2*a*t))";
+                errorDefinition
+                {
+                    primary      initialFieldNormalized;
+                    secondary    absolute;
+                    legacy       exactFieldNormalized;
+                    legacyValidThreshold "exact norm > initial norm * 1e-12";
+                    convergenceOrder primary;
+                    invalidLegacyCases true;
+                }
+            }
+            rotatingPeak
+            {
+                domain          "[-1,1] x [-1,1]";
+                initial         "rotating Gaussian peak started at t0=pi/2";
+                velocity        "U=(-y,x,0)";
+                epsilon         0.001;
+                center          "(x0,y0)=(0,0.5)";
+                centerMotion    "xhat=x0*cos(t)-y0*sin(t); yhat=x0*sin(t)+y0*cos(t)";
+                boundary        analyticOrZeroDirichlet;
+                time            "one round rotation; project endTime=2*pi";
+                resolutions     (20 40 80);
+                errorDefinition
+                {
+                    primary      exactFieldNormalized;
+                    secondary    absolute;
+                    convergenceOrder exactFieldNormalized;
+                }
+            }
+            assumptions       (explicitForwardEuler upwindAdvection correctedLaplacian thinPrism);
+            artifacts         (scripts/configs/03_advection_diffusion_equation cases/03_advection_diffusion_equation data/03_advection_diffusion_equation figures/03_advection_diffusion_equation);
+        }
+
+        problem04_poisson
+        {
+            equation          "laplacian(phi) = omega";
+            objectives        (solutionField L1Error L2Error LinfError convergenceRate);
+            domain            "[0,1] x [0,1]";
+            exactSolution     "phi=cos(pi*x)*cos(pi*y)";
+            source            "omega=-2*pi^2*cos(pi*x)*cos(pi*y)";
+            boundary          manufacturedDirichlet;
+            resolutions       (10 20 40 80);
+            meshTypes         (quad tri);
+            spatialMethod     OpenFOAMFiniteVolumeLaplacian;
+            linearSolver      GAMG;
+            linearTolerance   1e-12;
+            nNonOrthogonalCorrectors 2;
+            time              "steady; endTime=0";
+            acceptance        (meshOK solverEnded solverFatalFalse decreasingError observedOrderNearTwo logsPresent meshPresent formalReportPresent);
+            artifacts         (scripts/configs/04_poisson_equation cases/04_poisson_equation data/04_poisson_equation figures/04_poisson_equation report/04_poisson_equation);
+        }
+
+        problem05_navierStokes
+        {
+            equations        ("div(U)=0" "dU/dt + div(U tensor U) = -grad(p)/rho + div(nu*grad(U))");
+            objectives        (steadyVelocityField streamlines centerlineProfiles referenceComparison);
+            common
+            {
+                fluid            benchmarkFluid;
+                density          1;
+                lidVelocity      "U=1";
+                boundary         "no-slip walls except moving top wall";
+                numericalMethods (projection PISO);
+                meshTopology     hybridUnstructured;
+            }
+            squareCavity
+            {
+                domain           "[0,1] x [0,1]";
+                characteristicLength 1;
+                reynoldsNumbers  (1000 3200 5000);
+                viscosity        "nu=1/Re";
+                references       (Ghia1982 Ghia1992);
+                acceptance       (steadyState streamlines uCenterline vCenterline referenceComparison);
+            }
+            triangularCavity
+            {
+                geometry         equilateralTriangle;
+                characteristicLength 1;
+                reynoldsNumbers  (100 200 500);
+                viscosity        "nu=1/Re";
+                boundary         "left and right no-slip; top wall U=1";
+                references       (Kohno2006 Erturk2007 Jagannathan2014 Ribbens1994);
+                acceptance       (steadyState streamlines centerlineProfiles vortexLocations referenceComparison);
+            }
+            status             "Triangular-cavity hybrid80 subset checked; full PDF matrix remains partial.";
+            artifacts          (scripts/configs/05_navier_stokes_equation cases/05_navier_stokes_equation data/05_navier_stokes_equation figures/05_navier_stokes_equation);
+        }
+    }
+}
+
+// ************************************************************************* //

@@ -1,0 +1,27 @@
+{
+  "caseName": "07_lid_driven_cavity_projection_Re1000_hybrid40",
+  "reynolds": 1000,
+  "meshType": "hybrid",
+  "cellsPerEdge": 40,
+  "cells": 2646,
+  "finalTime": "34.396000000011",
+  "uMin": -0.363262142601,
+  "uMax": 0.651680316822,
+  "vMin": -0.493408302453,
+  "vMax": 0.346267556608,
+  "centerline": {
+    "u_max_abs_error_vs_ghia": 0.656882682257,
+    "u_rmse_vs_ghia": 0.20674171621964518,
+    "v_max_abs_error_vs_ghia": 0.465763084282,
+    "v_rmse_vs_ghia": 0.1609658922263769
+  },
+  "dataFiles": [
+    "u_centerline.csv",
+    "v_centerline.csv",
+    "summary.json"
+  ],
+  "figureFiles": [
+    "field_and_streamlines.png",
+    "centerline_comparison.png"
+  ]
+}

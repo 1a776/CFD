@@ -1,0 +1,32 @@
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 20%] Meshing curve 3 (Line)
+Info    : [ 30%] Meshing curve 4 (Line)
+Info    : [ 40%] Meshing curve 6 (Extruded)
+Info    : [ 50%] Meshing curve 7 (Extruded)
+Info    : [ 60%] Meshing curve 8 (Extruded)
+Info    : [ 60%] Meshing curve 9 (Extruded)
+Info    : [ 70%] Meshing curve 11 (Extruded)
+Info    : [ 80%] Meshing curve 12 (Extruded)
+Info    : [ 90%] Meshing curve 16 (Extruded)
+Info    : [100%] Meshing curve 20 (Extruded)
+Info    : Done meshing 1D (Wall 0.00487398s, CPU 0s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Transfinite)
+Info    : [ 20%] Meshing surface 13 (Transfinite)
+Info    : [ 40%] Meshing surface 17 (Transfinite)
+Info    : [ 60%] Meshing surface 21 (Transfinite)
+Info    : [ 70%] Meshing surface 25 (Transfinite)
+Info    : [ 90%] Meshing surface 26 (Transfinite)
+Info    : Done meshing 2D (Wall 0.0148256s, CPU 0.005947s)
+Info    : Meshing 3D...
+Info    : Meshing volume 1 (Extruded)
+Info    : Done meshing 3D (Wall 0.119745s, CPU 0.077241s)
+Info    : Optimizing mesh...
+Info    : Done optimizing mesh (Wall 0.000727201s, CPU 0.000728s)
+Info    : 13122 nodes 39692 elements
+Info    : Writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N80/mesh/mesh.msh'...
+Info    : Done writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N80/mesh/mesh.msh'
+mesh=/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N80/mesh/mesh.msh
+meshGeometry=/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N80/mesh/mesh_geometry.json

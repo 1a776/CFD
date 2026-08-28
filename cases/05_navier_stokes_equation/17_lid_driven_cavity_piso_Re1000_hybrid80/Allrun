@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$caseDir"
+: "${WM_PROJECT_DIR:?Please source /opt/openfoam14/etc/bashrc first}"
+. "$WM_PROJECT_DIR/bin/tools/RunFunctions"
+solverPath="/home/a776/workdocuments/上交船舶/slover/student_project/build/05_navier_stokes_equation/bin/pisoFoamStudent"
+if [ ! -x "$solverPath" ]; then
+    echo "Missing solver: $solverPath" >&2
+    echo "Run: sh /home/a776/workdocuments/上交船舶/slover/student_project/scripts/build_student_solver.sh" >&2
+    exit 1
+fi
+sh "$caseDir/Allclean"
+sh "$caseDir/Allrun.pre"
+rm -rf "$caseDir/0"
+cp -R "$caseDir/0.orig" "$caseDir/0"
+runApplication -overwrite "$solverPath"
+runApplication -overwrite foamPostProcess -latestTime -func writeCellCentres
+runApplication -overwrite foamPostProcess -latestTime -func writeCellVolumes

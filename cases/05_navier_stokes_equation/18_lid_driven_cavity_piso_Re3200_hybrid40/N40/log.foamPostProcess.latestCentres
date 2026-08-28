@@ -1,0 +1,40 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : foamPostProcess -latestTime -func writeCellCentres
+Date   : Aug 28 2026
+Time   : 14:22:00
+Host   : "DELL"
+PID    : 492
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/18_lid_driven_cavity_piso_Re3200_hybrid40/N40
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 132.95165009971154291
+
+
+Constructing functionObjects from system/functions
+    Selecting writeCellCentres with name writeCellCentres
+Time = 132.95165009971154291s
+
+Reading fields:
+
+Executing functionObjects
+    Writing cell-centre field C to 132.95165009971154291
+    Writing the x component field of the cell-centres Ccx to 132.95165009971154291
+    Writing the y component field of the cell-centres Ccy to 132.95165009971154291
+    Writing the z component field of the cell-centres Ccz to 132.95165009971154291
+
+End
+

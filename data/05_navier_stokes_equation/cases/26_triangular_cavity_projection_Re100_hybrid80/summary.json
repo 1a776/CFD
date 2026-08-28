@@ -1,0 +1,73 @@
+{
+  "caseName": "26_triangular_cavity_projection_Re100_hybrid80",
+  "solver": "projectionFoamStudent",
+  "reynolds": 100,
+  "viscosity": 0.01,
+  "resolution": 80,
+  "cells": 7308,
+  "finalTime": "0.5999999999999502398",
+  "mainVortex": {
+    "x": -0.1956710117337226,
+    "y": -0.20849420849420852,
+    "psi": -0.045204972451637154,
+    "omega": -2.1027069107645917
+  },
+  "vortices": [
+    {
+      "type": "minimum",
+      "x": -0.5870130352011675,
+      "y": -0.20849420849420852,
+      "psi": -0.04356161016402104
+    },
+    {
+      "type": "minimum",
+      "x": -0.1956710117337226,
+      "y": -0.20849420849420852,
+      "psi": -0.045204972451637154
+    },
+    {
+      "type": "minimum",
+      "x": 0.2826359058375991,
+      "y": -0.20849420849420852,
+      "psi": -0.044961983858404886
+    },
+    {
+      "type": "minimum",
+      "x": 0.688472078322357,
+      "y": -0.20849420849420852,
+      "psi": -0.04492795094739902
+    },
+    {
+      "type": "minimum",
+      "x": -1.0073433567032382,
+      "y": -0.1853281853281854,
+      "psi": -0.038854047254012945
+    },
+    {
+      "type": "minimum",
+      "x": 1.0798141017898022,
+      "y": -0.1853281853281854,
+      "psi": -0.041950610896395735
+    }
+  ],
+  "referencePrimary": {
+    "psi": -0.2482,
+    "omega": -1.3669,
+    "x": 0.3315,
+    "y": -0.6445
+  },
+  "uMin": -0.184153664024,
+  "uMax": 0.655827207083,
+  "vMin": -0.126450781367,
+  "vMax": 0.14647776536,
+  "dataFiles": [
+    "u_centerline.csv",
+    "v_horizontal.csv",
+    "summary.json"
+  ],
+  "figureFiles": [
+    "field_streamlines.png",
+    "centerline_comparison.png",
+    "streamfunction_vortices.png"
+  ]
+}

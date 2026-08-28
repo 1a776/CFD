@@ -1,0 +1,47 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /    O  peration     |
+    \\  /    A nd           |
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      p;
+}
+
+// 顶盖驱动腔流使用运动学压力 p = p_phys / rho。
+//
+// 初始压力：
+//
+//     p(x,y,0) = 0
+//
+// 固壁上采用零法向梯度作为压力边界初值。
+dimensions [0 2 -2 0 0 0 0];
+internalField uniform 0;
+boundaryField
+{
+    leftWall
+    {
+        type zeroGradient;
+    }
+    rightWall
+    {
+        type zeroGradient;
+    }
+    movingTop
+    {
+        type zeroGradient;
+    }
+    front
+    {
+        type empty;
+    }
+    back
+    {
+        type empty;
+    }
+}

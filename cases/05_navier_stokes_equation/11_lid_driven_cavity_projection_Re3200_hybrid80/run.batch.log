@@ -1,0 +1,7 @@
+Running /home/a776/vibeflow/python-env/bin/python on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running gmshToFoam on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running createPatch on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running checkMesh on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running /home/a776/workdocuments/上交船舶/slover/student_project/build/05_navier_stokes_equation/bin/projectionFoamStudent on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running foamPostProcess on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80
+Running foamPostProcess on /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80

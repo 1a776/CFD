@@ -1,0 +1,28 @@
+{
+  "caseName": "18_lid_driven_cavity_piso_Re3200_hybrid40",
+  "reynolds": 3200,
+  "viscosity": 0.0003125,
+  "meshType": "hybrid",
+  "cellsPerEdge": 40,
+  "cells": 2646,
+  "finalTime": "132.95165009971154291",
+  "uMin": -0.425545847647,
+  "uMax": 0.566805636571,
+  "vMin": -0.523055176807,
+  "vMax": 0.412810538342,
+  "centerline": {
+    "u_max_abs_error_vs_ghia": 0.5640530667929999,
+    "u_rmse_vs_ghia": 0.17099995278947683,
+    "v_max_abs_error_vs_ghia": 0.462652706934,
+    "v_rmse_vs_ghia": 0.15189610198875078
+  },
+  "dataFiles": [
+    "u_centerline.csv",
+    "v_centerline.csv",
+    "summary.json"
+  ],
+  "figureFiles": [
+    "field_and_streamlines.png",
+    "centerline_comparison.png"
+  ]
+}

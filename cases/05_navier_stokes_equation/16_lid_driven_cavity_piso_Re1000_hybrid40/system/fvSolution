@@ -1,0 +1,51 @@
+/*--------------------------------*- C++ -*----------------------------------*  =========                 |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration     |
+    \  /    A nd           |
+     \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+PISO
+{
+    // 第五题的 PISO 参数入口。
+    nCorrectors 2;
+    nNonOrthogonalCorrectors 1;
+    pRefCell 0;
+    pRefValue 0;
+    momentumPredictor yes;
+}
+
+solvers
+{
+    U
+    {
+        solver smoothSolver;
+        smoother symGaussSeidel;
+        tolerance 1e-08;
+        relTol 0;
+    }
+
+
+
+    p
+    {
+        solver GAMG;
+        tolerance 1e-08;
+        relTol 0;
+        smoother GaussSeidel;
+    }
+
+    // 末次压力校正使用 pFinal；PISO 与 projection 都保留这一入口。
+    pFinal
+    {
+        $p;
+        relTol 0;
+    }
+}

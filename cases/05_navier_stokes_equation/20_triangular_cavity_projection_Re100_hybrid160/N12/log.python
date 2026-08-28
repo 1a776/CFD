@@ -1,0 +1,64 @@
+Info    : Meshing 1D...
+Info    : [  0%] Meshing curve 1 (Line)
+Info    : [ 10%] Meshing curve 2 (Line)
+Info    : [ 10%] Meshing curve 3 (Line)
+Info    : [ 20%] Meshing curve 4 (Line)
+Info    : [ 20%] Meshing curve 5 (Line)
+Info    : [ 30%] Meshing curve 6 (Line)
+Info    : [ 30%] Meshing curve 7 (Line)
+Info    : [ 30%] Meshing curve 8 (Line)
+Info    : [ 40%] Meshing curve 9 (Line)
+Info    : [ 40%] Meshing curve 11 (Extruded)
+Info    : [ 50%] Meshing curve 12 (Extruded)
+Info    : [ 50%] Meshing curve 13 (Extruded)
+Info    : [ 60%] Meshing curve 14 (Extruded)
+Info    : [ 60%] Meshing curve 16 (Extruded)
+Info    : [ 60%] Meshing curve 17 (Extruded)
+Info    : [ 70%] Meshing curve 21 (Extruded)
+Info    : [ 70%] Meshing curve 25 (Extruded)
+Info    : [ 80%] Meshing curve 33 (Extruded)
+Info    : [ 80%] Meshing curve 34 (Extruded)
+Info    : [ 80%] Meshing curve 35 (Extruded)
+Info    : [ 90%] Meshing curve 39 (Extruded)
+Info    : [ 90%] Meshing curve 43 (Extruded)
+Info    : [100%] Meshing curve 55 (Extruded)
+Info    : [100%] Meshing curve 57 (Extruded)
+Info    : Done meshing 1D (Wall 0.00512801s, CPU 0.00181s)
+Info    : Meshing 2D...
+Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay)
+Info    : [  0%] Blossom: 21 internal 22 closed
+Info    : [  0%] Blossom recombination completed (Wall 0.00284124s, CPU 0.001015s): 8 quads, 6 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.286084, min Q = 0.24451
+Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
+Info    : [ 10%] Blossom: 21 internal 22 closed
+Info    : [ 10%] Blossom recombination completed (Wall 0.000329318s, CPU 0.000332s): 8 quads, 6 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.286084, min Q = 0.24451
+Info    : [ 20%] Meshing surface 3 (Plane, Frontal-Delaunay)
+Info    : [ 20%] Blossom: 21 internal 22 closed
+Info    : [ 20%] Blossom recombination completed (Wall 0.000328512s, CPU 0.000332s): 8 quads, 6 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.286084, min Q = 0.24451
+Info    : [ 20%] Meshing surface 4 (Plane, Frontal-Delaunay)
+Info    : [ 30%] Meshing surface 18 (Extruded)
+Info    : [ 30%] Meshing surface 22 (Extruded)
+Info    : [ 40%] Meshing surface 26 (Extruded)
+Info    : [ 50%] Meshing surface 30 (Extruded)
+Info    : [ 50%] Meshing surface 31 (Extruded)
+Info    : [ 60%] Meshing surface 40 (Extruded)
+Info    : [ 60%] Meshing surface 44 (Extruded)
+Info    : [ 70%] Meshing surface 48 (Extruded)
+Info    : [ 80%] Meshing surface 53 (Extruded)
+Info    : [ 80%] Meshing surface 62 (Extruded)
+Info    : [ 90%] Meshing surface 70 (Extruded)
+Info    : [ 90%] Meshing surface 75 (Extruded)
+Info    : [100%] Meshing surface 92 (Extruded)
+Info    : Done meshing 2D (Wall 0.0307006s, CPU 0.011355s)
+Info    : Meshing 3D...
+Info    : Meshing volume 1 (Extruded)
+Info    : Meshing volume 2 (Extruded)
+Info    : Meshing volume 3 (Extruded)
+Info    : Meshing volume 4 (Extruded)
+Info    : Done meshing 3D (Wall 0.00426726s, CPU 0.002109s)
+Info    : Optimizing mesh...
+Info    : Done optimizing mesh (Wall 6.0896e-05s, CPU 6.4e-05s)
+Info    : 288 nodes 939 elements
+Info    : Writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/20_triangular_cavity_projection_Re100_hybrid160/N12/mesh/mesh.msh'...
+Info    : Done writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/20_triangular_cavity_projection_Re100_hybrid160/N12/mesh/mesh.msh'
+mesh=/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/20_triangular_cavity_projection_Re100_hybrid160/N12/mesh/mesh.msh
+meshMetadata=/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/20_triangular_cavity_projection_Re100_hybrid160/N12/mesh/mesh_metadata.json

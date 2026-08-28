@@ -1,0 +1,27 @@
+/*--------------------------------*- C++ -*----------------------------------*  =========                 |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration     |
+    \  /    A nd           |
+     \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+
+// Reynolds 数定义：
+//
+//     Re = U L / ν
+//
+// 本案例取 U=1、L=1，因此：
+//
+//     Re = 1 / ν
+//
+// 当前工况：
+//
+//     Re = 1000
+//     ν  = 0.001
+nu 0.001;

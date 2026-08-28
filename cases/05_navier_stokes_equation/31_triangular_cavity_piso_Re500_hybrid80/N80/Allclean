@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$caseDir"
+rm -rf constant/polyMesh 0 postProcessing
+for timeDir in ./[0-9]*; do
+    [ "$timeDir" = "./0.orig" ] && continue
+    [ -d "$timeDir" ] && rm -rf "$timeDir"
+done
+rm -f log.* run.batch.log

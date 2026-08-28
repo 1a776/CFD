@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+caseDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$caseDir"
+rm -rf constant/polyMesh postProcessing
+for timeDir in ./[0-9]*; do
+    [ "$timeDir" = "./0.orig" ] && continue
+    [ -d "$timeDir" ] && rm -rf "$timeDir"
+done
+# 保留 run.batch.log；该文件由外层 Python 在调用 Allrun 前打开。
+rm -f log.*

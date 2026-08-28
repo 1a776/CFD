@@ -1,0 +1,86 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  14
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+Build  : 14-7b05503f98a8
+Exec   : /home/a776/workdocuments/上交船舶/slover/student_project/build/04_poisson_equation/bin/poissonFoamStudent
+Date   : Aug 28 2026
+Time   : 21:14:23
+Host   : "DELL"
+PID    : 529
+I/O    : uncollated
+Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 10)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Create mesh for time = 0
+
+Using dynamicCode for codedFixedValue xMinPoissonDirichlet at line 827 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/0/phi!boundaryField/xMin"
+Creating new library in "dynamicCode/xMinPoissonDirichlet/platforms/linux64GccDPInt32Opt/lib/libxMinPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMinPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMinPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMinPoissonDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMinPoissonDirichlet/../platforms/linux64GccDPInt32Opt/lib/libxMinPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so
+Using dynamicCode for codedFixedValue xMaxPoissonDirichlet at line 848 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/0/phi!boundaryField/xMax"
+Creating new library in "dynamicCode/xMaxPoissonDirichlet/platforms/linux64GccDPInt32Opt/lib/libxMaxPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMaxPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMaxPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMaxPoissonDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/xMaxPoissonDirichlet/../platforms/linux64GccDPInt32Opt/lib/libxMaxPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so
+Using dynamicCode for codedFixedValue yMinPoissonDirichlet at line 869 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/0/phi!boundaryField/yMin"
+Creating new library in "dynamicCode/yMinPoissonDirichlet/platforms/linux64GccDPInt32Opt/lib/libyMinPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMinPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMinPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMinPoissonDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMinPoissonDirichlet/../platforms/linux64GccDPInt32Opt/lib/libyMinPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so
+Using dynamicCode for codedFixedValue yMaxPoissonDirichlet at line 890 in "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/0/phi!boundaryField/yMax"
+Creating new library in "dynamicCode/yMaxPoissonDirichlet/platforms/linux64GccDPInt32Opt/lib/libyMaxPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.C" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMaxPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.C"
+    Copying "/opt/openfoam14/etc/codeTemplates/dynamicCode/codedFixedValueFvPatchFieldTemplate.H" to "/home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMaxPoissonDirichlet/codedFixedValueFvPatchFieldTemplate.H"
+wmake libso /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMaxPoissonDirichlet
+    ln: ./lnInclude
+    wmkdep: codedFixedValueFvPatchFieldTemplate.C
+    Ctoo: codedFixedValueFvPatchFieldTemplate.C
+    ld: /home/a776/workdocuments/上交船舶/slover/student_project/cases/04_poisson_equation/02_poisson_manufactured_tri/N20/dynamicCode/yMaxPoissonDirichlet/../platforms/linux64GccDPInt32Opt/lib/libyMaxPoissonDirichlet_54215ac932abcdd2651c8025aff523b920a408cc.so
+Student Poisson solver
+  case                     = "N20"
+  time                     = 0
+  cells                    = 800
+  solutionField            = phi
+  sourceField              = omega
+  nNonOrthogonalCorrectors = 2
+  phi dimensions           = []
+  omega dimensions         = [0 -2 0 0 0 0 0]
+  phi min                  = 0
+  phi max                  = 0
+  omega min                = -19.68514207659569
+  omega max                = 19.68514207659576
+
+Solving Poisson equation, non-orthogonal correction 0 of 2
+GAMG:  Solving for phi, Initial residual = 1, Final residual = 7.306477764814436e-13, No Iterations 23
+Solving Poisson equation, non-orthogonal correction 1 of 2
+GAMG:  Solving for phi, Initial residual = 1.92933223527275e-12, Final residual = 2.178085686766176e-13, No Iterations 1
+Solving Poisson equation, non-orthogonal correction 2 of 2
+GAMG:  Solving for phi, Initial residual = 2.178085686766312e-13, Final residual = 2.178085686766312e-13, No Iterations 0
+Solved phi min = -0.9975702912699765
+Solved phi max = 0.9975702912699996
+
+End
+

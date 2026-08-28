@@ -1,0 +1,64 @@
+/*--------------------------------*- C++ -*----------------------------------*  =========                 |
+  \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \    /    O  peration     |
+    \  /    A nd           |
+     \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+
+// 时间离散：
+//
+//     ∂U/∂t ≈ (Uⁿ⁺¹ - Uⁿ) / Δt
+ddtSchemes
+{
+    default Euler;
+}
+
+// 单元中心梯度和非正交面法向梯度。
+gradSchemes
+{
+    default Gauss linear;
+}
+
+divSchemes
+{
+    default none;
+
+    //     ∇·(U U) = 1/V_c Σ_f Φ_f U_f
+    //     Φ_f = U_f · S_f
+    div(phi,U) Gauss linearUpwind grad(U);
+
+}
+
+laplacianSchemes
+{
+    default none;
+
+    //     ∇·(ν∇U) = 1/V_c Σ_f (ν∇U)_f · S_cf
+    laplacian(nu,U) Gauss linear corrected;
+
+
+    // 压力方程对应的拉普拉斯项：
+    //
+    //     projectionFoamStudent:  ∇·(dtCoeff ∇p) = ∇·Φ*
+    //     pisoFoamStudent:        ∇·((1|A(U)) ∇p) = ∇·Φ*
+    // pisoFoamStudent 的压力方程使用 (1|A(U)) 这一动量对角系数.
+    laplacian((1|A(U)),p) Gauss linear corrected;
+
+}
+
+interpolationSchemes
+{
+    default linear;
+}
+
+snGradSchemes
+{
+    default corrected;
+}
