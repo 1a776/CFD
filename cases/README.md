@@ -221,9 +221,9 @@
 
 ### 4. Poisson 方程
 
-### 案例一：制造解 Poisson 四边形网格
+### 案例一：制造解 Poisson 方程
 
-本案例对应二维 Poisson 方程的制造解验证。计算域为单位正方形，解析解与源项按题面给定，四条边均采用制造解 Dirichlet 边界，目标是检查离散一致性和网格收敛。实验代号按罗马数字 I 编排，对应四边形网格，在 `N=10,20,40,80` 下比较误差下降和收敛阶。
+本案例对应二维 Poisson 方程的制造解验证。计算域为单位正方形，解析解与源项按题面给定，四条边均采用制造解 Dirichlet 边界，目标是检查离散一致性和网格收敛。实验代号按罗马数字 I-II 编排，其中 I 对应四边形网格，II 对应三角形网格；两组都在 `N=10,20,40,80` 下比较误差下降和收敛阶。
 
 该组生成的图片主要包括数值解与解析解对比图、误差分布图、全分辨率对比图，以及观察收敛阶图。前两类图主要看数值解是否贴合解析解、误差是否均匀分布，后两类图主要看误差是否随网格加密而下降，以及收敛阶是否接近理论值。对应的分析数据主要包括各分辨率的 `normalizedL1`、`normalizedL2` 误差和由相邻网格计算得到的观察收敛阶；其中 `normalizedL1` 更直接反映整体偏差，`normalizedL2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。
 
@@ -232,6 +232,7 @@
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
 | I | `01_poisson_manufactured_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=poissonFoamStudent`，`phi`，`omega`，制造解 Dirichlet 边界，稳态求解 |
+| II | `02_poisson_manufactured_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=poissonFoamStudent`，`phi`，`omega`，制造解 Dirichlet 边界，稳态求解 |
 
 #### 相关实验的数据归档
 
@@ -242,21 +243,6 @@
   - 数据汇总: [`data/04_poisson_equation/analysis/01_poisson_manufactured_quad/analysis.md`](../data/04_poisson_equation/analysis/01_poisson_manufactured_quad/analysis.md)
   - 报告: [`report/04_poisson_equation/report.md`](../report/04_poisson_equation/report.md)
   - 证据索引: [`report/04_poisson_equation/evidence_index.md`](../report/04_poisson_equation/evidence_index.md)
-
-### 案例二：制造解 Poisson 三角形网格
-
-本案例对应同一制造解 Poisson 方程的三角形网格验证。计算域、解析解、源项和边界条件均与四边形案例一致，只比较网格类型差异带来的误差变化。实验代号按罗马数字 II 编排，对应三角形网格，在 `N=10,20,40,80` 下比较误差下降和收敛阶。
-
-该组生成的图片主要包括数值解与解析解对比图、误差分布图、全分辨率对比图，以及观察收敛阶图。前两类图主要看数值解与解析解的贴合程度，后两类图主要看误差是否随网格加密而下降，以及收敛阶是否保持稳定。对应的分析数据主要包括各分辨率的 `normalizedL1`、`normalizedL2` 误差和由相邻网格计算得到的观察收敛阶；其中 `normalizedL1` 更直接反映整体偏差，`normalizedL2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。
-
-#### 相关实验配置
-
-| 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
-|---|---|---|---|---|---|
-| II | `02_poisson_manufactured_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=poissonFoamStudent`，`phi`，`omega`，制造解 Dirichlet 边界，稳态求解 |
-
-#### 相关实验的数据归档
-
 - II `02_poisson_manufactured_tri`
   - OpenFOAM目录: [`cases/04_poisson_equation/02_poisson_manufactured_tri/`](./04_poisson_equation/02_poisson_manufactured_tri/)
   - 数据: [`data/04_poisson_equation/cases/02_poisson_manufactured_tri/`](../data/04_poisson_equation/cases/02_poisson_manufactured_tri/)
