@@ -517,47 +517,7 @@ finalTimeError = 0.0
 从结果可信度看，四组实验均到达目标终止时间，误差范数随网格加密整体下降，代表性图像
 也与扩散物理一致。因此，第二题当前结果可以作为教学型求解器验证交付。
 
-## 11. 局限性、风险与未完成事项
 
-目前报告仍有以下局限：
-
-1. 本报告使用固定空间格式 `Gauss linear corrected`，未比较其他扩散离散格式；
-2. 显式时间推进未做独立时间收敛实验，空间误差和时间误差尚未完全分离；
-3. Gaussian 算例尚未生成跨分辨率汇总图，目前使用误差表和单案例诊断图支撑结论；
-4. 三角形和四边形的相同 $N$ 对应不同单元数量，严格公平比较仍需统一计算成本；
-5. 第一个算例的 Neumann 边界采用齐次解释，这是对原题歧义的工程化约定；
-6. 当前重点是教学型 OpenFOAM 求解器，不覆盖复杂几何、并行运行和工程级边界条件。
-
-## 12. 结论
-
-本项目已经完成第二题二维扩散方程的主要数值实现和验证流程。学生版
-`explicitDiffusionFoamStudent` 能够在 OpenFOAM 14 下读取扩散系数和标量场，调用
-OpenFOAM 有限体积库计算显式拉普拉斯扩散残差，根据扩散稳定性控制时间步，并完成
-前向 Euler 时间推进。
-
-间断初值测试表明，四边形和三角形网格都能正确复现扩散对不连续初值的平滑作用，并得到
-随网格加密而下降的误差。Gaussian 测试表明，在光滑解析解下，四边形和三角形网格均表现
-出接近二阶的细网格收敛趋势。
-
-因此，当前求解器可以认为已经完成了第二题的教学型实现和基本验证。若作为更正式的科研
-报告，下一步应补充独立时间收敛、相同计算成本的网格比较、更多扩散格式对比和更完整的
-Gaussian 跨分辨率图。
-
-## 13. 结果与报告完整性检查
-
-| 检查项 | 当前状态 | 证据 |
-|---|---|---|
-| 问题定义和研究目标清楚 | 已完成 | 第 1 节、原始题目 |
-| 假设、范围和验收标准明确 | 已完成 | 第 2 节 |
-| 数学模型和数值方法可追溯 | 已完成 | 第 3 节、推导 TeX、UDF 源码 |
-| 几何、网格和边界条件有说明 | 已完成 | 第 4-5 节、OpenFOAM case |
-| 间断初值四边形结果 | 已完成 | 第 6.1 节、`data/02_diffusion_equation/cases/01_discontinuous_quad/` |
-| 间断初值三角形结果 | 已完成 | 第 6.2 节、`data/02_diffusion_equation/cases/02_discontinuous_tri/` |
-| Gaussian 四边形结果 | 已完成 | 第 7.1 节、`data/02_diffusion_equation/cases/03_gaussian_quad/` |
-| Gaussian 三角形结果 | 已完成 | 第 7.2 节、`data/02_diffusion_equation/cases/04_gaussian_tri/` |
-| 关键图像有引用 | 已完成 | 第 6-7 节、`figures/02_diffusion_equation/` |
-| 局限性和风险已说明 | 已完成 | 第 11 节 |
-| 报告是否等同于正式科研论文 | 否 | 当前为教学型工程验证报告 |
 
 ## 14. 复现实验命令
 
@@ -626,24 +586,3 @@ python3 scripts/plot_study.py \
 
 ## 15. 证据索引
 
-第二题的完整证据索引见 `evidence_index.md`。该文件按照第一题报告的证据组织方式，
-把参数源、求解器实现、OpenFOAM case、运行日志、误差数据、结果图片、修复记录和限制
-逐项列出。
-
-本报告中的关键结论主要依赖以下证据链：
-
-| 类型 | 路径 |
-|---|---|
-| 求解器源码 | `../../UDF/solver/02_diffusion_equation/explicitDiffusionFoamStudent/` |
-| 配置文件 | `../../scripts/configs/02_diffusion_equation/` |
-| OpenFOAM case | `../../cases/02_diffusion_equation/` |
-| 数据结果 | `../../data/02_diffusion_equation/` |
-| 图片结果 | `../../figures/02_diffusion_equation/` |
-| 间断四边形分析 | `../../data/02_diffusion_equation/analysis/01_discontinuous_quad/analysis.md` |
-| 间断三角形分析 | `../../data/02_diffusion_equation/analysis/02_discontinuous_tri/analysis.md` |
-| Gaussian 四边形数据 | `../../data/02_diffusion_equation/cases/03_gaussian_quad/` |
-| Gaussian 三角形数据 | `../../data/02_diffusion_equation/cases/04_gaussian_tri/` |
-| 完整证据索引 | `evidence_index.md` |
-
-使用规则是：误差和收敛阶优先查 `summary.json` 或 `convergence_summary.csv`，图像现象查
-`figures/`，程序实现查 UDF 源码和脚本，边界、网格和运行状态查 OpenFOAM case 字典与日志。

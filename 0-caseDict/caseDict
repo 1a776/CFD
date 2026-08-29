@@ -355,7 +355,7 @@ report
 {
     title                "Training PDE numerical tests: unified case definition and verification record";
     language             zh-CN;
-    outputFile           report/04_poisson_equation/report.md;
+    outputFile           report/01_advection_equation/report.md;
     includeGeometry      true;
     includeMesh          true;
     includePhysics       true;
@@ -396,11 +396,11 @@ errors
 {
     summary
     {
-        total              6;
+        total              7;
         open               1;
         blocking           0;
-        resolved           5;
-        lastErrorId        error_0006;
+        resolved           6;
+        lastErrorId        error_0007;
     }
 
     entries
@@ -493,6 +493,21 @@ errors
             fixOptions       (restrictSamplingToPhysicalLine retainNearestFallbackOutsideDomain);
             resolution       "Restrict the horizontal sample to the exact cross-section of the equilateral triangle and record the interval in summary.json.";
             verification     "All regenerated v_horizontal.csv files have x strictly inside [-2/sqrt(3), 2/sqrt(3)] and summary.json records horizontalSampleRange.";
+        }
+
+        error_0007
+        {
+            title            "First-problem solid-rotation postprocessor used the wrong solver log";
+            stage            post;
+            category         postprocess;
+            severity         warning;
+            status           resolved;
+            blocking         false;
+            message          "The quadrilateral and triangular solid-rotation postprocessing branches read log.explicitDiffusionFoamStudent, and the quadrilateral branch also referenced an undefined diffusion-only variable.";
+            relatedPaths     (scripts/common/postprocess_case.py report/01_advection_equation/evidence_index.md);
+            fixOptions       (useAdvectionSolverLog removeDiffusionOnlyBranch);
+            resolution       "Use log.explicitAdvectionFoamStudent in both solid-rotation branches and evaluate solverEnded directly from the advection solver completion markers.";
+            verification     "scripts/common/postprocess_case.py passes python3 -m py_compile; the four preserved advection logs remain the documented complete-log evidence.";
         }
     }
 }
