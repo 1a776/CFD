@@ -11,10 +11,22 @@
 - [研究概况](#研究概况)
 - [1. 问题定义与研究目标](#1-问题定义与研究目标)
 - [2. 假设、范围与验收标准](#2-假设范围与验收标准)
+  - [2.1 基本假设](#21-基本假设)
+  - [2.2 本报告范围](#22-本报告范围)
+  - [2.3 验收标准](#23-验收标准)
 - [3. 数学模型与数值离散](#3-数学模型与数值离散)
+  - [3.1 有限体积积分形式](#31-有限体积积分形式)
+  - [3.2 空间离散](#32-空间离散)
+  - [3.3 误差定义](#33-误差定义)
 - [4. 几何、网格与边界条件](#4-几何网格与边界条件)
+  - [4.1 共同设置](#41-共同设置)
+  - [4.2 四边形网格](#42-四边形网格)
+  - [4.3 三角形网格](#43-三角形网格)
 - [5. 软件、算例与配置](#5-软件算例与配置)
 - [6. 结果与收敛性分析](#6-结果与收敛性分析)
+  - [6.1 四边形网格](#61-四边形网格)
+  - [6.2 三角形网格](#62-三角形网格)
+  - [6.3 跨网格比较](#63-跨网格比较)
 - [7. 结果讨论](#7-结果讨论)
 - [8. 局限性、风险与未完成事项](#8-局限性风险与未完成事项)
 - [9. 结论](#9-结论)
@@ -65,7 +77,7 @@ $$
 
 ### 2.1 基本假设
 
-- 二维问题用厚度为 `0.1` 的薄层三维网格表示；
+- 二维物理模型通过厚度为 `0.1` 的薄层挤出网格在 OpenFOAM 中实现，后处理仍按二维结果解释；
 - `phi` 与 `omega` 的制造解关系严格由题面给定；
 - 四条边均采用制造解 Dirichlet 边界；
 - 空间离散采用 OpenFOAM 的有限体积拉普拉斯格式；
@@ -187,7 +199,7 @@ build/04_poisson_equation/bin/poissonFoamStudent
 
 四边形网格的主结果如下。
 
-| N | cells | normalizedL1 | normalizedL2 | normalizedLinf | L1 order | final range |
+| N | cells | normalizedL1 | normalizedL2 | normalizedLinf | L1 order | final amplitude |
 |---:|---:|---:|---:|---:|---:|---:|
 | 10 | 100 | 1.15905514e-02 | 1.17346968e-02 | 1.21824184e-02 | - | 9.87412552e-01 |
 | 20 | 400 | 2.89260159e-03 | 2.92926304e-03 | 3.06911968e-03 | 2.002510 | 9.96894397e-01 |
@@ -200,12 +212,35 @@ build/04_poisson_equation/bin/poissonFoamStudent
 
 四边形案例中，`normalizedL1` 从 `1.15905514e-02` 下降到 `1.80704727e-04`，
 观察收敛阶几乎严格维持在 2 附近。
+这里的 `final amplitude` 对应 `summary.json` 中的 `finalAmplitude`，并与 `maxAbsFinal` 基本一致；
+它衡量的是终场峰值保持，而不是区间宽度。
+从 N10 到 N80，四边形网格的 `normalizedL1` 下降约 `64.14` 倍，这与二阶方法在 8 倍线性加密下应表现出的量级一致。
+
+![四边形网格 N10 场图与误差图](../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N10/field_comparison.png)
+
+N10 时数值场已经恢复出正确的四象限符号，但单元块状感仍然明显，误差场呈现清晰的对称偏差，
+幅值仍在 `1e-2` 量级，说明粗网格下的主导误差来自截断离散而不是求解不稳定。
+
+![四边形网格 N20 场图与误差图](../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N20/field_comparison.png)
+
+N20 时数值场与精确场的重合程度明显提高，误差图中的四象限结构仍在，但振幅已经收缩，
+这表明网格加密后误差开始按预期单调下降。
+
+![四边形网格 N40 场图与误差图](../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N40/field_comparison.png)
+
+N40 时数值场几乎与精确场重合，误差图已经退化为低幅值的平滑残差，
+说明该问题在规则四边形网格上确实呈现出稳定的二阶收敛特征。
+
+![四边形网格 N80 场图与误差图](../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N80/field_comparison.png)
+
+N80 的残差已经压到 `1e-4` 量级，误差图只剩很弱的对称残留，
+与表中的 `normalizedL1=1.80704727e-04` 和 `normalizedLinf=1.92663105e-04` 一致。
 
 ### 6.2 三角形网格
 
 三角形棱柱网格的主结果如下。
 
-| N | cells | normalizedL1 | normalizedL2 | normalizedLinf | L1 order | final range |
+| N | cells | normalizedL1 | normalizedL2 | normalizedLinf | L1 order | final amplitude |
 |---:|---:|---:|---:|---:|---:|---:|
 | 10 | 200 | 1.62756935e-02 | 1.66062528e-02 | 2.01094667e-02 | - | 9.90299674e-01 |
 | 20 | 800 | 4.32113274e-03 | 5.39470605e-03 | 1.01705048e-02 | 1.913238 | 9.97570291e-01 |
@@ -218,6 +253,29 @@ build/04_poisson_equation/bin/poissonFoamStudent
 
 三角形案例的 `normalizedL1` 从 `1.62756935e-02` 下降到 `2.91732900e-04`，
 观察收敛阶从 `1.913238` 逐步提升到 `1.954543`，与二阶趋势一致。
+这里的 `final amplitude` 同样对应 `summary.json` 的 `finalAmplitude`，
+它与 `maxAbsFinal` 只在最后几位上有微小差别。
+从 N10 到 N80，三角形网格的 `normalizedL1` 下降约 `55.79` 倍。该降幅略弱于四边形，但仍然清楚地支持近二阶收敛判断。
+
+![三角形网格 N10 场图与误差图](../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N10/field_comparison.png)
+
+N10 的三角形网格已经能重建出正确的全局符号分布，但单元边界痕迹更明显，
+误差场在边界和角点形成了更强的条带结构，`normalizedLinf` 也因此达到 `2.01094667e-02`。
+
+![三角形网格 N20 场图与误差图](../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N20/field_comparison.png)
+
+N20 时域内主场形状已经较为平滑，但边界附近仍可看到窄带误差，
+说明三角形网格在相同名义分辨率下仍然更受边界离散影响。
+
+![三角形网格 N40 场图与误差图](../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N40/field_comparison.png)
+
+N40 时误差主要收缩到边界附近，域内大部分区域已经与精确场高度一致，
+这与 `normalizedL1=1.13073669e-03` 的下降趋势一致。
+
+![三角形网格 N80 场图与误差图](../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N80/field_comparison.png)
+
+N80 时数值场已经非常接近精确场，但边界条带仍未完全消失，
+因此 `normalizedLinf` 仍保持在 `2.53737917e-03`，明显高于四边形网格。
 
 ### 6.3 跨网格比较
 
@@ -226,8 +284,15 @@ build/04_poisson_equation/bin/poissonFoamStudent
 | 四边形 | 1.80704727e-04 | 1.83012082e-04 | 1.92663105e-04 | 2.000126 |
 | 三角形 | 2.91732900e-04 | 6.32795448e-04 | 2.53737917e-03 | 1.954543 |
 
-四边形网格在相同名义分辨率下误差略小，三角形网格则在粗网格上误差更高，
-但两者都表现出稳定、单调的收敛行为。
+四边形网格在相同名义分辨率下误差更小。以 N80 为例，三角形的 `normalizedL1`
+比四边形大约 `1.61` 倍，`normalizedL2` 约大 `3.46` 倍，而 `normalizedLinf`
+约大 `13.17` 倍，说明三角形网格的局部极值误差更敏感，误差并不是均匀抬升，
+而是更容易在边界和角点附近聚集。
+
+同时，三角形 N80 的 `finalAmplitude` 略高于四边形 N80，但它的 `Linf` 明显更差，
+这说明“峰值保留”和“整体误差”并不完全同步，不能只凭单一指标判断网格优劣。
+两者都表现出稳定、单调的收敛行为，因此差别主要来自网格几何和离散 stencil，
+不是求解流程本身的不稳定。
 
 ## 7. 结果讨论
 
@@ -235,9 +300,12 @@ build/04_poisson_equation/bin/poissonFoamStudent
 从结果看，四边形网格几乎给出理想的二阶收敛，三角形网格也在加密后逼近二阶。
 这说明 `Gauss linear corrected` 拉普拉斯离散与 `GAMG` 线性求解器的组合在该问题上是可靠的。
 
-`final range` 在最细网格上已接近 `[-1,1]`，与解析解的峰值一致，
-没有出现明显的数值超调或欠调。`finalTimeError=0.0`、`meshOK=true`、
-`solverEnded=true` 和 `solverFatal=false` 共同说明求解流程完整闭合。
+从场图看，四边形网格的误差主要表现为平滑的四象限残差，而三角形网格的误差更集中在边界和角点附近，
+这与 `Linf` 的差异一致。`final amplitude` 在最细网格上已经非常接近 1，
+说明终场幅值保持良好，但它只是辅助指标，不能替代 `normalizedL1` 和 `normalizedLinf`。
+两组最细网格的 `maxFinal` 与 `minFinal` 也基本关于 0 对称，说明数值解没有引入可见的整体偏置。
+`finalTimeError=0.0`、`meshOK=true`、`solverEnded=true` 和 `solverFatal=false`
+共同说明求解流程完整闭合，且没有数值发散或中断。
 
 ## 8. 局限性、风险与未完成事项
 
