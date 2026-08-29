@@ -1,16 +1,58 @@
+<a id="cases-overview"></a>
 ## `cases/` 案例目录说明
 - `cases/` 是 OpenFOAM 原始案例目录；真正用于报告分析的数据和图片放在 `data/`、`figures/` 和 `report/` 中。
 
+## 目录
+
+- [`cases/` 案例目录说明](#cases-overview)
+- [具体题目的相关设计的实验案例以及实验配置](#case-designs-and-configurations)
+  - [1. 对流方程](#advection-equation)
+    - [案例一：正弦波平移](#advection-sine-wave-translation)
+      - [相关实验配置](#advection-sine-wave-translation-config)
+      - [相关实验的数据归档](#advection-sine-wave-translation-archive)
+    - [案例二：复杂轮廓固体旋转](#advection-solid-rotation)
+      - [相关实验配置](#advection-solid-rotation-config)
+      - [相关实验的数据归档](#advection-solid-rotation-archive)
+  - [2. 扩散方程](#diffusion-equation)
+    - [案例一：间断初值扩散](#diffusion-discontinuous-initial)
+      - [相关实验配置](#diffusion-discontinuous-initial-config)
+      - [相关实验的数据归档](#diffusion-discontinuous-initial-archive)
+    - [案例二：Gaussian 扩散](#diffusion-gaussian)
+      - [相关实验配置](#diffusion-gaussian-config)
+      - [相关实验的数据归档](#diffusion-gaussian-archive)
+  - [3. 对流-扩散方程](#advection-diffusion-equation)
+    - [案例一：正弦波平移](#advection-diffusion-sine-wave-translation)
+      - [相关实验配置](#advection-diffusion-sine-wave-translation-config)
+      - [相关实验的数据归档](#advection-diffusion-sine-wave-translation-archive)
+    - [案例二：旋转尖峰平流扩散](#advection-diffusion-rotating-peak)
+      - [相关实验配置](#advection-diffusion-rotating-peak-config)
+      - [相关实验的数据归档](#advection-diffusion-rotating-peak-archive)
+  - [4. Poisson 方程](#poisson-equation)
+    - [案例一：制造解 Poisson 方程](#poisson-manufactured-solution)
+      - [相关实验配置](#poisson-manufactured-solution-config)
+      - [相关实验的数据归档](#poisson-manufactured-solution-archive)
+  - [5. Navier-Stokes 方程](#navier-stokes-equation)
+    - [案例一：方腔顶盖驱动流](#navier-stokes-lid-driven-cavity)
+      - [已有数据的实验配置](#navier-stokes-lid-driven-cavity-config)
+      - [数据与图片归档](#navier-stokes-lid-driven-cavity-archive)
+    - [案例二：等边三角腔顶盖驱动流](#navier-stokes-triangular-cavity)
+      - [已有数据的实验配置](#navier-stokes-triangular-cavity-config)
+      - [数据与图片归档](#navier-stokes-triangular-cavity-archive)
+
+<a id="case-designs-and-configurations"></a>
 ## 具体题目的相关设计的实验案例以及实验配置
 
+<a id="advection-equation"></a>
 ### 1. 对流方程
 
+<a id="advection-sine-wave-translation"></a>
 ### 案例一：正弦波平移
 
 本案例对应二维对流方程的正弦波平移算例。所有实验统一放在同一物理域、同一速度场和同一时间控制下，只比较网格类型、空间格式和分辨率的变化。所有算例都采用单位正方形周期区域，速度场取 `U=(1,1,0)`，标量场为 `T`，终止时间为 `1.0`，最大 CFL 为 `0.2`。实验代号按罗马数字 I-IV 编排，其中 I、II 对应四边形网格，III、IV 对应三角形网格；I、III 是一阶迎风，II、IV 是线性迎风。
 
 该组生成的图片主要包括数值场与精确解的对比图、对角线剖面对比图、振幅随时间变化图、CFL 历史图，以及误差收敛曲线和观察收敛阶图，重点观察波形平移后是否保持幅值、是否出现数值耗散以及是否有非物理过冲。对应的分析数据主要包括 `L1`、`L2`、`Linf` 误差、`L1` 观察收敛阶、最终振幅、最大 CFL 和质量误差，其中 `L1` 与收敛阶最能直接反映网格加密后的精度变化，`L2` 和 `Linf` 则分别补充平均误差和峰值偏差。
 
+<a id="advection-sine-wave-translation-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -20,6 +62,7 @@
 | III | `03_sine_wave_tri_upwind` | 三角形 | `Gauss upwind` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 | IV | `03_sine_wave_tri_linearUpwind` | 三角形 | `Gauss linearUpwind grad(T)` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 
+<a id="advection-sine-wave-translation-archive"></a>
 #### 相关实验的数据归档
 
 - I `01_sine_wave_quad`
@@ -51,12 +94,14 @@
   - 报告: [`report/01_advection_equation/report.md`](../report/01_advection_equation/report.md)
   - 证据索引: [`report/01_advection_equation/evidence_index.md`](../report/01_advection_equation/evidence_index.md)
 
+<a id="advection-solid-rotation"></a>
 ### 案例二：复杂轮廓固体旋转
 
 本案例对应二维对流方程的复杂轮廓固体旋转算例。所有实验统一在单位正方形计算域内，外边界对标量场采用零值条件；速度场取绕 `(0.5,0.5)` 的刚体旋转，角速度为 `1`，终止时间为 `2π`，最大 CFL 为 `0.2`。初始场由切口圆盘、圆锥和光滑峰值三部分构成。实验代号按罗马数字 V-VI 编排，其中 V 对应四边形网格，VI 对应三角形网格；两组都采用一阶迎风格式，通过 `N=50,100,200` 的结果比较轮廓保持、数值耗散和质量守恒。
 
 该组生成的图片主要包括初始场与最终场的对比图、最终等值线图和 CFL 历史图，重点观察切口是否闭合、圆盘边界是否变钝、峰值是否被抹平，以及一圈旋转后整体轮廓是否回到原位。对应的分析数据主要包括一圈旋转后的 `cycleL1AgainstInitial`、最大 CFL、归一化质量误差、最终最大值和单元数；其中 `cycleL1AgainstInitial` 反映整体形状偏差，质量误差反映守恒性，最终最大值则反映数值耗散对峰值的削弱程度。
 
+<a id="advection-solid-rotation-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -64,6 +109,7 @@
 | V | `04_solid_rotation_quad_upwind` | 四边形 | `Gauss upwind` | `50, 100, 200` | 单位正方形区域、刚体旋转速度场 `u=(0.5-y, x-0.5, 0)`、旋转中心 `(0.5,0.5)`、角速度 `1`、`t=2π`、`maxCo=0.2`、初始场为切口圆盘/圆锥/光滑峰值、外边界标量为零 |
 | VI | `04_solid_rotation_tri_upwind` | 三角形 | `Gauss upwind` | `50, 100, 200` | 单位正方形区域、刚体旋转速度场 `u=(0.5-y, x-0.5, 0)`、旋转中心 `(0.5,0.5)`、角速度 `1`、`t=2π`、`maxCo=0.2`、初始场为切口圆盘/圆锥/光滑峰值、外边界标量为零 |
 
+<a id="advection-solid-rotation-archive"></a>
 #### 相关实验的数据归档
 
 - V `04_solid_rotation_quad_upwind`
@@ -79,14 +125,17 @@
   - 报告: [`report/01_advection_equation/report.md`](../report/01_advection_equation/report.md)
   - 证据索引: [`report/01_advection_equation/evidence_index.md`](../report/01_advection_equation/evidence_index.md)
 
+<a id="diffusion-equation"></a>
 ### 2. 扩散方程
 
+<a id="diffusion-discontinuous-initial"></a>
 ### 案例一：间断初值扩散
 
 本案例对应二维扩散方程的间断初值验证。计算域为 `[-5,5] \times [-5,5]`，初始场为中心方块指示函数，外边界采用齐次 Neumann 条件，扩散系数取 `\mu=1`，终止时间为 `0.2`。实验代号按罗马数字 I-II 编排，其中 I 对应四边形网格，II 对应三角形网格；两组都在 `N=10,20,40,80` 下比较扩散平滑过程、误差收敛和守恒性。
 
 该组生成的图片主要包括数值场与解析解的对比图、典型剖面图、时间演化图，以及网格加密下的误差收敛曲线和观察收敛阶图。前两类图主要看间断是否被正确平滑、峰值是否衰减、剖面是否与解析解一致；后两类图主要看误差是否随网格加密而下降，以及收敛阶是否稳定。对应的分析数据主要包括各分辨率的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 更直接反映整体偏差，`L2` 更能体现平均意义下的误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。
 
+<a id="diffusion-discontinuous-initial-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -94,6 +143,7 @@
 | I | `01_discontinuous_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、中心方块初值、齐次 Neumann 边界 |
 | II | `02_discontinuous_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、中心方块初值、齐次 Neumann 边界 |
 
+<a id="diffusion-discontinuous-initial-archive"></a>
 #### 相关实验的数据归档
 
 - I `01_discontinuous_quad`
@@ -111,12 +161,14 @@
   - 报告: [`report/02_diffusion_equation/report.md`](../report/02_diffusion_equation/report.md)
   - 证据索引: [`report/02_diffusion_equation/evidence_index.md`](../report/02_diffusion_equation/evidence_index.md)
 
+<a id="diffusion-gaussian"></a>
 ### 案例二：Gaussian 扩散
 
 本案例对应二维扩散方程的 Gaussian 初值验证。计算域同样为 `[-5,5] \times [-5,5]`，初始场为光滑 Gaussian 分布，外边界采用与解析解一致的时间变化 Dirichlet 条件，扩散系数仍取 `\mu=1`，终止时间为 `0.2`。实验代号按罗马数字 III-IV 编排，其中 III 对应四边形网格，IV 对应三角形网格；两组都在 `N=10,20,40,80` 下比较光滑场的扩散形态、边界一致性和误差收敛。
 
 该组生成的图片主要包括数值场与解析解的对比图、典型剖面图，以及时间演化图，重点观察峰值衰减、分布扩散是否与解析解一致、边界是否与理论值贴合，以及剖面是否随网格加密逐步逼近精确解。对应的分析数据主要包括各分辨率 `summary.json` 中的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 主要看整体误差，`L2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的收敛趋势是否稳定。
 
+<a id="diffusion-gaussian-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -124,6 +176,7 @@
 | III | `03_gaussian_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、Gaussian 初值、解析解 Dirichlet 边界 |
 | IV | `04_gaussian_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、Gaussian 初值、解析解 Dirichlet 边界 |
 
+<a id="diffusion-gaussian-archive"></a>
 #### 相关实验的数据归档
 
 - III `03_gaussian_quad`
@@ -141,14 +194,17 @@
   - 报告: [`report/02_diffusion_equation/report.md`](../report/02_diffusion_equation/report.md)
   - 证据索引: [`report/02_diffusion_equation/evidence_index.md`](../report/02_diffusion_equation/evidence_index.md)
 
+<a id="advection-diffusion-equation"></a>
 ### 3. 对流-扩散方程
 
+<a id="advection-diffusion-sine-wave-translation"></a>
 ### 案例一：正弦波平移
 
 本案例对应二维对流-扩散方程的正弦波平移验证。计算域为单位正方形周期区域，初始场取正弦波，速度场为常量平移，扩散系数为 `mu=1`，终止时间为 `1.0`。实验代号按罗马数字 I-II 编排，其中 I 对应四边形网格，II 对应三角形网格；两组都在 `N=10,20,40,80` 下比较平移后的波形保持、数值耗散和误差收敛。
 
 该组生成的图片主要包括数值场与精确解的对比图、典型剖面图、振幅变化图，以及误差收敛曲线和观察收敛阶图。前两类图主要看波形平移后是否还能保持峰谷位置和幅值，后两类图主要看误差是否随网格加密而下降，以及收敛阶是否稳定。对应的分析数据主要包括各分辨率的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 更直接反映整体偏差，`L2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。由于 `mu=1`、`t=1` 时解析正弦波的幅值为 $\exp(-8\pi^2)\approx5.12\times10^{-35}$，以解析解范数归一化的相对误差会受到近零分母影响，因此本案例以初始场归一化误差作为主指标，以绝对误差作为辅助指标，解析解相对误差仅保留作诊断。
 
+<a id="advection-diffusion-sine-wave-translation-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -156,6 +212,7 @@
 | I | `01_sine_wave_quad_upwind` | 四边形 | `Gauss upwind` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(1,1,0)`、`mu=1`、`endTime=1.0`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、周期边界 |
 | II | `02_sine_wave_tri_upwind` | 三角形 | `Gauss upwind` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(1,1,0)`、`mu=1`、`endTime=1.0`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、周期边界 |
 
+<a id="advection-diffusion-sine-wave-translation-archive"></a>
 #### 相关实验的数据归档
 
 - I `01_sine_wave_quad_upwind`
@@ -173,12 +230,14 @@
   - 报告: [`report/03_advection_diffusion_equation/report.md`](../report/03_advection_diffusion_equation/report.md)
   - 证据索引: [`report/03_advection_diffusion_equation/evidence_index.md`](../report/03_advection_diffusion_equation/evidence_index.md)
 
+<a id="advection-diffusion-rotating-peak"></a>
 ### 案例二：旋转尖峰平流扩散
 
 本案例对应二维对流-扩散方程的旋转尖峰验证。计算域为 `[-1,1]\times[-1,1]`，初始场为旋转尖峰，速度场为刚体旋转，扩散系数取较小常数，终止时间为 `2\pi`。实验代号按罗马数字 III-VI 编排，其中 III、V 对应四边形网格，IV、VI 对应三角形网格；两类边界设置分别比较零 Dirichlet 近似与解析 Dirichlet，在 `N=20,40,80` 下观察轮廓保持、边界影响和误差收敛。
 
 该组生成的图片主要包括初始场与最终场对比图、最终等值线图、典型剖面图，以及误差收敛曲线和观察收敛阶图。前两类图主要看尖峰轮廓是否被抹平、峰值是否衰减、切口区域是否保持合理，后两类图主要看误差是否随网格加密而下降，以及不同边界处理下的差异是否明显。对应的分析数据主要包括各分辨率的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 更直接反映整体形状偏差，`L2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。
 
+<a id="advection-diffusion-rotating-peak-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
@@ -188,6 +247,7 @@
 | V | `05_rotating_peak_quad_analyticDirichlet_upwind` | 四边形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、解析 Dirichlet |
 | VI | `06_rotating_peak_tri_analyticDirichlet_upwind` | 三角形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、解析 Dirichlet |
 
+<a id="advection-diffusion-rotating-peak-archive"></a>
 #### 相关实验的数据归档
 
 - III `03_rotating_peak_quad_upwind`
@@ -219,8 +279,10 @@
   - 报告: [`report/03_advection_diffusion_equation/report.md`](../report/03_advection_diffusion_equation/report.md)
   - 证据索引: [`report/03_advection_diffusion_equation/evidence_index.md`](../report/03_advection_diffusion_equation/evidence_index.md)
 
+<a id="poisson-equation"></a>
 ### 4. Poisson 方程
 
+<a id="poisson-manufactured-solution"></a>
 ### 案例一：制造解 Poisson 方程
 
 本案例对应二维稳态 Poisson 方程的制造解验证。计算域为单位正方形
@@ -242,6 +304,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 观察收敛阶用于判断误差是否随网格加密按预期下降，并比较四边形和三角形
 网格在相同名义分辨率下的收敛表现。
 
+<a id="poisson-manufactured-solution-config"></a>
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 网格后端 | 分辨率 N | 固定设置 |
@@ -249,6 +312,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 | I | `01_poisson_manufactured_quad` | 四边形 | `blockMesh` | `10, 20, 40, 80` | 单位正方形区域、$\phi_{\mathrm{exact}}=\cos(\pi x)\cos(\pi y)$、$\omega=-2\pi^2\cos(\pi x)\cos(\pi y)$、四边 Dirichlet、`Gauss linear corrected`、`GAMG`、线性求解容差 `1e-12`、非正交修正 `2` 次、稳态计算 |
 | II | `02_poisson_manufactured_tri` | 三角形棱柱 | `gmsh` | `10, 20, 40, 80` | 单位正方形区域、$\phi_{\mathrm{exact}}=\cos(\pi x)\cos(\pi y)$、$\omega=-2\pi^2\cos(\pi x)\cos(\pi y)$、四边 Dirichlet、`Gauss linear corrected`、`GAMG`、线性求解容差 `1e-12`、非正交修正 `2` 次、稳态计算 |
 
+<a id="poisson-manufactured-solution-archive"></a>
 #### 相关实验的数据归档
 
 - I `01_poisson_manufactured_quad`
@@ -266,6 +330,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
   - 报告: [`report/04_poisson_equation/report.md`](../report/04_poisson_equation/report.md)
   - 证据索引: [`report/04_poisson_equation/evidence_index.md`](../report/04_poisson_equation/evidence_index.md)
 
+<a id="navier-stokes-equation"></a>
 ### 5. Navier-Stokes 方程
 
 本题以下只整理已经生成结果数据和图片的混合网格实验。结果分析以
@@ -275,6 +340,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 和等边三角腔顶盖驱动流的 `26`-`31`。未形成上述数据和图片归档的其他编号
 不列入本节分析范围。
 
+<a id="navier-stokes-lid-driven-cavity"></a>
 ### 案例一：方腔顶盖驱动流
 
 本案例对应二维不可压 Navier-Stokes 方程的方腔顶盖驱动流。计算域为
@@ -295,6 +361,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 收敛阶，而是以中心线 RMSE、最大绝对误差、主循环形态和稳态判据作为主要
 比较依据。
 
+<a id="navier-stokes-lid-driven-cavity-config"></a>
 #### 已有数据的实验配置
 
 | 实验代号 | 案例 | 算法 | 网格 | Reynolds 数 | 分辨率 / 单元数 | 固定设置 |
@@ -308,6 +375,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 | VII | `18_lid_driven_cavity_piso_Re3200_hybrid40` | PISO 法 | 混合网格 `hybrid40` | `3200` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.001`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 | VIII | `19_lid_driven_cavity_piso_Re3200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `3200` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.0005`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 
+<a id="navier-stokes-lid-driven-cavity-archive"></a>
 #### 数据与图片归档
 
 - I `07_lid_driven_cavity_projection_Re1000_hybrid40`
@@ -367,6 +435,7 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
 
+<a id="navier-stokes-triangular-cavity"></a>
 ### 案例二：等边三角腔顶盖驱动流
 
 本案例对应二维等边三角腔顶盖驱动流。三角腔顶点取
@@ -391,6 +460,7 @@ Reynolds 数，用于比较压力-速度耦合算法对三角腔主循环、角�
 流场、速度剖面和涡结构，不将其作为已经达到稳态的结论；其余已归档结果
 按照各自的 `summary.json`、剖面数据和图片进行比较。
 
+<a id="navier-stokes-triangular-cavity-config"></a>
 #### 已有数据的实验配置
 
 | 实验代号 | 案例 | 算法 | 网格 | Reynolds 数 | 分辨率 / 单元数 | 固定设置 |
@@ -402,6 +472,7 @@ Reynolds 数，用于比较压力-速度耦合算法对三角腔主循环、角�
 | XIII | `30_triangular_cavity_piso_Re200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `200` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.005$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 | XIV | `31_triangular_cavity_piso_Re500_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `500` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.002$、`Δt=0.00025`、`endTime=140`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 
+<a id="navier-stokes-triangular-cavity-archive"></a>
 #### 数据与图片归档
 
 - IX `26_triangular_cavity_projection_Re100_hybrid80`

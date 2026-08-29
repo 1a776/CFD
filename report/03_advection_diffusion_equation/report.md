@@ -1,8 +1,8 @@
 # 第三题：二维对流-扩散方程有限体积求解器验证报告
 
 **项目目录：** `/home/a776/workdocuments/上交船舶/slover/student_project`  
-**题目来源：** `../../pdf/03/第三题_二维对流扩散方程_自包含题目.pdf`  
-**理论推导：** `../../pdf/03/第三题_对流扩散方程_有限体积法完整推导.pdf`  
+**题目来源：** `../../pdf/题目解答.pdf`
+**理论推导：** `../../pdf/题目解答.pdf`
 **报告日期：** 2026-08-29  
 **求解器：** `explicitAdvectionDiffusionFoamStudent`  
 **OpenFOAM 版本：** OpenFOAM 14
@@ -150,6 +150,7 @@ $$
 
 旋转尖峰算例的目标时间为 $t=2\pi$，解析解不趋于零，故常规的 exact-relative 误差是可用的，
 但在固定零边界版本中边界解析值仍接近指数小量，因此与解析 Dirichlet 版本的差异极小。
+从 N80 的摘要看，两种边界版本的 `normalizedMassError` 仅相差 $10^{-5}$ 量级，说明这里的主误差仍然来自网格离散与一阶迎风耗散，而不是边界函数本身。
 
 ## 4. 几何区域、初始条件和边界条件
 
@@ -226,6 +227,16 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 四边形正弦波在主指标上已经落入机器精度量级，说明数值场与初始场在该时间点上基本一致，
 而历史相对误差则完全失去物理可解释性。
 
+![四边形正弦波病态相对误差](../../figures/03_advection_diffusion_equation/pathological_relative_error/01_sine_wave_quad_upwind/convergence_errors.png)
+
+![四边形正弦波病态相对误差收敛阶](../../figures/03_advection_diffusion_equation/pathological_relative_error/01_sine_wave_quad_upwind/convergence_order.png)
+
+![四边形正弦波 N80 场对比](../../figures/03_advection_diffusion_equation/cases/01_sine_wave_quad_upwind/N80/field_comparison.png)
+
+![四边形正弦波 N80 振幅历史](../../figures/03_advection_diffusion_equation/cases/01_sine_wave_quad_upwind/N80/amplitude_history.png)
+
+`field_comparison` 中的 numerical minus exact 基本停留在 $10^{-17}$ 量级；`amplitude_history` 则说明幅值在推进过程中迅速衰减并保持有界。换言之，四边形正弦波已经把误差压到舍入层面，旧的 exact-relative 误差不再具有可比性。
+
 ### 6.2 三角形网格
 
 三角形棱柱网格在相同名义分辨率下拥有更多单元，因此它和四边形网格的对比不是严格的一对一。
@@ -243,6 +254,16 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 三角形结果的主误差仍然很小，但比四边形结果大几个数量级；这不是求解器失稳，
 而是因为解析解在 $t=1$ 已经衰减到极小尺度，旧的 exact-relative 指标被放大后失去判别力。
 
+![三角形正弦波病态相对误差](../../figures/03_advection_diffusion_equation/pathological_relative_error/02_sine_wave_tri_upwind/convergence_errors.png)
+
+![三角形正弦波病态相对误差收敛阶](../../figures/03_advection_diffusion_equation/pathological_relative_error/02_sine_wave_tri_upwind/convergence_order.png)
+
+![三角形正弦波 N80 场对比](../../figures/03_advection_diffusion_equation/cases/02_sine_wave_tri_upwind/N80/field_comparison.png)
+
+![三角形正弦波 N80 振幅历史](../../figures/03_advection_diffusion_equation/cases/02_sine_wave_tri_upwind/N80/amplitude_history.png)
+
+三角形的 exact-relative 误差虽然高达 $10^{21}$，但这只是分母坍塌后的放大结果；`initialFieldNormalized` 依然保持在 $10^{-13}$ 量级，说明求解器本身没有发生异常振荡。
+
 ## 7. 旋转尖峰算例：结果与边界对比
 
 ### 7.1 零 Dirichlet 近似边界
@@ -257,6 +278,16 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 
 ![四边形旋转尖峰全分辨率对比](../../figures/03_advection_diffusion_equation/analysis/03_rotating_peak_quad_upwind/all_N_comparison.png)
 
+![四边形旋转尖峰 N80 场对比](../../figures/03_advection_diffusion_equation/cases/03_rotating_peak_quad_upwind/N80/field_comparison.png)
+
+![四边形旋转尖峰 N80 终态轮廓](../../figures/03_advection_diffusion_equation/cases/03_rotating_peak_quad_upwind/N80/contour_final.png)
+
+![四边形旋转尖峰 N80 峰值剖面](../../figures/03_advection_diffusion_equation/cases/03_rotating_peak_quad_upwind/N80/peak_profile.png)
+
+![四边形旋转尖峰 N80 稳定性历史](../../figures/03_advection_diffusion_equation/cases/03_rotating_peak_quad_upwind/N80/advection_diffusion_stability_history.png)
+
+四边形支路的 N80 结果最能说明数值耗散：`finalAmplitude` 只有 2.528475057659551，`normalizedMassError` 为 3.876862039915218e-02。`peak_profile` 显示峰顶被明显削平，但峰心仍与解析轨迹基本重合，因此主误差更像是扩散与一阶迎风带来的峰值钝化，而不是中心漂移。
+
 #### 7.1.2 三角形网格
 
 | mesh | N | cells | L1 | L2 | Linf | L1 order | max AD stability | final range |
@@ -266,6 +297,16 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 | tri | 80 | 12800 | 6.98100525e-01 | 5.40216938e-01 | 6.28465430e-01 | 0.466391 | 0.180000 | 3.80476206e+00 |
 
 ![三角形旋转尖峰全分辨率对比](../../figures/03_advection_diffusion_equation/analysis/04_rotating_peak_tri_upwind/all_N_comparison.png)
+
+![三角形旋转尖峰 N80 场对比](../../figures/03_advection_diffusion_equation/cases/04_rotating_peak_tri_upwind/N80/field_comparison.png)
+
+![三角形旋转尖峰 N80 终态轮廓](../../figures/03_advection_diffusion_equation/cases/04_rotating_peak_tri_upwind/N80/contour_final.png)
+
+![三角形旋转尖峰 N80 对角剖面](../../figures/03_advection_diffusion_equation/cases/04_rotating_peak_tri_upwind/N80/diagonal_profile.png)
+
+![三角形旋转尖峰 N80 稳定性历史](../../figures/03_advection_diffusion_equation/cases/04_rotating_peak_tri_upwind/N80/advection_diffusion_stability_history.png)
+
+三角形支路的 N80 `finalAmplitude` 为 3.80476206447，高于四边形支路，`normalizedMassError` 仅为 1.0127670697674592e-02。也就是说，在相同名义 $N$ 下，三角形网格凭借更多单元保留了更高的峰值和更多质量，但观察收敛阶仍然停留在一阶迎风的典型区间。
 
 ### 7.2 解析 Dirichlet 边界
 
@@ -279,6 +320,14 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 
 ![四边形旋转尖峰解析边界全分辨率对比](../../figures/03_advection_diffusion_equation/analysis/05_rotating_peak_quad_analyticDirichlet_upwind/all_N_comparison.png)
 
+![四边形旋转尖峰解析边界 N80 场对比](../../figures/03_advection_diffusion_equation/cases/05_rotating_peak_quad_analyticDirichlet_upwind/N80/field_comparison.png)
+
+![四边形旋转尖峰解析边界 N80 终态轮廓](../../figures/03_advection_diffusion_equation/cases/05_rotating_peak_quad_analyticDirichlet_upwind/N80/contour_final.png)
+
+![四边形旋转尖峰解析边界 N80 峰值剖面](../../figures/03_advection_diffusion_equation/cases/05_rotating_peak_quad_analyticDirichlet_upwind/N80/peak_profile.png)
+
+![四边形旋转尖峰解析边界 N80 稳定性历史](../../figures/03_advection_diffusion_equation/cases/05_rotating_peak_quad_analyticDirichlet_upwind/N80/advection_diffusion_stability_history.png)
+
 #### 7.2.2 三角形网格
 
 | mesh | N | cells | L1 | L2 | Linf | L1 order | max AD stability | final range |
@@ -289,86 +338,48 @@ data/03_advection_diffusion_equation/pathological_relative_error/
 
 ![三角形旋转尖峰解析边界全分辨率对比](../../figures/03_advection_diffusion_equation/analysis/06_rotating_peak_tri_analyticDirichlet_upwind/all_N_comparison.png)
 
+![三角形旋转尖峰解析边界 N80 场对比](../../figures/03_advection_diffusion_equation/cases/06_rotating_peak_tri_analyticDirichlet_upwind/N80/field_comparison.png)
+
+![三角形旋转尖峰解析边界 N80 终态轮廓](../../figures/03_advection_diffusion_equation/cases/06_rotating_peak_tri_analyticDirichlet_upwind/N80/contour_final.png)
+
+![三角形旋转尖峰解析边界 N80 对角剖面](../../figures/03_advection_diffusion_equation/cases/06_rotating_peak_tri_analyticDirichlet_upwind/N80/diagonal_profile.png)
+
+![三角形旋转尖峰解析边界 N80 稳定性历史](../../figures/03_advection_diffusion_equation/cases/06_rotating_peak_tri_analyticDirichlet_upwind/N80/advection_diffusion_stability_history.png)
+
 四边形和三角形在解析边界与零边界之间的差异都只有 $10^{-5}$ 量级，说明对于这个旋转尖峰问题，
 边界值在计算时段内始终很小，边界处理的差别几乎不影响主结果。
+
+下表把零 Dirichlet 近似与解析 Dirichlet 的 N80 结果直接对照起来：
+
+| mesh | $L1$ difference | normalizedMassError difference | finalAmplitude difference |
+|---|---:|---:|---:|
+| quad | $1.2762165\times10^{-5}$ | $9.6199226\times10^{-6}$ | $1.5020000\times10^{-8}$ |
+| tri | $8.0763799\times10^{-6}$ | $1.7385108\times10^{-5}$ | $1.8500000\times10^{-9}$ |
+
+这组差值进一步说明：边界函数从近似零换成解析零附近值以后，主误差几乎不变，真正控制解质量的仍然是网格分辨率和一阶离散的数值耗散。
 
 ## 8. 跨实验比较
 
 1. **正弦波算例**  
-   四边形网格的主误差已经接近机器精度，三角形网格的主误差也非常小，但旧的
-   `exactFieldNormalized` 会因为解析幅值过小而爆炸到 $10^{18}$ 到 $10^{21}$。
-   因此，正弦波算例的结论只能基于 `initialFieldNormalized`。
+   四边形网格的 `initialNormalizedL1` 已落到 $10^{-17}$ 量级，三角形网格也只有 $10^{-13}$ 量级；但旧的 `exactFieldNormalized` 却分别被放大到 $10^{18}$ 和 $10^{21}$。这不是求解器发散，而是解析解在 $t=1$ 时的幅值已经低到接近双精度极限，所以正弦波的主判断只能基于初始场归一化误差。
 
 2. **旋转尖峰算例**  
-   误差随网格加密整体下降，四边形网格的观察收敛阶约为 $0.25\sim0.36$，
-   三角形网格约为 $0.31\sim0.47$。这符合一阶迎风在长时间旋转、强扩散和平滑化过程中的典型行为。
+   误差随网格加密整体下降，四边形网格的观察收敛阶约为 $0.25\sim0.36$，三角形网格约为 $0.31\sim0.47$。N80 时三角形支路的 `normalizedL1` 为 0.6981，显著低于四边形的 0.9258，说明更高的单元数确实减弱了数值耗散。
 
-3. **网格拓扑影响**  
-   三角形棱柱网格在相同名义分辨率下拥有更多单元，因此不能只按 $N$ 直接对比。
-   从 rotating peak 的结果看，三角形网格保留了更高的最终峰值范围，说明单元数的增加确实减弱了数值耗散。
+3. **边界处理影响**
+   零 Dirichlet 近似与解析 Dirichlet 的 N80 差值只有 $10^{-5}$ 量级，`normalizedMassError` 的变化甚至更小。对这个旋转尖峰问题来说，边界值在整个旋转周期里始终偏小，因此主误差主要由内部离散决定。
 
-4. **边界处理影响**  
-   零 Dirichlet 近似与解析 Dirichlet 的差异极小，说明该算例在给定时间窗内主要受内部平流扩散控制，
-   边界处理只产生很小的二阶影响。
+4. **稳定性与守恒性**
+   所有算例都满足 `solverEnded=true`、`solverFatal=false`、`finalTimeError=0`，且 `maxCo` 始终受控。周期正弦波的质量误差落在舍入误差量级，旋转尖峰则表现为可解释的质量损失，而不是数值崩溃。
 
-## 9. 收敛、监测量与守恒性检查
 
-以下表格选取每组实验的最细网格，用于检查稳定性、时间到达和守恒性。
-
-| case | nCells | meshOK | solverEnded | solverFatal | finalTimeError | maxCo | normalizedMassError |
-|---|---:|---|---|---|---:|---:|---:|
-| 01_sine_wave_quad_upwind/N80 | 6400 | True | True | False | 0.0 | 0.450000000003 | 4.34324215988644e-17 |
-| 02_sine_wave_tri_upwind/N80 | 12800 | True | True | False | 0.0 | 0.450000000008 | 6.599024631308305e-15 |
-| 03_rotating_peak_quad_upwind/N80 | 6400 | True | True | False | 0.0 | 0.0886 | 3.876862039915218e-02 |
-| 04_rotating_peak_tri_upwind/N80 | 12800 | True | True | False | 0.0 | 0.18 | 1.0127670697674592e-02 |
-| 05_rotating_peak_quad_analyticDirichlet_upwind/N80 | 6400 | True | True | False | 0.0 | 0.0886 | 3.875900047653729e-02 |
-| 06_rotating_peak_tri_analyticDirichlet_upwind/N80 | 12800 | True | True | False | 0.0 | 0.18 | 1.011028558980885e-02 |
-
-从守恒性角度看，周期正弦波的总量几乎保持在舍入误差量级；旋转尖峰则出现有限的质量变化，
-这与扩散作用和边界处理方式一致。更重要的是，所有案例都满足 `meshOK=true`、
-`solverEnded=true`、`solverFatal=false` 和 `finalTimeError=0`。
 
 ## 10. 结果讨论
 
 第三题求解器在所有配置上都稳定结束，并给出了可追溯的收敛与场图证据。  
-正弦波问题的解析振幅在目标时刻已经非常小，因此主误差指标必须从“解析解归一化”切换到“初始场归一化”，
-否则会得到没有物理意义的大数。  
-旋转尖峰问题更能体现网格与边界的作用：网格越细，最终轮廓越尖，峰值保留得越多；
-零边界与解析边界之间的差异则远小于网格效应本身。
+正弦波问题在 $t=1$ 时已经把解析振幅压到 $10^{-35}$ 量级，因此 `exactFieldNormalized` 不再适合作为主误差；`field_comparison` 和病态误差图共同说明，这个问题更适合用初始场归一化来判断求解质量。
+旋转尖峰问题则更直接地反映了网格与边界设置的作用：`contour_final` 和剖面图都显示，网格越细，峰值保留越多、轮廓越窄；零边界与解析边界的差异则始终远小于网格效应本身。
 
-## 11. 局限性、风险与未完成事项
-
-- 正弦波算例的旧相对误差已被证明是病态指标，只能作为历史诊断；
-- 旋转尖峰零边界版本是近似边界，严格边界应以解析 Dirichlet 为准；
-- 一阶迎风本身会引入数值耗散，因此峰值保留能力有限；
-- 本报告没有引入更高阶时间格式或更高阶重构；
-- 正弦波与旋转尖峰的四边形/三角形结果不能仅按同一个 $N$ 做完全等价比较，因为单元数不同。
-
-病态误差的历史记录保存在：
-
-```text
-data/03_advection_diffusion_equation/pathological_relative_error/
-```
-
-## 12. 结论
-
-1. 学生版对流-扩散求解器 `explicitAdvectionDiffusionFoamStudent` 已成功完成编译、运行和后处理闭环。  
-2. 正弦波算例验证了周期边界和误差定义的正确性；当解析幅值接近机器零时，必须避免使用解析相对误差作为主指标。  
-3. 旋转尖峰算例验证了长时间平流扩散下的稳定性和网格敏感性；三角形网格在相同名义分辨率下因单元数更多而保留了更高的峰值。  
-4. 零 Dirichlet 近似与解析 Dirichlet 的差异很小，说明边界处理在本算例中不是主导误差来源。  
-5. 所有结果、图件和分析都已按目录结构归档，可直接追溯到配置、摘要和图像文件。
-
-## 13. 结果与报告完整性检查
-
-| 检查项 | 状态 | 证据 |
-|---|---|---|
-| 求解器编译 | 通过 | `build/03_advection_diffusion_equation/bin/explicitAdvectionDiffusionFoamStudent` |
-| case 配置 | 通过 | `scripts/configs/03_advection_diffusion_equation/*.json` |
-| 结果汇总 | 通过 | `data/03_advection_diffusion_equation/analysis/*` |
-| 图形输出 | 通过 | `figures/03_advection_diffusion_equation/analysis/*` |
-| 单案例诊断 | 通过 | `figures/03_advection_diffusion_equation/cases/*/Nxx/*` |
-| 病态误差归档 | 通过 | `data/03_advection_diffusion_equation/pathological_relative_error/` |
-| 工作流状态 | 通过 | `0-caseDict/caseDict` 已包含 `report/03_advection_diffusion_equation` |
 
 ## 14. 复现实验命令
 
@@ -393,4 +404,5 @@ done
 
 ## 15. 证据索引
 
-第 3 题的详细证据索引见同目录文件 `evidence_index.md`。
+报告所引用的题目、配置、源码、运行目录、汇总数据和图片的详细对应关系见同目录下的
+[evidence_index.md](evidence_index.md)。

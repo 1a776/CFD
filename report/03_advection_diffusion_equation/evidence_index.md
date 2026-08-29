@@ -6,8 +6,7 @@
 
 | 内容 | 证据 | 用途 |
 |---|---|---|
-| 原始第三题题面 | `../../pdf/03/第三题_二维对流扩散方程_自包含题目.pdf` | 控制方程、两个算例族、网格与时间要求 |
-| 第三题有限体积推导 | `../../pdf/03/第三题_对流扩散方程_有限体积法完整推导.pdf` | 显式有限体积离散、迎风格式和扩散项推导 |
+| 第三题题面与解答 | `../../pdf/题目解答.pdf` | 控制方程、两个算例族、网格与时间要求 |
 | 正弦波四边形配置 | `../../scripts/configs/03_advection_diffusion_equation/01_sine_wave_quad_upwind.json` | 周期边界、四边形网格、误差定义、终止时间 |
 | 正弦波三角形配置 | `../../scripts/configs/03_advection_diffusion_equation/02_sine_wave_tri_upwind.json` | 周期边界、三角形网格、误差定义、终止时间 |
 | 旋转尖峰四边形近似边界配置 | `../../scripts/configs/03_advection_diffusion_equation/03_rotating_peak_quad_upwind.json` | 零 Dirichlet 近似边界、四边形网格 |

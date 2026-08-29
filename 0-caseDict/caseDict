@@ -355,7 +355,7 @@ report
 {
     title                "Training PDE numerical tests: unified case definition and verification record";
     language             zh-CN;
-    outputFile           report/02_diffusion_equation/report.md;
+    outputFile           report/03_advection_diffusion_equation/report.md;
     includeGeometry      true;
     includeMesh          true;
     includePhysics       true;

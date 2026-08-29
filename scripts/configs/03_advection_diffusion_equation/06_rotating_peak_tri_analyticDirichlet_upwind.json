@@ -6,7 +6,6 @@
   "problem": "rotating_peak_advection_diffusion",
   "meshType": "tri",
   "meshBackend": "gmsh",
-  "gmshPython": "/home/a776/vibeflow/python-env/bin/python",
   "schemeName": "Gauss_upwind__Gauss_linear_corrected__analyticDirichlet",
   "divScheme": "Gauss upwind",
   "laplacianScheme": "Gauss linear corrected",

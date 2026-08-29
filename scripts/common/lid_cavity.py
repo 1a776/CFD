@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import json
+import os
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -139,9 +141,7 @@ def _hybrid_allrun_pre(config: dict) -> str:
             max(2, round(resolution * layer_thickness)),
         )
     )
-    gmsh_python = config.get(
-        "gmshPython", "/home/a776/vibeflow/python-env/bin/python"
-    )
+    gmsh_python = config.get("gmshPython", "")
     return f"""#!/bin/sh
 
 set -eu
@@ -157,7 +157,10 @@ cd "$caseDir"
 # 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
 # 网格参数来自当前案例 JSON，不改变求解器和物理边界接口。
 gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
-if [ ! -x "$gmshPython" ]; then
+if [ -z "$gmshPython" ]; then
+    gmshPython="$(command -v python3 || true)"
+fi
+if [ -z "$gmshPython" ] || [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
     echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
     exit 1
@@ -689,10 +692,11 @@ rm -f log.*
 def run(config_path: Path, overwrite: bool = False) -> Path:
     config = load_case_config(config_path)
     target = prepare(config_path, overwrite=overwrite)
+    bashrc = Path(os.environ.get("OPENFOAM_BASHRC", "/opt/openfoam14/etc/bashrc"))
     log = target / "run.batch.log"
     with log.open("w", encoding="utf-8") as stream:
         subprocess.run(
-            ["bash", "-lc", "source /opt/openfoam14/etc/bashrc && sh ./Allrun"],
+            ["bash", "-lc", f"source {shlex.quote(str(bashrc))} && sh ./Allrun"],
             cwd=target,
             stdout=stream,
             stderr=subprocess.STDOUT,

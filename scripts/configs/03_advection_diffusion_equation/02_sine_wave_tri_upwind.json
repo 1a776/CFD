@@ -6,7 +6,6 @@
   "problem": "sine_wave_advection_diffusion",
   "meshType": "tri",
   "meshBackend": "gmsh",
-  "gmshPython": "/home/a776/vibeflow/python-env/bin/python",
   "schemeName": "Gauss_upwind__Gauss_linear_corrected",
   "divScheme": "Gauss upwind",
   "laplacianScheme": "Gauss linear corrected",
