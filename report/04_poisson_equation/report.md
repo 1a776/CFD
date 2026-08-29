@@ -30,8 +30,7 @@
 - [7. 结果讨论](#7-结果讨论)
 - [8. 局限性、风险与未完成事项](#8-局限性风险与未完成事项)
 - [9. 结论](#9-结论)
-- [10. 复现实验命令](#10-复现实验命令)
-- [11. 结果与完整性检查](#11-结果与完整性检查)
+- [10. 证据索引](#10-证据索引)
 
 ## 研究概况
 
@@ -322,32 +321,8 @@ N80 时数值场已经非常接近精确场，但边界条带仍未完全消失�
 3. 三角形棱柱网格的主误差从 `1.62756935e-02` 下降到 `2.91732900e-04`，观察收敛阶逐步逼近 2。  
 4. 结果没有显示数值发散、求解中断或明显的边界失配，报告中的图表和日志均已归档。
 
-## 10. 复现实验命令
+## 10. 证据索引
 
-```bash
-cd /home/a776/workdocuments/上交船舶/slover/student_project
-source /opt/openfoam14/etc/bashrc
+报告所引用的题目、配置、源码、运行目录、汇总数据和图片的详细对应关系见同目录下的
+[evidence_index.md](evidence_index.md)。
 
-python scripts/run_study.py --config scripts/configs/04_poisson_equation/01_poisson_manufactured_quad.json
-python scripts/analyze_study.py --config scripts/configs/04_poisson_equation/01_poisson_manufactured_quad.json
-python scripts/plot_study.py --config scripts/configs/04_poisson_equation/01_poisson_manufactured_quad.json
-
-python scripts/run_study.py --config scripts/configs/04_poisson_equation/02_poisson_manufactured_tri.json
-python scripts/analyze_study.py --config scripts/configs/04_poisson_equation/02_poisson_manufactured_tri.json
-python scripts/plot_study.py --config scripts/configs/04_poisson_equation/02_poisson_manufactured_tri.json
-```
-
-## 11. 结果与完整性检查
-
-| 检查项 | 状态 | 证据 |
-|---|---|---|
-| 求解器编译 | 通过 | `build/04_poisson_equation/bin/poissonFoamStudent` |
-| 四边形 N80 日志 | 通过 | `cases/04_poisson_equation/01_poisson_manufactured_quad/N80/log.poissonFoamStudent` |
-| 三角形 N80 日志 | 通过 | `cases/04_poisson_equation/02_poisson_manufactured_tri/N80/log.poissonFoamStudent` |
-| 四边形分析文件 | 通过 | `data/04_poisson_equation/analysis/01_poisson_manufactured_quad/analysis.md` |
-| 三角形分析文件 | 通过 | `data/04_poisson_equation/analysis/02_poisson_manufactured_tri/analysis.md` |
-| 四边形结果图 | 通过 | `figures/04_poisson_equation/analysis/01_poisson_manufactured_quad/` |
-| 三角形结果图 | 通过 | `figures/04_poisson_equation/analysis/02_poisson_manufactured_tri/` |
-| 工作流状态 | 通过 | `0-caseDict/caseDict` |
-
-详细证据索引见同目录文件 `evidence_index.md`。
