@@ -28,6 +28,9 @@
 | 汇总图 | `../../figures/04_poisson_equation/analysis/01_poisson_manufactured_quad/all_N_comparison.png` | 不同分辨率的场对比 |
 | 误差图 | `../../figures/04_poisson_equation/analysis/01_poisson_manufactured_quad/convergence_errors.png` | 误差下降趋势 |
 | 收敛阶图 | `../../figures/04_poisson_equation/analysis/01_poisson_manufactured_quad/convergence_order.png` | 观察收敛阶 |
+| N10 单案例图 | `../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N10/field_comparison.png` | 最粗网格场对比 |
+| N20 单案例图 | `../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N20/field_comparison.png` | 次粗网格场对比 |
+| N40 单案例图 | `../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N40/field_comparison.png` | 中等网格场对比 |
 | N80 单案例图 | `../../figures/04_poisson_equation/cases/01_poisson_manufactured_quad/N80/field_comparison.png` | 最细网格场对比 |
 
 每个网格分辨率的详细文件为：
@@ -49,6 +52,9 @@ data/04_poisson_equation/cases/01_poisson_manufactured_quad/Nxx/error_field.csv
 | 汇总图 | `../../figures/04_poisson_equation/analysis/02_poisson_manufactured_tri/all_N_comparison.png` | 不同分辨率的场对比 |
 | 误差图 | `../../figures/04_poisson_equation/analysis/02_poisson_manufactured_tri/convergence_errors.png` | 误差下降趋势 |
 | 收敛阶图 | `../../figures/04_poisson_equation/analysis/02_poisson_manufactured_tri/convergence_order.png` | 观察收敛阶 |
+| N10 单案例图 | `../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N10/field_comparison.png` | 最粗网格场对比 |
+| N20 单案例图 | `../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N20/field_comparison.png` | 次粗网格场对比 |
+| N40 单案例图 | `../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N40/field_comparison.png` | 中等网格场对比 |
 | N80 单案例图 | `../../figures/04_poisson_equation/cases/02_poisson_manufactured_tri/N80/field_comparison.png` | 最细网格场对比 |
 
 每个网格分辨率的详细文件为：
