@@ -1637,7 +1637,7 @@ def _postprocess_quad_solid_rotation_case(
         else 0.0
     )
     mass_change = final_mass - initial_mass
-    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)
@@ -1679,11 +1679,7 @@ def _postprocess_quad_solid_rotation_case(
         "maxFinal": float(numerical.max()),
         "timeSteps": len(records),
         "meshOK": "Mesh OK." in mesh_log,
-        "solverEnded": (
-            "End" in solver_log
-            if problem == "diffusion_discontinuity"
-            else "End" in solver_log and "Stage 5 time loop completed" in solver_log
-        ),
+        "solverEnded": "End" in solver_log and "Stage 5 time loop completed" in solver_log,
         "solverFatal": "FOAM FATAL ERROR" in solver_log,
     }
     (data_dir / "summary.json").write_text(
@@ -1745,7 +1741,7 @@ def _postprocess_tri_solid_rotation_case(
         if mass_scale
         else 0.0
     )
-    solver_log = (case / "log.explicitDiffusionFoamStudent").read_text(encoding="utf-8")
+    solver_log = (case / "log.explicitAdvectionFoamStudent").read_text(encoding="utf-8")
     mesh_log_path = case / "log.checkMesh"
     mesh_log = mesh_log_path.read_text(encoding="utf-8") if mesh_log_path.exists() else ""
     configured_end_time = control_value(case, "endTime", 2.0 * math.pi)

@@ -6,8 +6,8 @@
 
 | 内容 | 证据 | 用途 |
 |---|---|---|
-| 原始第一题 | `../../pdf/01/first_advection_problem.pdf` | 控制方程、正弦波算例、固体旋转算例和题目要求 |
-| 有限体积推导 | `../../pdf/01/advection_fvm_explicit_solver_derivation.pdf` | 控制体积分、面通量、迎风格式、显式 Euler 和 CFL 推导 |
+| 原始题目文件 | `../../pdf/training_examples_incomp.pdf` | 控制方程、正弦波算例、固体旋转算例和题目要求 |
+| 题目解答与理论参考 | `../../pdf/题目解答.pdf` | 有限体积控制体积分、面通量、迎风格式、显式 Euler 和 CFL 相关说明 |
 | 四边形一阶迎风配置 | `../../scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json` | 网格、速度、终止时间、CFL 和空间格式 |
 | 四边形线性迎风配置 | `../../scripts/configs/01_advection_equation/02_sine_wave_quad_linearUpwind.json` | 高阶格式扩展 |
 | 三角形一阶迎风配置 | `../../scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json` | 三角形网格正弦波案例 |
@@ -78,6 +78,8 @@ data/01_advection_equation/cases/<caseName>/Nxx/error_field.csv
 |---|---|
 | 运行 Bug 记录 | `../../docs/bug_log.md` |
 | 时间精度问题修复 | `../../UDF/solver/01_advection_equation/explicitAdvectionFoamStudent/explicitAdvectionFoamStudent.C` |
+| 当前保留的完整运行日志 | `../../cases/01_advection_equation/01_sine_wave_quad/N10/`、`N20/`、`N40/`、`N80/` |
+| 其他案例的当前证据 | 对应 `../../data/`、`../../figures/` 路径下的汇总数据、时间历史和图片；当前快照未保留全部运行日志 |
 
 ## 6. 证据使用规则
 

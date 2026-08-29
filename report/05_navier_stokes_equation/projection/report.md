@@ -177,6 +177,7 @@ $$-\frac{2}{\sqrt{3}}\le x\le\frac{2}{\sqrt{3}}$$
 |---|---:|---|---:|---|
 | `07_lid_driven_cavity_projection_Re1000_hybrid40` | 1000 | 方腔 hybrid40 | 2646 | 已保留 |
 | `08_lid_driven_cavity_projection_Re1000_hybrid80` | 1000 | 方腔 hybrid80 | 9282 | 已保留 |
+| `10_lid_driven_cavity_projection_Re3200_hybrid40` | 3200 | 方腔 hybrid40 | 2646 | 已保留，满足稳态判据 |
 | `11_lid_driven_cavity_projection_Re3200_hybrid80` | 3200 | 方腔 hybrid80 | 9282 | 已保留 |
 | `26_triangular_cavity_projection_Re100_hybrid80` | 100 | 三角腔 hybrid80 | 7308 | 摘要为瞬态 |
 | `27_triangular_cavity_projection_Re200_hybrid80` | 200 | 三角腔 hybrid80 | 7308 | 已保留 |
@@ -206,12 +207,19 @@ $$-\frac{2}{\sqrt{3}}\le x\le\frac{2}{\sqrt{3}}$$
 |---|---:|---:|---:|---:|---:|
 | Re1000 hybrid40 | 34.396 | 0.206742 | 0.160966 | 0.656883 | 0.465763 |
 | Re1000 hybrid80 | 26.696 | 0.210637 | 0.138038 | 0.671954 | 0.329668 |
+| Re3200 hybrid40 | 95.935 | 0.030110 | 0.050971 | 0.071322 | 0.094757 |
 | Re3200 hybrid80 | 55.996 | 0.226499 | 0.169243 | 0.729606 | 0.331169 |
 
 Re1000 从 hybrid40 加密到 hybrid80 后，$v$ 中心线 RMSE 从
 `0.160966` 降至 `0.138038`，而 $u$ 中心线 RMSE 略有上升。
 这说明当前结果仍受到网格、插值和压力投影离散共同影响，
 不能仅凭单一网格量级声称已经达到文献精度。
+
+在 `Re=3200` 下，当前保留的 hybrid40 结果中心线 RMSE
+分别为 `0.030110`（$u$）和 `0.050971`（$v$），明显低于当前
+hybrid80 结果的 `0.226499` 和 `0.169243`。这说明不同网格案例
+之间不能只按名义分辨率直接排序，仍需结合网格质量、时间推进过程
+和稳态日志进行复核。
 
 ### 6.2 场与流线
 
@@ -221,6 +229,16 @@ Re1000 从 hybrid40 加密到 hybrid80 后，$v$ 中心线 RMSE 从
 
 场图显示顶盖剪切驱动形成主循环，速度幅值在顶盖附近较大，
 流线在腔体内部闭合，整体结构符合顶盖驱动方腔的基本物理图像。
+
+`Re=3200`、hybrid40 的结果图和中心线对比图如下：
+
+![Projection 方腔 Re3200 hybrid40 速度场与流线](../../../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/field_and_streamlines.png)
+
+![Projection 方腔 Re3200 hybrid40 中心线对比](../../../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/centerline_comparison.png)
+
+该案例在 `t=95.935` 达到稳态，连续 20 个时间步满足稳态判据，
+最终最大速度散度约为 `5.74e-9`，可作为当前投影法结果中具有完整
+运行日志和后处理证据的一组 `Re=3200` 方腔算例。
 
 ## 7. 三角腔结果
 
@@ -263,8 +281,10 @@ Re200 和 Re500 的主涡位置已经落在主循环所在的下部区域，
 `Steady state reached`，并给出 `max |div(U)|` 约为 $10^{-9}$、
 `max |U-Uprevious|` 约为 $10^{-6}$。
 
+方腔 Re3200 hybrid40 的日志出现 `Steady state reached`，
+结束时间为 `t=95.935`，最终 `max |div(U)|` 约为 `5.74e-9`。
 方腔 Re3200 hybrid80 当前保留摘要，但未找到对应
-`log.projectionFoamStudent`，因此只按摘要证据使用。
+`log.projectionFoamStudent`，因此仍只按摘要证据使用。
 三角腔 Re200、Re500 也未保留投影 solver log。
 
 ### 8.2 网格质量
@@ -280,6 +300,7 @@ Re200 和 Re500 的主涡位置已经落在主循环所在的下部区域，
 - 三角腔 Re100 的摘要与配置终止时间不一致，不能作为稳态结果；
 - 三角腔 Re200、Re500 缺少 solver log 和最终正时间目录，独立复核能力有限；
 - 方腔 Re3200 hybrid80 缺少当前 solver log，只能依赖摘要、中心线和图件；
+- 方腔 Re3200 hybrid40 虽然已有完整运行日志，但与 hybrid80 的误差差异较大，仍需结合网格和离散设置进一步复核；
 - 方腔中心线误差仍然较大，结果适合算法流程验证，不宜直接作为高精度文献复现；
 - 涡结构来自插值后的速度场和二次流函数重构，对插值和网格掩膜较敏感；
 - 混合网格在相同 `hybridN` 下单元分布并非均匀，不能仅用一个名义分辨率衡量所有误差来源。
@@ -287,7 +308,7 @@ Re200 和 Re500 的主涡位置已经落在主循环所在的下部区域，
 ## 10. 结论
 
 1. `projectionFoamStudent` 已实现独立的预测速度、压力泊松方程和速度/通量投影流程。
-2. 方腔 Re1000 的两个混合网格案例能够稳定结束，场图和流线呈现顶盖驱动腔流的基本结构。
+2. 方腔 Re1000 的两个混合网格案例，以及 Re3200 hybrid40 案例能够稳定结束，场图和流线呈现顶盖驱动腔流的基本结构。
 3. 方腔中心线与 Ghia 数据仍存在明显误差，当前结果更适合作为投影法实现和工作流验证。
 4. 三角腔 Re200、Re500 的摘要显示主涡已形成，但由于最终场和 solver log 不完整，结论只能限定为结果档案分析。
 5. 三角腔 Re100 当前摘要仍是早期瞬态，不能支持稳态验证；后续若要闭合第五题，应重新生成并完整运行该案例。
@@ -304,6 +325,9 @@ python scripts/run_lid_cavity.py \
 
 python scripts/run_lid_cavity.py \
   --config scripts/configs/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80.json
+
+python scripts/run_lid_cavity.py \
+  --config scripts/configs/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40.json
 
 python scripts/run_lid_cavity.py \
   --config scripts/configs/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80.json

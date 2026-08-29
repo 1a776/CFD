@@ -7,10 +7,10 @@
 \*---------------------------------------------------------------------------*/
 Build  : 14-7b05503f98a8
 Exec   : gmshToFoam /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/mesh/mesh.msh
-Date   : Aug 28 2026
-Time   : 09:48:33
+Date   : Aug 29 2026
+Time   : 09:29:05
 Host   : "DELL"
-PID    : 1015
+PID    : 153514
 I/O    : uncollated
 Case   : /home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40
 nProcs : 1
