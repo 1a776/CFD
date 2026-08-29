@@ -1000,46 +1000,8 @@ maxCo = 0.2
 不是严格意义上的解析解收敛阶。固体旋转案例还应在后续工作中补充不同网格尺度下的
 统一误差定义和更系统的格式对比。
 
-## 11. 局限性、风险与未完成事项
 
-目前报告仍有以下局限：
-
-1. 正弦波收敛研究使用了固定 CFL，而不是完全独立的空间和时间收敛分离研究；
-2. 固体旋转案例主要使用一圈后的轮廓图和体积加权差异，没有像正弦波一样的独立解析解误差；
-3. 三角形和四边形的相同 $N$ 对应不同单元数量，直接比较会受到网格尺度差异影响；
-4. 当前重点是教学型显式求解器，没有覆盖并行计算、复杂边界和工程船舶几何；
-5. `linearUpwind` 在光滑正弦波上误差较小，但四边形粗网格已经出现振幅过冲；
-6. 当前复杂轮廓旋转只完成一阶迎风，尚未完成 `linearUpwind` 的旋转对比。
-
-## 12. 结论
-
-本项目已经完成第一题的主要数值实现和验证流程。学生版
-`explicitAdvectionFoamStudent` 能够在 OpenFOAM 14 下读取速度场和标量场，计算面通量，
-根据 CFL 自动调整时间步，调用显式对流散度并完成前向 Euler 时间推进。
-
-正弦波测试表明，四边形和三角形网格都能够得到随网格加密而下降的误差；线性迎风扩展
-在光滑正弦波上比一阶迎风具有更小的数值误差。固体旋转测试表明，复杂轮廓能够完成
-一整圈旋转，质量守恒误差保持在浮点误差量级，但一阶迎风带来的数值耗散仍然明显。
-
-因此，当前求解器可以认为已经完成了第一题的教学型实现和基本验证。若作为正式科研报告，
-下一步应补充统一网格尺度比较、时间收敛分离、复杂轮廓的高阶格式测试和更严格的误差
-分析。
-
-## 13. 结果与报告完整性检查
-
-| 检查项 | 当前状态 | 证据 |
-|---|---|---|
-| 问题定义和研究目标清楚 | 已完成 | 第 1 节、原始题目 |
-| 假设、范围和验收标准明确 | 已完成 | 第 2 节 |
-| 数学模型和数值方法可追溯 | 已完成 | 第 3 节、有限体积推导 PDF、UDF 源码 |
-| 几何、网格和边界条件有说明 | 已完成 | 第 4-5 节、OpenFOAM case |
-| 关键结果有表格和图像 | 已完成 | 第 6-8 节、`data/`、`figures/` |
-| 关键结论有数据来源 | 已完成 | `report/01_advection_equation/evidence_index.md` |
-| 局限性和风险已说明 | 已完成 | 第 11 节、`docs/bug_log.md` |
-| 未解决阻塞错误已处理 | 已完成 | `summary.json` 中 `solverFatal=false` |
-| 报告是否等同于正式科研论文 | 否 | 当前为教学型工程验证报告 |
-
-## 14. 复现实验命令
+## 11. 复现实验命令
 
 从项目根目录执行：
 
@@ -1086,20 +1048,5 @@ python3 scripts/plot_study.py \
     --config scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json
 ```
 
-## 15. 证据索引
+## 12. 证据索引
 
-| 证据 | 路径 |
-|---|---|
-| 原始第一题 | `../../pdf/01/first_advection_problem.pdf` |
-| 有限体积与显式求解器推导 | `../../pdf/01/advection_fvm_explicit_solver_derivation.pdf` |
-| 求解器源码 | `../../UDF/solver/01_advection_equation/explicitAdvectionFoamStudent/explicitAdvectionFoamStudent.C` |
-| 求解器开发说明 | `../../UDF/README.md` |
-| 四边形正弦波配置 | `../../scripts/configs/01_advection_equation/01_sine_wave_quad_upwind.json` |
-| 三角形正弦波配置 | `../../scripts/configs/01_advection_equation/03_sine_wave_tri_upwind.json` |
-| 四边形误差表 | `../../data/01_advection_equation/analysis/01_sine_wave_quad/convergence_summary.csv` |
-| 三角形误差表 | `../../data/01_advection_equation/analysis/03_sine_wave_tri_upwind/convergence_summary.csv` |
-| 四边形分析说明 | `../../data/01_advection_equation/analysis/01_sine_wave_quad/analysis.md` |
-| 三角形分析说明 | `../../data/01_advection_equation/analysis/03_sine_wave_tri_upwind/analysis.md` |
-| 运行 Bug 记录 | `../../docs/bug_log.md` |
-| 四边形旋转结果 | `../../data/01_advection_equation/cases/04_solid_rotation_quad_upwind/` |
-| 三角形旋转结果 | `../../data/01_advection_equation/cases/04_solid_rotation_tri_upwind/` |

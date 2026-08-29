@@ -347,7 +347,7 @@ postProcessing
     {
         csv                (data/01_advection_equation data/02_diffusion_equation data/03_advection_diffusion_equation data/04_poisson_equation data/05_navier_stokes_equation);
         images             (figures/01_advection_equation figures/02_diffusion_equation figures/03_advection_diffusion_equation figures/04_poisson_equation figures/05_navier_stokes_equation);
-        reportData         (report/01_advection_equation report/02_diffusion_equation report/03_advection_diffusion_equation report/04_poisson_equation);
+        reportData         (report/01_advection_equation report/02_diffusion_equation report/03_advection_diffusion_equation report/04_poisson_equation report/05_navier_stokes_equation/projection report/05_navier_stokes_equation/piso);
     }
 }
 
