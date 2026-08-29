@@ -38,8 +38,7 @@
   - [8.2 网格质量](#82-网格质量)
 - [9. 局限性与风险](#9-局限性与风险)
 - [10. 结论](#10-结论)
-- [11. 复现实验命令](#11-复现实验命令)
-- [12. 证据索引](#12-证据索引)
+- [11. 证据索引](#11-证据索引)
 
 ## 研究概况
 
@@ -63,9 +62,17 @@
 
 第五题研究二维不可压 Navier-Stokes 方程：
 
-$$\nabla\cdot\boldsymbol{U}=0$$
+```math
+\nabla\cdot\boldsymbol{U} = 0
+```
 
-$$\frac{\partial\boldsymbol{U}}{\partial t}+\nabla\cdot(\boldsymbol{U}\otimes\boldsymbol{U})=-\nabla p+\nabla\cdot(\nu\nabla\boldsymbol{U})$$
+```math
+\begin{aligned}
+\frac{\partial\boldsymbol{U}}{\partial t}
+&+ \nabla\cdot(\boldsymbol{U}\otimes\boldsymbol{U}) \\
+&= -\nabla p + \nabla\cdot(\nu\nabla\boldsymbol{U})
+\end{aligned}
+```
 
 项目取密度 $\rho=1$，因此使用运动学压力和运动黏度 $\nu$。
 压力投影法的目标是先求得不满足无散约束的预测速度，
@@ -109,7 +116,7 @@ $$\frac{\partial\boldsymbol{U}}{\partial t}+\nabla\cdot(\boldsymbol{U}\otimes\bo
 | 求解器构建 | 存在 `build/05_navier_stokes_equation/bin/projectionFoamStudent` |
 | 网格质量 | `checkMesh` 输出 `Mesh OK` |
 | 求解结束 | 日志出现稳态结束或配置终止时间 |
-| 不可压约束 | solver log 中的 `max |div(U)|` 足够小；缺少 solver log 的案例只按摘要级证据使用 |
+| 不可压约束 | solver log 中的 `max abs(div(U))` 足够小；缺少 solver log 的案例只按摘要级证据使用 |
 | 方腔验证 | 提供 `u(0.5,y)`、`v(x,0.5)` 与 Ghia 对比 |
 | 三角腔验证 | 提供流线、主涡位置、流函数和中心线 |
 | 可追溯性 | 配置、摘要、图件和日志路径明确 |
@@ -120,7 +127,13 @@ $$\frac{\partial\boldsymbol{U}}{\partial t}+\nabla\cdot(\boldsymbol{U}\otimes\bo
 
 在时间步 $n\to n+1$ 内，求解不含新压力投影的预测速度 $\boldsymbol{U}^*$：
 
-$$\frac{\boldsymbol{U}^*-\boldsymbol{U}^n}{\Delta t}+\nabla\cdot(\boldsymbol{U}^n\otimes\boldsymbol{U}^*)-\nabla\cdot(\nu\nabla\boldsymbol{U}^*)=0$$
+```math
+\begin{aligned}
+\frac{\boldsymbol{U}^*-\boldsymbol{U}^n}{\Delta t}
+&+ \nabla\cdot(\boldsymbol{U}^n\otimes\boldsymbol{U}^*) \\
+&- \nabla\cdot(\nu\nabla\boldsymbol{U}^*) = 0
+\end{aligned}
+```
 
 源码中对应 `fvm::ddt(UStar)`、`fvm::div(phi,UStar)` 和
 `fvm::laplacian(nu,UStar)` 的有限体积组装。
@@ -130,18 +143,30 @@ $$\frac{\boldsymbol{U}^*-\boldsymbol{U}^n}{\Delta t}+\nabla\cdot(\boldsymbol{U}^
 预测速度对应的面通量为 $\Phi^*=\boldsymbol{U}^*\cdot\boldsymbol{S}$。
 令
 
-$$\boldsymbol{U}^{n+1}=\boldsymbol{U}^*-\Delta t\nabla p^{n+1}$$
+```math
+\boldsymbol{U}^{n+1}
+= \boldsymbol{U}^* - \Delta t\nabla p^{n+1}
+```
 
 代入无散条件，得到压力方程：
 
-$$\nabla\cdot(\Delta t\nabla p^{n+1})=\nabla\cdot\boldsymbol{U}^*$$
+```math
+\nabla\cdot(\Delta t\nabla p^{n+1})
+= \nabla\cdot\boldsymbol{U}^*
+```
 
 离散实现中使用 `fvm::laplacian(dtCoeff,p) == fvc::div(phiStar)`。
 最终通量与速度分别按
 
-$$\Phi^{n+1}=\Phi^*-\operatorname{flux}(\Delta t\nabla p^{n+1})$$
+```math
+\Phi^{n+1}
+= \Phi^* - \operatorname{flux}(\Delta t\nabla p^{n+1})
+```
 
-$$\boldsymbol{U}^{n+1}=\boldsymbol{U}^*-\Delta t\nabla p^{n+1}$$
+```math
+\boldsymbol{U}^{n+1}
+= \boldsymbol{U}^* - \Delta t\nabla p^{n+1}
+```
 
 进行修正。
 
@@ -168,7 +193,13 @@ $$\boldsymbol{U}^{n+1}=\boldsymbol{U}^*-\Delta t\nabla p^{n+1}$$
 
 三角腔顶点为
 
-$$A=(-\sqrt{3},0),\quad B=(\sqrt{3},0),\quad C=(0,-3)$$
+```math
+\begin{aligned}
+A &= (-\sqrt{3},0),\\
+B &= (\sqrt{3},0),\\
+C &= (0,-3)
+\end{aligned}
+```
 
 其中 $AB$ 为运动顶盖，左右两边为静止无滑移壁面。
 Gmsh 生成三角形棱柱混合网格：三条壁面附近设置结构化四边形带，
@@ -186,7 +217,9 @@ Gmsh 生成三角形棱柱混合网格：三条壁面附近设置结构化四边
 
 三角腔水平剖面只在物理域内采样：
 
-$$-\frac{2}{\sqrt{3}}\le x\le\frac{2}{\sqrt{3}}$$
+```math
+-\frac{2}{\sqrt{3}} \le x \le \frac{2}{\sqrt{3}}
+```
 
 ## 5. 算例覆盖与配置
 
@@ -344,32 +377,78 @@ Re200 和 Re500 的主涡位置已经落在主循环所在的下部区域，
 
 ### 7.2 三角腔场图
 
+`Re=100` 的图件如下：
+
+![Projection 三角腔 Re100 速度场与流线](../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/field_streamlines.png)
+
+该图仍然显示早期发展阶段的顶盖剪切主导特征：上边界附近已经出现多处局部波动，
+但流线尚未组织成后续工况中的单一主循环。换言之，这组图说明流动已经被驱动起来，
+却还不能视为收敛后的主涡结构。
+
+![Projection 三角腔 Re100 中心线对比](../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/centerline_comparison.png)
+
+对应的中心线在上下两条剖面上都远离参考曲线，尤其是 `v(x,-1)` 的下壁 trough
+尚未建立，说明此时的投影结果只能用于瞬态诊断，不能用于稳态精度判断。
+
+![Projection 三角腔 Re100 流函数与涡结构](../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/streamfunction_vortices.png)
+
+流函数图中的多个小极值位于顶盖附近，彼此分散且尺度较小，更像是未收敛瞬态中的局部卷吸，
+不能直接当作稳定的次级涡结构。
+
+`Re=200` 的图件如下：
+
 ![Projection 三角腔 Re200 速度场与流线](../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/field_streamlines.png)
 
 Re200 速度场图显示顶盖剪切驱动的主循环已经形成，主涡位于三角腔下部偏右区域。
 由于等边三角腔的左右斜壁把回流限制在收缩几何中，流线不是方腔中的近矩形闭合形态，
-而是沿斜壁收束。速度幅值在顶盖附近最高，向底部衰减，符合顶盖驱动腔流的基本能量输入路径。
+ 而是沿斜壁收束。速度幅值在顶盖附近最高，向底部衰减，符合顶盖驱动腔流的基本能量输入路径。
+
+![Projection 三角腔 Re200 中心线对比](../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/centerline_comparison.png)
+
+Re200 的中心线已经恢复出较稳定的主循环轮廓，但 `u(0,y)` 在下半段仍偏平，
+`v(x,-1)` 的负峰位置也比参考值略偏右，说明当前结果对主循环纵向深度的捕捉好于横向位置。
 
 ![Projection 三角腔 Re200 流函数与涡结构](../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/streamfunction_vortices.png)
 
 流函数图给出主涡位置和涡量分布的后处理诊断。Re200 的数值主涡
 `(0.3406,-0.6834)` 与参考主涡 `(0.2030,-0.7266)` 相比，垂向位置较接近，
-横向偏差较大，说明当前结果对主循环纵向深度的捕捉好于横向位置。
+横向偏差较大，这与中心线图中的右移趋势一致。
 图中小幅值局部极值对插值网格、有限区域掩膜和分辨率较敏感，
 不应在没有局部网格收敛证据时直接解释为可靠的物理次涡。
 
+`Re=500` 的图件如下：
+
+![Projection 三角腔 Re500 速度场与流线](../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/field_streamlines.png)
+
+与 Re200 相比，Re500 的主循环仍然位于腔体下部，但右侧剪切层更陡，左下部回流区更厚，
+说明更高 Reynolds 数确实增强了惯性输运；同时，这也使得薄边界层更难在当前网格上被充分解析。
+
+![Projection 三角腔 Re500 中心线对比](../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/centerline_comparison.png)
+
+Re500 的 `u(0,y)` 在上半段已基本沿着参考趋势演化，但下半段仍偏平；
+`v(x,-1)` 的负峰深度明显不足，说明主涡和底部回流的强度被低估。
+这与 `v` 分量 RMSE 和最大绝对误差同时增大的情况一致。
+
+![Projection 三角腔 Re500 流函数与涡结构](../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/streamfunction_vortices.png)
+
+Re500 的流函数主涡核心继续向右下方移动，但与参考位置相比仍偏右，
+并且下方次级回流的等值线更宽，说明当前 hybrid80 对高 Reynolds 数下的剪切层仍偏保守。
+
 ### 7.3 三角腔跨 Reynolds 数比较
 
-Re100、Re200、Re500 的摘要不能按同一证据等级直接比较。Re100 只推进到
-`t≈0.6`，速度场尚处于早期发展阶段，因此主涡位置明显偏离参考值并不代表
-稳态算法误差。Re200 与 Re500 的摘要终止时间分别约为 `23.7651` 和 `41.1882`，
-主涡均位于腔体下部，说明主循环结构已形成；随着 Reynolds 数从 200 增至 500，
-参考主涡向右下方移动，而当前数值主涡也保持在下部区域，但横向偏差仍为主要误差来源。
+Re100、Re200、Re500 不能按同一证据等级直接比较。Re100 只推进到 `t≈0.6`，
+图中已经出现多处顶盖附近的局部波动，但这些波动尚未组织成稳定主循环，因此它只能作为瞬态诊断；
+不能把这组图里的小极值解释为收敛后的物理次涡。
 
-造成三角腔偏差的原因包括：斜壁边界层和顶角区域对混合网格质量更敏感；
-最大非正交角约 `61.68` 度，高于方腔混合网格；流函数与主涡位置来自离散速度场的
-后处理重构，受插值分辨率和域内掩膜影响。由于当前缺少投影法三角腔的 solver log
-和最终正时间目录，三角腔结论应限定为“摘要和图件支持的趋势观察”。
+Re200 和 Re500 使用的是同一 `hybrid80` 网格，`checkMesh` 指标也相同，
+因此二者差异主要来自 Reynolds 数而不是网格变化。Re200 已经恢复出清晰的单主涡结构，
+Re500 则表现出更强的右侧剪切层和更明显的下部回流，但中心线 trough 仍被低估，
+说明更高 Reynolds 数下的薄边界层已经开始超出当前分辨率的舒适区。
+
+换言之，三角腔的误差来源主要有三类：斜壁和顶角对混合网格更敏感，最大非正交角达到 `61.68` 度；
+流函数和主涡来自离散速度场的后处理重构，对插值分辨率和域内掩膜敏感；
+而 Re500 相比 Re200 的额外偏差，则主要反映了更高 Reynolds 数下的薄剪切层未被充分解析。
+因此，本节更适合被读成“趋势已经被捕捉，但高 Re 精度仍有限”。
 
 ## 8. 稳态性、网格与证据完整性
 
@@ -411,44 +490,6 @@ Re100、Re200、Re500 的摘要不能按同一证据等级直接比较。Re100 �
 4. 三角腔 Re200、Re500 的摘要显示主涡已形成，但由于最终场和 solver log 不完整，结论只能限定为结果档案分析。
 5. 三角腔 Re100 当前摘要仍是早期瞬态，不能支持稳态验证；后续若要闭合第五题，应重新生成并完整运行该案例。
 
-## 11. 复现实验命令
-
-```bash
-cd /home/a776/workdocuments/上交船舶/slover/student_project
-source /opt/openfoam14/etc/bashrc
-bash scripts/build_student_solver.sh
-
-python scripts/run_lid_cavity.py \
-  --config scripts/configs/05_navier_stokes_equation/07_lid_driven_cavity_projection_Re1000_hybrid40.json
-
-python scripts/run_lid_cavity.py \
-  --config scripts/configs/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80.json
-
-python scripts/run_lid_cavity.py \
-  --config scripts/configs/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40.json
-
-python scripts/run_lid_cavity.py \
-  --config scripts/configs/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80.json
-
-python scripts/run_lid_cavity.py --overwrite \
-  --config scripts/configs/05_navier_stokes_equation/26_triangular_cavity_projection_Re100_hybrid80.json
-
-python scripts/run_lid_cavity.py --overwrite \
-  --config scripts/configs/05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80.json
-
-python scripts/run_lid_cavity.py --overwrite \
-  --config scripts/configs/05_navier_stokes_equation/28_triangular_cavity_projection_Re500_hybrid80.json
-
-python scripts/postprocess_triangular_cavity.py \
-  --case cases/05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80/N80
-
-python scripts/postprocess_triangular_cavity.py \
-  --case cases/05_navier_stokes_equation/28_triangular_cavity_projection_Re500_hybrid80/N80
-```
-
-三角腔 Re100 必须先按配置重新生成有效的最终时间目录，
-再执行 `postprocess_triangular_cavity.py`，不能直接复用当前 `t≈0.6` 摘要。
-
-## 12. 证据索引
+## 11. 证据索引
 
 详细证据索引见同目录文件 `evidence_index.md`。

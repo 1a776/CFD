@@ -32,14 +32,9 @@
 - [7. 三角腔结果](#7-三角腔结果)
   - [7.1 主涡位置与流函数](#71-主涡位置与流函数)
   - [7.2 三角腔场图](#72-三角腔场图)
-- [8. 稳态性、网格与验证讨论](#8-稳态性网格与验证讨论)
-  - [8.1 稳态和不可压约束](#81-稳态和不可压约束)
-  - [8.2 网格质量](#82-网格质量)
-  - [8.3 与参考数据的关系](#83-与参考数据的关系)
 - [9. 局限性与风险](#9-局限性与风险)
 - [10. 结论](#10-结论)
-- [11. 复现实验命令](#11-复现实验命令)
-- [12. 证据索引](#12-证据索引)
+- [11. 证据索引](#11-证据索引)
 
 ## 研究概况
 
@@ -63,11 +58,16 @@
 
 第五题的控制方程为
 
-$$\nabla\cdot\boldsymbol{U}=0$$
+$$
+\begin{aligned}
+\nabla\cdot\boldsymbol{U} &= 0, \\
+\frac{\partial\boldsymbol{U}}{\partial t}
+  + \nabla\cdot(\boldsymbol{U}\otimes\boldsymbol{U})
+  &= -\nabla p+\nabla\cdot(\nu\nabla\boldsymbol{U}).
+\end{aligned}
+$$
 
-$$\frac{\partial\boldsymbol{U}}{\partial t}+\nabla\cdot(\boldsymbol{U}\otimes\boldsymbol{U})=-\nabla p+\nabla\cdot(\nu\nabla\boldsymbol{U})$$
-
-项目取 $\rho=1$，并设置 $\nu=1/Re$。
+项目取 $\rho = 1$，并设置 $\nu = 1/\mathrm{Re}$。
 PISO 法在同一个时间步内反复执行动量预测、压力修正和通量更新，
 使速度场逐步满足压力-速度耦合和不可压约束。
 
@@ -84,7 +84,7 @@ PISO 法在同一个时间步内反复执行动量预测、压力修正和通量
 
 - 流体不可压、牛顿、密度固定为 `1`；
 - 顶盖速度和特征长度均取 `1`；
-- $\nu=1/Re$；
+- $\nu = 1/\mathrm{Re}$；
 - 除运动顶盖外，所有固壁无滑移；
 - 二维流动通过厚度为 `0.1` 的薄层三维网格表示；
 - 对流项采用 `Gauss linearUpwind grad(U)`；
@@ -123,11 +123,15 @@ PISO 法在同一个时间步内反复执行动量预测、压力修正和通量
 
 源码首先组装
 
-$$\mathrm{fvm::ddt}(U)+\mathrm{fvm::div}(\phi,U)-\mathrm{fvm::laplacian}(\nu,U)=-\mathrm{fvc::grad}(p)$$
-
-其离散矩阵可抽象为
-
-$$A(U)U=H(U)-\nabla p$$
+$$
+\begin{aligned}
+\text{fvm::ddt}(U)
+  + \text{fvm::div}(\phi,U)
+  - \text{fvm::laplacian}(\nu,U)
+  &= -\text{fvc::grad}(p), \\
+A(U)U &= H(U) - \nabla p.
+\end{aligned}
+$$
 
 其中 $A(U)$ 是包含瞬态、对流和扩散贡献的动量矩阵。
 
@@ -135,30 +139,35 @@ $$A(U)U=H(U)-\nabla p$$
 
 定义
 
-$$rAU=\frac{1}{A(U)},\qquad HbyA=rAU\,H(U)$$
+$$
+\begin{aligned}
+rAU &= \frac{1}{A(U)}, \\
+HbyA &= rAU\,H(U).
+\end{aligned}
+$$
 
 预测面通量为
 
-$$\phi_{HbyA}=fvc::flux(HbyA)+fvc::interpolate(rAU)\,fvc::ddtCorr(U,\phi)$$
+$$
+\begin{aligned}
+\phi_{HbyA}
+  &= \text{fvc::flux}(HbyA)
+   + \text{fvc::interpolate}(rAU)\,\text{fvc::ddtCorr}(U,\phi), \\
+\nabla\cdot(rAU\nabla p) &= \nabla\cdot\phi_{HbyA}, \\
+\phi &= \phi_{HbyA} - \text{flux}(\text{laplacian}(rAU,p)), \\
+U &= HbyA - rAU\nabla p.
+\end{aligned}
+$$
 
-将速度无散条件写成压力方程：
-
-$$\nabla\cdot(rAU\nabla p)=\nabla\cdot\phi_{HbyA}$$
-
-源码中对应 `fvm::laplacian(rAU,p) == fvc::div(phiHbyA)`。
-压力求解后更新面通量：
-
-$$\phi=\phi_{HbyA}-\operatorname{flux}(\operatorname{laplacian}(rAU,p))$$
-
-并修正单元速度：
-
-$$U=HbyA-rAU\nabla p$$
+源码中对应 $\text{fvm::laplacian}(rAU,p) = \text{fvc::div}(\phi_{HbyA})$。
 
 ### 3.3 PISO 校正循环
 
 PISO 控制器在同一时间步中执行多次压力校正：
 
-$$U^*\rightarrow p^{(1)}\rightarrow U^{(1)}\rightarrow p^{(2)}\rightarrow U^{(2)}$$
+$$
+U^{*} \to p^{(1)} \to U^{(1)} \to p^{(2)} \to U^{(2)}
+$$
 
 本项目配置 `nCorrectors=2`，并对非正交项执行 `1` 次修正。
 最后一次压力修正负责更新守恒面通量，从而将局部连续性误差压低。
@@ -182,7 +191,13 @@ $$U^*\rightarrow p^{(1)}\rightarrow U^{(1)}\rightarrow p^{(2)}\rightarrow U^{(2)
 
 三角腔顶点为
 
-$$A=(-\sqrt{3},0),\quad B=(\sqrt{3},0),\quad C=(0,-3)$$
+$$
+\begin{aligned}
+A &= (-\sqrt{3},0), \\
+B &= (\sqrt{3},0), \\
+C &= (0,-3).
+\end{aligned}
+$$
 
 顶边 $AB$ 为速度为 `1` 的运动壁面，左右边为无滑移壁面。
 hybrid80 网格采用壁面结构化带、中心三角形非结构化区域和厚度方向棱柱挤出，
@@ -190,7 +205,9 @@ hybrid80 网格采用壁面结构化带、中心三角形非结构化区域和�
 
 三角腔水平中心线后处理限制为物理截面
 
-$$-\frac{2}{\sqrt{3}}\le x\le\frac{2}{\sqrt{3}}$$
+$$
+-\frac{2}{\sqrt{3}} \le x \le \frac{2}{\sqrt{3}}
+$$
 
 避免把三角形外部区域误当成物理采样结果。
 
@@ -306,8 +323,6 @@ Re=100 和 Re=200 的主涡位置接近参考数据，
 4. 三角腔 Re=100 和 Re=200 的主涡位置接近参考结果；Re=500 的偏差明显增大，主要反映当前网格对高 Reynolds 数下薄剪切层与角区回流的分辨仍然不足。
 5. 所有已检查案例均达到配置的稳态判据，没有发现运行致命错误，但完整的 Reynolds 数和网格矩阵仍需后续补齐。
 
-
-
-## 12. 证据索引
-
-详细证据索引见同目录文件 `evidence_index.md`。
+## 11. 证据索引
+报告所引用的题目、配置、源码、运行目录、汇总数据和图片的详细对应关系见同目录下的
+[evidence_index.md](evidence_index.md)。
