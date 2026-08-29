@@ -1,17 +1,17 @@
 # 第二题报告证据索引
 
-本索引用于说明 `report.md` 中的关键结论分别来自哪个题目文件、推导文档、配置、代码、
-OpenFOAM case、日志、数据或图片。报告中的数值结论应优先追溯到 `summary.json`、
-`convergence_summary.csv` 或后处理 CSV；图像结论应追溯到 `figures/`；程序行为应追溯到
-求解器源码、OpenFOAM 字典和运行日志。
+本索引用于说明 `report.md` 中的关键结论分别来自哪个题目文件、配置、代码、OpenFOAM
+case、数据或图片。报告中的数值结论应优先追溯到 `summary.json`、`convergence_summary.csv`
+或后处理 CSV；图像结论应追溯到 `figures/`；程序行为应追溯到求解器源码、OpenFOAM
+字典和当前快照中实际保留的运行日志。当前快照中只有间断初值四边形案例族保留了完整的
+`blockMesh`、`checkMesh` 和求解器日志。
 
 ## 1. 参数源与问题定义
 
 | 内容 | 证据 | 用途 |
 |---|---|---|
 | 原始第二题 | `../../pdf/training_examples_incomp.pdf` | 控制方程、两个扩散算例、网格和误差要求 |
-| 第二题自包含题面 | `../../pdf/tex/第二题_二维扩散方程_自包含题目.tex` | 中文化题面和问题整理 |
-| 有限体积推导 | `../../pdf/tex/diffusion_fvm_explicit_solver_derivation.tex` | 控制体积分、扩散通量、显式 Euler 和扩散时间步推导 |
+| 题目解答与有限体积推导参考 | `../../pdf/题目解答.pdf` | 控制体定义、扩散通量、显式 Euler 和扩散时间步推导 |
 | 间断四边形配置 | `../../scripts/configs/02_diffusion_equation/01_discontinuous_quad.json` | 区域、初值、Neumann 边界、网格、终止时间和扩散格式 |
 | 间断三角形配置 | `../../scripts/configs/02_diffusion_equation/02_discontinuous_tri.json` | 三角形网格下的同一间断扩散算例 |
 | Gaussian 四边形配置 | `../../scripts/configs/02_diffusion_equation/03_gaussian_quad.json` | Gaussian 初值、解析解 Dirichlet 边界、四边形网格 |
@@ -35,14 +35,13 @@ OpenFOAM case、日志、数据或图片。报告中的数值结论应优先追�
 | 内容 | 证据 | 用途 |
 |---|---|---|
 | 间断四边形 case | `../../cases/02_diffusion_equation/01_discontinuous_quad/` | 四边形 `blockMesh`、`zeroGradient` 边界和运行日志 |
-| 间断三角形 case | `../../cases/02_diffusion_equation/02_discontinuous_tri/` | Gmsh 三角形网格、`createPatch` 和运行日志 |
+| 间断三角形 case | `../../cases/02_diffusion_equation/02_discontinuous_tri/`、`../../cases/02_diffusion_equation/02_discontinuous_tri/N80/Allrun.pre` | Gmsh 三角形网格预处理和边界重建配置；当前快照未保留对应运行日志 |
 | Gaussian 四边形 case | `../../cases/02_diffusion_equation/03_gaussian_quad/` | 四边形 Gaussian 初值和 `codedFixedValue` 边界 |
-| Gaussian 三角形 case | `../../cases/02_diffusion_equation/04_gaussian_tri/` | 三角形 Gaussian 初值、普通外边界和 `codedFixedValue` 边界 |
-| 四边形网格日志 | `../../cases/02_diffusion_equation/*_quad/N*/log.blockMesh` | `blockMesh` 网格生成过程 |
-| 三角形网格转换日志 | `../../cases/02_diffusion_equation/*_tri/N*/log.gmshToFoam` | Gmsh 网格转 OpenFOAM 网格过程 |
-| 三角形边界重建日志 | `../../cases/02_diffusion_equation/*_tri/N*/log.createPatch` | `zMin/zMax` empty 边界和外边界 patch 构造 |
-| 网格检查日志 | `../../cases/02_diffusion_equation/*/N*/log.checkMesh` | 网格质量和 `Mesh OK` |
-| 求解器日志 | `../../cases/02_diffusion_equation/*/N*/log.explicitDiffusionFoamStudent` | 时间推进、扩散 Co、残差、质量和场范围 |
+| Gaussian 三角形 case | `../../cases/02_diffusion_equation/04_gaussian_tri/`、`../../cases/02_diffusion_equation/04_gaussian_tri/N80/Allrun.pre` | 三角形 Gaussian 初值、普通外边界和 `codedFixedValue` 边界 |
+| 间断四边形网格日志 | `../../cases/02_diffusion_equation/01_discontinuous_quad/N*/log.blockMesh` | `blockMesh` 网格生成过程 |
+| 间断四边形网格检查日志 | `../../cases/02_diffusion_equation/01_discontinuous_quad/N*/log.checkMesh` | 网格质量和 `Mesh OK` |
+| 间断四边形求解器日志 | `../../cases/02_diffusion_equation/01_discontinuous_quad/N*/log.explicitDiffusionFoamStudent` | 时间推进、扩散 Co、残差、质量和场范围 |
+| 其他案例的数据级状态 | `../../data/02_diffusion_equation/cases/*/N*/summary.json` | `meshOK`、`solverEnded`、`solverFatal`、终止时间和误差标记 |
 | 单案例元数据 | `../../cases/02_diffusion_equation/*/N*/metadata.json` | 配置、分辨率、边界条件、格式和输出字段 |
 
 ## 4. 间断初值扩散结果
@@ -101,7 +100,8 @@ data/02_diffusion_equation/cases/02_discontinuous_tri/Nxx/error_field.csv
 
 Gaussian 算例目前没有单独生成 `data/02_diffusion_equation/analysis/03_gaussian_quad/` 和
 `data/02_diffusion_equation/analysis/04_gaussian_tri/` 下的跨分辨率汇总图；报告中的
-Gaussian 收敛阶表由各分辨率 `summary.json` 的 $L_1$ 误差计算得到。
+Gaussian 收敛阶表由各分辨率 `summary.json` 的 $L_1$ 误差计算得到，其他范数则直接来自
+各分辨率 `summary.json`。
 
 每个分辨率的详细数据还包括：
 
@@ -122,7 +122,7 @@ data/02_diffusion_equation/cases/04_gaussian_tri/Nxx/error_field.csv
 | 内容 | 证据 | 说明 |
 |---|---|---|
 | Gaussian 三角形 `createPatch` 修复 | `../../scripts/common/foam_case.py` | 只有 `periodicXY` 使用 cyclic；Gaussian Dirichlet 外边界改为普通 patch |
-| 修复后的三角形日志 | `../../cases/02_diffusion_equation/04_gaussian_tri/N10/log.createPatch` | `createPatch` 能完成普通外边界重建 |
+| Gaussian 三角形边界配置修复 | `../../scripts/common/foam_case.py`、`../../cases/02_diffusion_equation/04_gaussian_tri/N10/system/createPatchDict` | `createPatch` 用普通外边界重建非周期 Gaussian 问题；当前快照未保留运行日志 |
 | 运行 Bug 记录 | `../../docs/bug_log.md` | 项目运行中遇到的问题和修复记录 |
 | Gaussian 汇总图限制 | `../../data/02_diffusion_equation/cases/03_gaussian_quad/`、`../../data/02_diffusion_equation/cases/04_gaussian_tri/` | 已有逐分辨率数据和图，尚未生成独立 analysis 汇总图 |
 
@@ -132,5 +132,5 @@ data/02_diffusion_equation/cases/04_gaussian_tri/Nxx/error_field.csv
    `convergence_summary.csv`。
 2. 具体时程、最大值变化和稳定性应追溯到 `time_history.csv` 和求解器日志。
 3. 场形状、剖面和图像现象应追溯到 `figures/02_diffusion_equation/`。
-4. 数学公式应追溯到原始题目和有限体积推导文档。
+4. 数学公式应追溯到原始题目和 `../../pdf/题目解答.pdf`。
 5. 程序行为应追溯到求解器源码、统一脚本、OpenFOAM case 字典和运行日志。

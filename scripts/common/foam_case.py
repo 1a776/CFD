@@ -1544,7 +1544,7 @@ def _write_case_scripts(case: Path, config: CaseConfig, resolution: int) -> None
     hybrid_allrun_pre = None
     hybrid_create_patch = None
     if config.mesh_type == "hybrid":
-        gmsh_python = config.gmsh_python or "/home/a776/vibeflow/python-env/bin/python"
+        gmsh_python = config.gmsh_python
         boundary_layer_thickness = (
             config.boundary_layer_thickness
             if config.boundary_layer_thickness is not None
@@ -1570,8 +1570,11 @@ cd "$caseDir"
 # 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
 # 该预处理与第一题混合网格一致，只是求解器换成了第五题的
 # pisoFoamStudent。
-gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
-if [ ! -x "$gmshPython" ]; then
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python or ''}}}"
+if [ -z "$gmshPython" ]; then
+    gmshPython="$(command -v python3 || true)"
+fi
+if [ -z "$gmshPython" ] || [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
     echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
     exit 1
@@ -1593,8 +1596,11 @@ cd "$caseDir"
 
 # 第五题第二个算例：等边三角形顶盖驱动腔流。
 # 外圈三条边生成边界层四边形带，中心保留三角形核心区。
-gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
-if [ ! -x "$gmshPython" ]; then
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python or ''}}}"
+if [ -z "$gmshPython" ]; then
+    gmshPython="$(command -v python3 || true)"
+fi
+if [ -z "$gmshPython" ] || [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
     echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
     exit 1
@@ -1622,8 +1628,11 @@ cd "$caseDir"
 
 # 第五题第一个算例：方腔混合网格。
 # 外圈为结构化四边形边界层，中心区域为三角形非结构网格。
-gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
-if [ ! -x "$gmshPython" ]; then
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python or ''}}}"
+if [ -z "$gmshPython" ]; then
+    gmshPython="$(command -v python3 || true)"
+fi
+if [ -z "$gmshPython" ] || [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
     echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
     exit 1
@@ -1740,7 +1749,7 @@ runApplication -overwrite checkMesh
 runApplication -overwrite "$solverPath"
 """
     elif config.mesh_type == "tri":
-        gmsh_python = config.gmsh_python or "/home/a776/vibeflow/python-env/bin/python"
+        gmsh_python = config.gmsh_python
         allrun_pre = f"""#!/bin/sh
 
 set -eu
@@ -1756,8 +1765,11 @@ cd "$caseDir"
 # Gmsh 生成二维三角形并拉伸为 OpenFOAM 薄棱柱；
 # gmshToFoam 导入网格，createPatch 恢复四条物理边界；
 # C/Vc 写出真实单元中心和体积，随后按这些中心生成 omega。
-gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python}}}"
-if [ ! -x "$gmshPython" ]; then
+gmshPython="${{VIBEFLOW_PYTHON:-{gmsh_python or ''}}}"
+if [ -z "$gmshPython" ]; then
+    gmshPython="$(command -v python3 || true)"
+fi
+if [ -z "$gmshPython" ] || [ ! -x "$gmshPython" ]; then
     echo "Missing Gmsh Python interpreter: $gmshPython" >&2
     echo "Set VIBEFLOW_PYTHON to a Python environment containing gmsh." >&2
     exit 1
