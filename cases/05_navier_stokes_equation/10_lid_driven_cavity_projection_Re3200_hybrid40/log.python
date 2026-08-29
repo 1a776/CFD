@@ -63,33 +63,33 @@ Info    : [100%] Meshing curve 190 (Extruded)
 Info    : [100%] Meshing curve 203 (Extruded)
 Info    : [100%] Meshing curve 204 (Extruded)
 Info    : [100%] Meshing curve 212 (Extruded)
-Info    : Done meshing 1D (Wall 0.0184345s, CPU 0.005024s)
+Info    : Done meshing 1D (Wall 0.00269177s, CPU 0.000864s)
 Info    : Meshing 2D...
 Info    : [  0%] Meshing surface 1 (Plane, Frontal-Delaunay)
 Info    : [  0%] Blossom: 12 internal 6 closed
-Info    : [  0%] Blossom recombination completed (Wall 0.00061462s, CPU 0.000492s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.349054, min Q = 0.243748
+Info    : [  0%] Blossom recombination completed (Wall 0.00233455s, CPU 0.000115s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.349054, min Q = 0.243748
 Info    : [ 10%] Meshing surface 2 (Plane, Frontal-Delaunay)
 Info    : [ 10%] Blossom: 115 internal 38 closed
-Info    : [ 10%] Blossom recombination completed (Wall 0.00509979s, CPU 0.004195s): 37 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.557927, min Q = 0.290724
+Info    : [ 10%] Blossom recombination completed (Wall 0.00163704s, CPU 0.001638s): 37 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.557927, min Q = 0.290724
 Info    : [ 10%] Meshing surface 3 (Plane, Frontal-Delaunay)
 Info    : [ 10%] Blossom: 12 internal 6 closed
-Info    : [ 10%] Blossom recombination completed (Wall 0.000638928s, CPU 0.00064s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
+Info    : [ 10%] Blossom recombination completed (Wall 0.000192975s, CPU 0.000193s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
 Info    : [ 10%] Meshing surface 4 (Plane, Frontal-Delaunay)
 Info    : [ 10%] Blossom: 121 internal 38 closed
-Info    : [ 10%] Blossom recombination completed (Wall 0.0165619s, CPU 0.005676s): 39 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.535981, min Q = 0.293365
+Info    : [ 10%] Blossom recombination completed (Wall 0.00202792s, CPU 0.002031s): 39 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.535981, min Q = 0.293365
 Info    : [ 10%] Meshing surface 5 (Plane, Frontal-Delaunay)
 Info    : [ 20%] Meshing surface 6 (Plane, Frontal-Delaunay)
 Info    : [ 20%] Blossom: 115 internal 38 closed
-Info    : [ 20%] Blossom recombination completed (Wall 0.00790362s, CPU 0.00578s): 37 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.557927, min Q = 0.290724
+Info    : [ 20%] Blossom recombination completed (Wall 0.00199503s, CPU 0.001996s): 37 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.557927, min Q = 0.290724
 Info    : [ 20%] Meshing surface 7 (Plane, Frontal-Delaunay)
 Info    : [ 20%] Blossom: 12 internal 6 closed
-Info    : [ 20%] Blossom recombination completed (Wall 0.00142496s, CPU 0.001207s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
+Info    : [ 20%] Blossom recombination completed (Wall 0.000309349s, CPU 0.00031s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
 Info    : [ 20%] Meshing surface 8 (Plane, Frontal-Delaunay)
 Info    : [ 20%] Blossom: 121 internal 38 closed
-Info    : [ 20%] Blossom recombination completed (Wall 0.00700328s, CPU 0.005762s): 39 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.535981, min Q = 0.293365
+Info    : [ 20%] Blossom recombination completed (Wall 0.00199767s, CPU 0.001999s): 39 quads, 16 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.535981, min Q = 0.293365
 Info    : [ 20%] Meshing surface 9 (Plane, Frontal-Delaunay)
 Info    : [ 20%] Blossom: 12 internal 6 closed
-Info    : [ 20%] Blossom recombination completed (Wall 0.0015737s, CPU 0.000975s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
+Info    : [ 20%] Blossom recombination completed (Wall 0.000283327s, CPU 0.000284s): 5 quads, 0 triangles, 0 invalid quads, 0 quads with Q < 0.1, avg Q = 0.399085, min Q = 0.307231
 Info    : [ 30%] Meshing surface 33 (Extruded)
 Info    : [ 30%] Meshing surface 37 (Extruded)
 Info    : [ 30%] Meshing surface 41 (Extruded)
@@ -123,7 +123,7 @@ Info    : [100%] Meshing surface 200 (Extruded)
 Info    : [100%] Meshing surface 213 (Extruded)
 Info    : [100%] Meshing surface 217 (Extruded)
 Info    : [100%] Meshing surface 222 (Extruded)
-Info    : Done meshing 2D (Wall 0.241899s, CPU 0.14929s)
+Info    : Done meshing 2D (Wall 0.0593154s, CPU 0.052186s)
 Info    : Meshing 3D...
 Info    : Meshing volume 1 (Extruded)
 Info    : Meshing volume 2 (Extruded)
@@ -134,9 +134,9 @@ Info    : Meshing volume 6 (Extruded)
 Info    : Meshing volume 7 (Extruded)
 Info    : Meshing volume 8 (Extruded)
 Info    : Meshing volume 9 (Extruded)
-Info    : Done meshing 3D (Wall 0.0263531s, CPU 0.021465s)
+Info    : Done meshing 3D (Wall 0.00858731s, CPU 0.007876s)
 Info    : Optimizing mesh...
-Info    : Done optimizing mesh (Wall 0.000336532s, CPU 0.000336s)
+Info    : Done optimizing mesh (Wall 0.000106004s, CPU 0.000106s)
 Info    : 2860 nodes 8514 elements
 Info    : Writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/mesh/mesh.msh'...
 Info    : Done writing '/home/a776/workdocuments/上交船舶/slover/student_project/cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/mesh/mesh.msh'

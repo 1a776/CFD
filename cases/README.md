@@ -9,20 +9,20 @@
 
 本案例对应二维对流方程的正弦波平移算例。所有实验统一放在同一物理域、同一速度场和同一时间控制下，只比较网格类型、空间格式和分辨率的变化。所有算例都采用单位正方形周期区域，速度场取 `U=(1,1,0)`，标量场为 `T`，终止时间为 `1.0`，最大 CFL 为 `0.2`。实验代号按罗马数字 I-IV 编排，其中 I、II 对应四边形网格，III、IV 对应三角形网格；I、III 是一阶迎风，II、IV 是线性迎风。
 
-该组生成的图片主要包括数值场与精确解的对比图、对角线剖面对比图、振幅随时间变化图和 CFL 历史图，重点观察波形平移后是否保持幅值、是否出现数值耗散以及是否有非物理过冲。对应的分析数据主要包括 `L1`、`L2`、`Linf` 误差、`L1` 观察收敛阶、最终振幅、最大 CFL 和质量误差，其中 `L1` 与收敛阶最能直接反映网格加密后的精度变化，`L2` 和 `Linf` 则分别补充平均误差和峰值偏差。
+该组生成的图片主要包括数值场与精确解的对比图、对角线剖面对比图、振幅随时间变化图、CFL 历史图，以及误差收敛曲线和观察收敛阶图，重点观察波形平移后是否保持幅值、是否出现数值耗散以及是否有非物理过冲。对应的分析数据主要包括 `L1`、`L2`、`Linf` 误差、`L1` 观察收敛阶、最终振幅、最大 CFL 和质量误差，其中 `L1` 与收敛阶最能直接反映网格加密后的精度变化，`L2` 和 `Linf` 则分别补充平均误差和峰值偏差。
 
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
-| I | `01_sine_wave_quad_upwind` | 四边形 | `Gauss upwind` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
+| I | `01_sine_wave_quad` | 四边形 | `Gauss upwind` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 | II | `02_sine_wave_quad_linearUpwind` | 四边形 | `Gauss linearUpwind grad(T)` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 | III | `03_sine_wave_tri_upwind` | 三角形 | `Gauss upwind` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 | IV | `03_sine_wave_tri_linearUpwind` | 三角形 | `Gauss linearUpwind grad(T)` | `10, 20, 40, 80` | 单位正方形周期区域、周期边界、`U=(1,1,0)`、`T`、`endTime=1.0`、`maxCo=0.2` |
 
 #### 相关实验的数据归档
 
-- I `01_sine_wave_quad_upwind`
+- I `01_sine_wave_quad`
   - OpenFOAM目录: [`cases/01_advection_equation/01_sine_wave_quad/`](./01_advection_equation/01_sine_wave_quad/)
   - 数据: [`data/01_advection_equation/cases/01_sine_wave_quad/`](../data/01_advection_equation/cases/01_sine_wave_quad/)
   - 图片: [`figures/01_advection_equation/cases/01_sine_wave_quad/`](../figures/01_advection_equation/cases/01_sine_wave_quad/)
@@ -53,7 +53,7 @@
 
 ### 案例二：复杂轮廓固体旋转
 
-本案例对应二维对流方程的复杂轮廓固体旋转算例。所有实验同样放在单位正方形周期域内，速度场取绕 `(0.5,0.5)` 的刚体旋转，角速度为 `1`，终止时间为 `2π`，最大 CFL 为 `0.2`。初始场由切口圆盘、圆锥和光滑峰值三部分构成。实验代号按罗马数字 V-VI 编排，其中 V 对应四边形网格，VI 对应三角形网格；两组都采用一阶迎风格式，通过 `N=50,100,200` 的结果比较轮廓保持、数值耗散和质量守恒。
+本案例对应二维对流方程的复杂轮廓固体旋转算例。所有实验统一在单位正方形计算域内，外边界对标量场采用零值条件；速度场取绕 `(0.5,0.5)` 的刚体旋转，角速度为 `1`，终止时间为 `2π`，最大 CFL 为 `0.2`。初始场由切口圆盘、圆锥和光滑峰值三部分构成。实验代号按罗马数字 V-VI 编排，其中 V 对应四边形网格，VI 对应三角形网格；两组都采用一阶迎风格式，通过 `N=50,100,200` 的结果比较轮廓保持、数值耗散和质量守恒。
 
 该组生成的图片主要包括初始场与最终场的对比图、最终等值线图和 CFL 历史图，重点观察切口是否闭合、圆盘边界是否变钝、峰值是否被抹平，以及一圈旋转后整体轮廓是否回到原位。对应的分析数据主要包括一圈旋转后的 `cycleL1AgainstInitial`、最大 CFL、归一化质量误差、最终最大值和单元数；其中 `cycleL1AgainstInitial` 反映整体形状偏差，质量误差反映守恒性，最终最大值则反映数值耗散对峰值的削弱程度。
 
@@ -91,8 +91,8 @@
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
-| I | `01_discontinuous_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=explicitDiffusionFoamStudent`，`phi`，`mu=1`，`endTime=0.2`，`diffusionCo=0.45`，`maxDeltaT=0.001`，中心方块初值，齐次 Neumann 边界 |
-| II | `02_discontinuous_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=explicitDiffusionFoamStudent`，`phi`，`mu=1`，`endTime=0.2`，`diffusionCo=0.45`，`maxDeltaT=0.001`，中心方块初值，齐次 Neumann 边界 |
+| I | `01_discontinuous_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、中心方块初值、齐次 Neumann 边界 |
+| II | `02_discontinuous_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、中心方块初值、齐次 Neumann 边界 |
 
 #### 相关实验的数据归档
 
@@ -121,8 +121,8 @@
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
-| III | `03_gaussian_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=explicitDiffusionFoamStudent`，`phi`，`mu=1`，`endTime=0.2`，`diffusionCo=0.45`，`maxDeltaT=0.001`，Gaussian 初值，解析解 Dirichlet 边界 |
-| IV | `04_gaussian_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | `solver=explicitDiffusionFoamStudent`，`phi`，`mu=1`，`endTime=0.2`，`diffusionCo=0.45`，`maxDeltaT=0.001`，Gaussian 初值，解析解 Dirichlet 边界 |
+| III | `03_gaussian_quad` | 四边形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、Gaussian 初值、解析解 Dirichlet 边界 |
+| IV | `04_gaussian_tri` | 三角形 | `Gauss linear corrected` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`mu=1`、`endTime=0.2`、`diffusionCo=0.45`、`maxDeltaT=0.001`、Gaussian 初值、解析解 Dirichlet 边界 |
 
 #### 相关实验的数据归档
 
@@ -145,16 +145,16 @@
 
 ### 案例一：正弦波平移
 
-本案例对应二维对流-扩散方程的正弦波平移验证。计算域为单位正方形周期区域，初始场取正弦波，速度场为常量平移，扩散系数取题面给定值，终止时间为 `1.0`。实验代号按罗马数字 I-II 编排，其中 I 对应四边形网格，II 对应三角形网格；两组都在 `N=10,20,40,80` 下比较平移后的波形保持、数值耗散和误差收敛。
+本案例对应二维对流-扩散方程的正弦波平移验证。计算域为单位正方形周期区域，初始场取正弦波，速度场为常量平移，扩散系数为 `mu=1`，终止时间为 `1.0`。实验代号按罗马数字 I-II 编排，其中 I 对应四边形网格，II 对应三角形网格；两组都在 `N=10,20,40,80` 下比较平移后的波形保持、数值耗散和误差收敛。
 
-该组生成的图片主要包括数值场与精确解的对比图、典型剖面图、振幅变化图，以及误差收敛曲线和观察收敛阶图。前两类图主要看波形平移后是否还能保持峰谷位置和幅值，后两类图主要看误差是否随网格加密而下降，以及收敛阶是否稳定。对应的分析数据主要包括各分辨率的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 更直接反映整体偏差，`L2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。
+该组生成的图片主要包括数值场与精确解的对比图、典型剖面图、振幅变化图，以及误差收敛曲线和观察收敛阶图。前两类图主要看波形平移后是否还能保持峰谷位置和幅值，后两类图主要看误差是否随网格加密而下降，以及收敛阶是否稳定。对应的分析数据主要包括各分辨率的 `L1`、`L2` 误差和由相邻网格计算得到的观察收敛阶；其中 `L1` 更直接反映整体偏差，`L2` 用来补充平均误差水平，观察收敛阶则用来判断网格加密后的精度提升趋势。由于 `mu=1`、`t=1` 时解析正弦波的幅值为 $\exp(-8\pi^2)\approx5.12\times10^{-35}$，以解析解范数归一化的相对误差会受到近零分母影响，因此本案例以初始场归一化误差作为主指标，以绝对误差作为辅助指标，解析解相对误差仅保留作诊断。
 
 #### 相关实验配置
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
-| I | `01_sine_wave_quad_upwind` | 四边形 | `Gauss upwind` | `10, 20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(1,1,0)`，`mu`，`endTime=1.0`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，周期边界 |
-| II | `02_sine_wave_tri_upwind` | 三角形 | `Gauss upwind` | `10, 20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(1,1,0)`，`mu`，`endTime=1.0`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，周期边界 |
+| I | `01_sine_wave_quad_upwind` | 四边形 | `Gauss upwind` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(1,1,0)`、`mu=1`、`endTime=1.0`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、周期边界 |
+| II | `02_sine_wave_tri_upwind` | 三角形 | `Gauss upwind` | `10, 20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(1,1,0)`、`mu=1`、`endTime=1.0`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、周期边界 |
 
 #### 相关实验的数据归档
 
@@ -183,10 +183,10 @@
 
 | 实验代号 | 案例 | 网格类型 | 空间格式 | 分辨率 N | 固定设置 |
 |---|---|---|---|---|---|
-| III | `03_rotating_peak_quad_upwind` | 四边形 | `Gauss upwind` | `20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(-y,x,0)`，`mu=1e-3`，`endTime=2π`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，零 Dirichlet 近似 |
-| IV | `04_rotating_peak_tri_upwind` | 三角形 | `Gauss upwind` | `20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(-y,x,0)`，`mu=1e-3`，`endTime=2π`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，零 Dirichlet 近似 |
-| V | `05_rotating_peak_quad_analyticDirichlet_upwind` | 四边形 | `Gauss upwind` | `20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(-y,x,0)`，`mu=1e-3`，`endTime=2π`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，解析 Dirichlet |
-| VI | `06_rotating_peak_tri_analyticDirichlet_upwind` | 三角形 | `Gauss upwind` | `20, 40, 80` | `solver=explicitAdvectionDiffusionFoamStudent`，`phi`，`U=(-y,x,0)`，`mu=1e-3`，`endTime=2π`，`advectionDiffusionCo=0.45`，`maxDeltaT=0.001`，解析 Dirichlet |
+| III | `03_rotating_peak_quad_upwind` | 四边形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、零 Dirichlet 近似 |
+| IV | `04_rotating_peak_tri_upwind` | 三角形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、零 Dirichlet 近似 |
+| V | `05_rotating_peak_quad_analyticDirichlet_upwind` | 四边形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、解析 Dirichlet |
+| VI | `06_rotating_peak_tri_analyticDirichlet_upwind` | 三角形 | `Gauss upwind` | `20, 40, 80` | 显式时间推进、标量场 `phi`、`U=(-y,x,0)`、`mu=1e-3`、`endTime=2π`、`advectionDiffusionCo=0.45`、`maxDeltaT=0.001`、解析 Dirichlet |
 
 #### 相关实验的数据归档
 
@@ -268,12 +268,19 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 
 ### 5. Navier-Stokes 方程
 
+本题以下只整理已经生成结果数据和图片的混合网格实验。结果分析以
+`data/05_navier_stokes_equation/cases/` 下的 `summary.json`、剖面数据文件，
+以及 `figures/05_navier_stokes_equation/cases/` 下的结果图片为依据。当前纳入
+分析的混合网格实验共 14 组：方腔顶盖驱动流的 `07`、`08`、`10`、`11`、`16`-`19`
+和等边三角腔顶盖驱动流的 `26`-`31`。未形成上述数据和图片归档的其他编号
+不列入本节分析范围。
+
 ### 案例一：方腔顶盖驱动流
 
 本案例对应二维不可压 Navier-Stokes 方程的方腔顶盖驱动流。计算域为
 单位正方形 `[0,1] × [0,1]`，左、右、下壁面采用无滑移条件，上壁面以
 `U=(1,0,0)` 匀速运动，运动黏度按 $\nu=1/Re$ 设置。实验比较压力投影法
-和 PISO 法在不同 Reynolds 数及混合网格分辨率下的计算结果，当前归档结果
+和 PISO 法在不同 Reynolds 数及混合网格分辨率下的计算结果。本节已有结果
 覆盖 `Re=1000`、`Re=3200`，以及 `hybrid40` 和 `hybrid80` 两个网格等级。
 混合网格在壁面附近布置结构化网格层，在内部保留非结构化区域，用于同时
 分辨壁面速度梯度和腔体内部主循环。
@@ -288,19 +295,20 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
 收敛阶，而是以中心线 RMSE、最大绝对误差、主循环形态和稳态判据作为主要
 比较依据。
 
-#### 相关实验配置
+#### 已有数据的实验配置
 
 | 实验代号 | 案例 | 算法 | 网格 | Reynolds 数 | 分辨率 / 单元数 | 固定设置 |
 |---|---|---|---|---:|---|---|
 | I | `07_lid_driven_cavity_projection_Re1000_hybrid40` | 压力投影法 | 混合网格 `hybrid40` | `1000` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.001`、`endTime=100`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 | II | `08_lid_driven_cavity_projection_Re1000_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `1000` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| III | `11_lid_driven_cavity_projection_Re3200_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `3200` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.0005`、`endTime=150`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| IV | `16_lid_driven_cavity_piso_Re1000_hybrid40` | PISO 法 | 混合网格 `hybrid40` | `1000` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.001`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| V | `17_lid_driven_cavity_piso_Re1000_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `1000` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| VI | `18_lid_driven_cavity_piso_Re3200_hybrid40` | PISO 法 | 混合网格 `hybrid40` | `3200` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.001`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| VII | `19_lid_driven_cavity_piso_Re3200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `3200` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.0005`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| III | `10_lid_driven_cavity_projection_Re3200_hybrid40` | 压力投影法 | 混合网格 `hybrid40` | `3200` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.001`、配置 `endTime=150`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8`、至少推进 `1000` 步、连续 `20` 步满足稳态判据后提前结束 |
+| IV | `11_lid_driven_cavity_projection_Re3200_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `3200` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.0005`、`endTime=150`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| V | `16_lid_driven_cavity_piso_Re1000_hybrid40` | PISO 法 | 混合网格 `hybrid40` | `1000` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.001`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| VI | `17_lid_driven_cavity_piso_Re1000_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `1000` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.001$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| VII | `18_lid_driven_cavity_piso_Re3200_hybrid40` | PISO 法 | 混合网格 `hybrid40` | `3200` | `N=40` / `2646` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.001`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| VIII | `19_lid_driven_cavity_piso_Re3200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `3200` | `N=80` / `9282` | 单位正方形、顶盖 `U=(1,0,0)`、其余壁面无滑移、$\nu=0.0003125$、`Δt=0.0005`、`endTime=150`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 
-#### 相关实验的数据归档
+#### 数据与图片归档
 
 - I `07_lid_driven_cavity_projection_Re1000_hybrid40`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/07_lid_driven_cavity_projection_Re1000_hybrid40/`](./05_navier_stokes_equation/07_lid_driven_cavity_projection_Re1000_hybrid40/)
@@ -316,35 +324,42 @@ I 采用结构化四边形网格，II 采用三角形棱柱网格。每组均在
   - 数据汇总: [`data/05_navier_stokes_equation/cases/08_lid_driven_cavity_projection_Re1000_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/08_lid_driven_cavity_projection_Re1000_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
-- III `11_lid_driven_cavity_projection_Re3200_hybrid80`
+- III `10_lid_driven_cavity_projection_Re3200_hybrid40`
+  - OpenFOAM目录: [`cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/`](./05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/)
+  - 数据: [`data/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/`](../data/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/)
+  - 图片: [`figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/`](../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/)
+  - 数据汇总: [`data/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/summary.json`](../data/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/summary.json)
+  - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
+  - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
+- IV `11_lid_driven_cavity_projection_Re3200_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80/`](./05_navier_stokes_equation/11_lid_driven_cavity_projection_Re3200_hybrid80/)
   - 数据: [`data/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/`](../data/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/`](../figures/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
-- IV `16_lid_driven_cavity_piso_Re1000_hybrid40`
+- V `16_lid_driven_cavity_piso_Re1000_hybrid40`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/16_lid_driven_cavity_piso_Re1000_hybrid40/`](./05_navier_stokes_equation/16_lid_driven_cavity_piso_Re1000_hybrid40/)
   - 数据: [`data/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/`](../data/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/)
   - 图片: [`figures/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/`](../figures/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/summary.json`](../data/05_navier_stokes_equation/cases/16_lid_driven_cavity_piso_Re1000_hybrid40/summary.json)
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
-- V `17_lid_driven_cavity_piso_Re1000_hybrid80`
+- VI `17_lid_driven_cavity_piso_Re1000_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/17_lid_driven_cavity_piso_Re1000_hybrid80/`](./05_navier_stokes_equation/17_lid_driven_cavity_piso_Re1000_hybrid80/)
   - 数据: [`data/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/`](../data/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/`](../figures/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/17_lid_driven_cavity_piso_Re1000_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
-- VI `18_lid_driven_cavity_piso_Re3200_hybrid40`
+- VII `18_lid_driven_cavity_piso_Re3200_hybrid40`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/18_lid_driven_cavity_piso_Re3200_hybrid40/N40/`](./05_navier_stokes_equation/18_lid_driven_cavity_piso_Re3200_hybrid40/N40/)
   - 数据: [`data/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/`](../data/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/)
   - 图片: [`figures/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/`](../figures/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/summary.json`](../data/05_navier_stokes_equation/cases/18_lid_driven_cavity_piso_Re3200_hybrid40/summary.json)
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
-- VII `19_lid_driven_cavity_piso_Re3200_hybrid80`
+- VIII `19_lid_driven_cavity_piso_Re3200_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/19_lid_driven_cavity_piso_Re3200_hybrid80/N80/`](./05_navier_stokes_equation/19_lid_driven_cavity_piso_Re3200_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/19_lid_driven_cavity_piso_Re3200_hybrid80/`](../data/05_navier_stokes_equation/cases/19_lid_driven_cavity_piso_Re3200_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/19_lid_driven_cavity_piso_Re3200_hybrid80/`](../figures/05_navier_stokes_equation/cases/19_lid_driven_cavity_piso_Re3200_hybrid80/)
@@ -371,59 +386,60 @@ Reynolds 数，用于比较压力-速度耦合算法对三角腔主循环、角�
 `omega`、与文献参考主涡的 `|dx|`、`|dy|` 和 `|dpsi|`、速度分量范围、
 实际结束时间和网格单元数。该案例不存在统一的解析解，因此主要采用主涡
 位置、流函数、中心线剖面和流线形态进行验证，不使用 `L1`、`L2` 观察收敛阶。
-其中，压力投影法的 Re=100 结果只到约 `t=0.6`，不能作为稳态结论；压力
-投影法 Re=200、500 的当前归档也缺少完整求解日志和最终正时间场，只能作为
-摘要级结果使用，PISO 三个 Reynolds 数的稳态日志和结果较完整。
+本节只使用已经生成的 `data` 和 `figures` 进行结果分析。压力投影法
+`Re=100` 的 `26` 号结果记录到约 `t=0.6`，因此相关数据仅用于观察当前
+流场、速度剖面和涡结构，不将其作为已经达到稳态的结论；其余已归档结果
+按照各自的 `summary.json`、剖面数据和图片进行比较。
 
-#### 相关实验配置
+#### 已有数据的实验配置
 
 | 实验代号 | 案例 | 算法 | 网格 | Reynolds 数 | 分辨率 / 单元数 | 固定设置 |
 |---|---|---|---|---:|---|---|
-| VIII | `26_triangular_cavity_projection_Re100_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `100` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.01$、`Δt=0.001`、`endTime=80`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| IX | `27_triangular_cavity_projection_Re200_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `200` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.005$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| X | `28_triangular_cavity_projection_Re500_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `500` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.002$、`Δt=0.00025`、`endTime=140`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| XI | `29_triangular_cavity_piso_Re100_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `100` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.01$、`Δt=0.001`、`endTime=80`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| XII | `30_triangular_cavity_piso_Re200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `200` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.005$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
-| XIII | `31_triangular_cavity_piso_Re500_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `500` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.002$、`Δt=0.00025`、`endTime=140`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| IX | `26_triangular_cavity_projection_Re100_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `100` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.01$、`Δt=0.001`、`endTime=80`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| X | `27_triangular_cavity_projection_Re200_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `200` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.005$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| XI | `28_triangular_cavity_projection_Re500_hybrid80` | 压力投影法 | 混合网格 `hybrid80` | `500` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.002$、`Δt=0.00025`、`endTime=140`、`maxCo=0.2`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| XII | `29_triangular_cavity_piso_Re100_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `100` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.01$、`Δt=0.001`、`endTime=80`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| XIII | `30_triangular_cavity_piso_Re200_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `200` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.005$、`Δt=0.0005`、`endTime=100`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
+| XIV | `31_triangular_cavity_piso_Re500_hybrid80` | PISO 法 | 混合网格 `hybrid80` | `500` | `N=80` / `7308` | 等边三角腔、顶盖 `U=(1,0,0)`、左右壁面无滑移、$\nu=0.002$、`Δt=0.00025`、`endTime=140`、`maxCo=0.2`、`maxDeltaT=0.01`、对流项 `Gauss linearUpwind grad(U)`、扩散项 `Gauss linear corrected`、`GAMG`、线性容差 `1e-8`、压力校正 `2` 次、非正交修正 `1` 次、稳态速度容差 `1e-6`、质量容差 `1e-8` |
 
-#### 相关实验的数据归档
+#### 数据与图片归档
 
-- VIII `26_triangular_cavity_projection_Re100_hybrid80`
+- IX `26_triangular_cavity_projection_Re100_hybrid80`
   - OpenFOAM目录: 当前未保留该案例的 OpenFOAM 目录，仅保留结果摘要和图片
   - 数据: [`data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/`](../data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/`](../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
-- IX `27_triangular_cavity_projection_Re200_hybrid80`
+- X `27_triangular_cavity_projection_Re200_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80/N80/`](./05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/`](../data/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/`](../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
-- X `28_triangular_cavity_projection_Re500_hybrid80`
+- XI `28_triangular_cavity_projection_Re500_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/28_triangular_cavity_projection_Re500_hybrid80/N80/`](./05_navier_stokes_equation/28_triangular_cavity_projection_Re500_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/`](../data/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/`](../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/projection/report.md`](../report/05_navier_stokes_equation/projection/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/projection/evidence_index.md`](../report/05_navier_stokes_equation/projection/evidence_index.md)
-- XI `29_triangular_cavity_piso_Re100_hybrid80`
+- XII `29_triangular_cavity_piso_Re100_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/29_triangular_cavity_piso_Re100_hybrid80/N80/`](./05_navier_stokes_equation/29_triangular_cavity_piso_Re100_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/`](../data/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/`](../figures/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/29_triangular_cavity_piso_Re100_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
-- XII `30_triangular_cavity_piso_Re200_hybrid80`
+- XIII `30_triangular_cavity_piso_Re200_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/30_triangular_cavity_piso_Re200_hybrid80/N80/`](./05_navier_stokes_equation/30_triangular_cavity_piso_Re200_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/`](../data/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/`](../figures/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/)
   - 数据汇总: [`data/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/summary.json`](../data/05_navier_stokes_equation/cases/30_triangular_cavity_piso_Re200_hybrid80/summary.json)
   - 报告: [`report/05_navier_stokes_equation/piso/report.md`](../report/05_navier_stokes_equation/piso/report.md)
   - 证据索引: [`report/05_navier_stokes_equation/piso/evidence_index.md`](../report/05_navier_stokes_equation/piso/evidence_index.md)
-- XIII `31_triangular_cavity_piso_Re500_hybrid80`
+- XIV `31_triangular_cavity_piso_Re500_hybrid80`
   - OpenFOAM目录: [`cases/05_navier_stokes_equation/31_triangular_cavity_piso_Re500_hybrid80/N80/`](./05_navier_stokes_equation/31_triangular_cavity_piso_Re500_hybrid80/N80/)
   - 数据: [`data/05_navier_stokes_equation/cases/31_triangular_cavity_piso_Re500_hybrid80/`](../data/05_navier_stokes_equation/cases/31_triangular_cavity_piso_Re500_hybrid80/)
   - 图片: [`figures/05_navier_stokes_equation/cases/31_triangular_cavity_piso_Re500_hybrid80/`](../figures/05_navier_stokes_equation/cases/31_triangular_cavity_piso_Re500_hybrid80/)
