@@ -51,17 +51,17 @@
 
 第四题的控制方程为稳态 Poisson 方程：
 
-$$
+```math
 \nabla^2 \phi = \omega .
-$$
+```
 
 题面给出的制造解为
 
-$$
-\phi_{\mathrm{exact}}(x,y)=\cos(\pi x)\cos(\pi y),
+```math
+\phi_{\mathrm{exact}}(x,y) = \cos(\pi x)\cos(\pi y),
 \qquad
-\omega(x,y)=-2\pi^2\cos(\pi x)\cos(\pi y).
-$$
+\omega(x,y) = -2\pi^2\cos(\pi x)\cos(\pi y).
+```
 
 本项目使用学生版求解器 `poissonFoamStudent`，
 在二维域 $[0,1]\times[0,1]$ 上分别采用四边形网格和三角形网格完成验证，
@@ -109,21 +109,21 @@ $$
 
 对任意控制体 $\Omega_c$ 积分，可得
 
-$$
-\int_{\Omega_c}\nabla^2\phi\,\mathrm dV
+```math
+\int_{\Omega_c}\nabla^2\phi\,\mathrm{d}V
 =
-\int_{\Omega_c}\omega\,\mathrm dV.
-$$
+\int_{\Omega_c}\omega\,\mathrm{d}V.
+```
 
 离散后写为
 
-$$
-\sum_{f\in\partial\Omega_c} (\nabla\phi)_f\cdot\mathbf S_f
+```math
+\sum_{f\in\partial\Omega_c} (\nabla\phi)_f\cdot\mathbf{S}_f
 =
 \omega_c V_c,
-$$
+```
 
-其中 $V_c$ 为单元体积，$\mathbf S_f$ 为面面积矢量。
+其中 $V_c$ 为单元体积，$\mathbf{S}_f$ 为面面积矢量。
 
 ### 3.2 空间离散
 
@@ -144,9 +144,9 @@ laplacian(phi) Gauss linear corrected;
 
 观察收敛阶按下式计算：
 
-$$
-p=\frac{\log(E_N/E_{2N})}{\log 2},
-$$
+```math
+p = \frac{\log(E_N/E_{2N})}{\log 2},
+```
 
 其中 $E_N$ 表示分辨率为 $N$ 时的主误差。
 
@@ -325,4 +325,3 @@ N80 时数值场已经非常接近精确场，但边界条带仍未完全消失�
 
 报告所引用的题目、配置、源码、运行目录、汇总数据和图片的详细对应关系见同目录下的
 [evidence_index.md](evidence_index.md)。
-

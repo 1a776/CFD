@@ -33,10 +33,13 @@
 | Re3200 hybrid40 摘要 | `../../../data/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/summary.json` |
 | Re3200 hybrid80 摘要 | `../../../data/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/summary.json` |
 | Re1000 hybrid40 场图 | `../../../figures/05_navier_stokes_equation/cases/07_lid_driven_cavity_projection_Re1000_hybrid40/field_and_streamlines.png` |
+| Re1000 hybrid40 中心线图 | `../../../figures/05_navier_stokes_equation/cases/07_lid_driven_cavity_projection_Re1000_hybrid40/centerline_comparison.png` |
 | Re1000 hybrid80 场图 | `../../../figures/05_navier_stokes_equation/cases/08_lid_driven_cavity_projection_Re1000_hybrid80/field_and_streamlines.png` |
-| Re3200 hybrid40 场图 | `../../../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/field_and_streamlines.png` |
 | Re1000 hybrid80 中心线图 | `../../../figures/05_navier_stokes_equation/cases/08_lid_driven_cavity_projection_Re1000_hybrid80/centerline_comparison.png` |
+| Re3200 hybrid40 场图 | `../../../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/field_and_streamlines.png` |
 | Re3200 hybrid40 中心线图 | `../../../figures/05_navier_stokes_equation/cases/10_lid_driven_cavity_projection_Re3200_hybrid40/centerline_comparison.png` |
+| Re3200 hybrid80 场图 | `../../../figures/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/field_and_streamlines.png` |
+| Re3200 hybrid80 中心线图 | `../../../figures/05_navier_stokes_equation/cases/11_lid_driven_cavity_projection_Re3200_hybrid80/centerline_comparison.png` |
 | Re1000 hybrid40 日志 | `../../../cases/05_navier_stokes_equation/07_lid_driven_cavity_projection_Re1000_hybrid40/log.projectionFoamStudent` |
 | Re1000 hybrid80 日志 | `../../../cases/05_navier_stokes_equation/08_lid_driven_cavity_projection_Re1000_hybrid80/log.projectionFoamStudent` |
 | Re3200 hybrid40 日志 | `../../../cases/05_navier_stokes_equation/10_lid_driven_cavity_projection_Re3200_hybrid40/log.projectionFoamStudent` |
@@ -61,8 +64,15 @@ summary.json
 | Re100 摘要 | `../../../data/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/summary.json` |
 | Re200 摘要 | `../../../data/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/summary.json` |
 | Re500 摘要 | `../../../data/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/summary.json` |
+| Re100 场图 | `../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/field_streamlines.png` |
+| Re100 中心线图 | `../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/centerline_comparison.png` |
+| Re100 流函数图 | `../../../figures/05_navier_stokes_equation/cases/26_triangular_cavity_projection_Re100_hybrid80/streamfunction_vortices.png` |
 | Re200 场图 | `../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/field_streamlines.png` |
+| Re200 中心线图 | `../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/centerline_comparison.png` |
 | Re200 流函数图 | `../../../figures/05_navier_stokes_equation/cases/27_triangular_cavity_projection_Re200_hybrid80/streamfunction_vortices.png` |
+| Re500 场图 | `../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/field_streamlines.png` |
+| Re500 中心线图 | `../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/centerline_comparison.png` |
+| Re500 流函数图 | `../../../figures/05_navier_stokes_equation/cases/28_triangular_cavity_projection_Re500_hybrid80/streamfunction_vortices.png` |
 | Re200 网格检查 | `../../../cases/05_navier_stokes_equation/27_triangular_cavity_projection_Re200_hybrid80/N80/log.checkMesh` |
 | Re500 网格检查 | `../../../cases/05_navier_stokes_equation/28_triangular_cavity_projection_Re500_hybrid80/N80/log.checkMesh` |
 
@@ -78,10 +88,10 @@ summary.json
 
 | 问题 | 现状 | 报告处理 |
 |---|---|---|
-| Re100 三角腔 | 摘要终止于 `t≈0.6`，没有当前 case 目录 | 只作为瞬态历史诊断，不作稳态结论 |
-| Re200/Re500 三角腔 | 保留网格和 `0` 时刻字段，缺少最终正时间目录与 solver log | 只作为摘要级结果证据 |
+| Re100 三角腔 | 摘要终止于 `t≈0.6`，图件对应早期瞬态，没有当前 case 目录 | 只作为瞬态历史诊断，不作稳态结论 |
+| Re200/Re500 三角腔 | 保留网格、摘要和图件，缺少最终正时间目录与 solver log | 只作为摘要级结果证据 |
 | Re3200 方腔 hybrid40 | 有摘要、中心线数据、结果图片和投影 solver log，已记录稳态结束信息 | 可作为具有完整运行证据的 Re3200 方腔案例 |
-| Re3200 方腔 hybrid80 | 有摘要和中心线数据，当前未找到投影 solver log | 不把日志级稳态结论扩大到该案例 |
+| Re3200 方腔 hybrid80 | 有摘要、中心线数据和图件，当前未找到投影 solver log | 不把日志级稳态结论扩大到该案例 |
 | 完整矩阵 | 配置文件多于当前数据摘要 | 明确报告范围为已归档子集 |
 
 数值结论优先来自 `summary.json`；
